@@ -56,12 +56,14 @@ module mainboard(input  clk,
    wire	       grom_clk_en;
 
    wire	       memen;
+   wire	       memen8; // use for 8-bit RAM/ROM, not needed for MB
    wire	       we;
    wire	       iaq;
    wire	       dbin;
    wire [0:14] a;
    wire [0:15] d;
    wire [0:15] q;
+   wire	       ready;
    wire	       sysrdy;
    wire	       ready_grom;
    wire	       ready_sgc;
@@ -74,12 +76,17 @@ module mainboard(input  clk,
 
    wire [0:15] d_rom;
    wire [0:15] d_sp;
-   wire [0:15] d_vdp;
-   wire [0:15] d_grom;
+   wire [0:15] d_mpx;
+   wire [0:7]  d8;
+   wire [0:7]  d8_grom;
+   wire [0:7]  cd_vdp;
+   wire [0:7]  q8;
    reg	       d_rom_valid;
    reg	       d_sp_valid;
    reg	       d_vdp_valid;
-   reg	       d_grom_valid;
+   reg	       d_mpx_hi_valid;
+   reg	       d_mpx_lo_valid;
+   reg	       d8_grom_valid;
 
    wire	       romen;
    wire	       mbe;
@@ -111,23 +118,23 @@ module mainboard(input  clk,
    assign audio_gate = p_out[8];
    assign mag_out = p_out[9];
 
-   assign a15 = 1'b0;
-
    assign d = 16'hffff &
-	      (d_rom_valid?  d_rom  : 16'hffff) &
-	      (d_sp_valid?   d_sp   : 16'hffff) &
-	      (d_vdp_valid?  d_vdp  : 16'hffff) &
-	      (d_grom_valid? d_grom : 16'hffff);
+	      (d_rom_valid ?    d_rom                  : 16'hffff) &
+	      (d_sp_valid ?     d_sp                   : 16'hffff) &
+	      (d_vdp_valid ?    { cd_vdp, 8'hff }      : 16'hffff) &
+	      (d_mpx_hi_valid ? { d_mpx[0:7], 8'hff }  : 16'hffff) &
+	      (d_mpx_lo_valid ? { 8'hff, d_mpx[8:15] } : 16'hffff);
+   assign d8 = 8'hff &
+	       (d8_grom_valid ? d8_grom : 8'hff);
    assign sysrdy = (ready_grom | ~gs) & ready_sgc;
 
-   assign d_vdp[8:15] = 8'hff;
-   assign d_grom[8:15] = 8'hff;
-   
    always @(posedge clk) begin
       d_rom_valid <= dbin && romen;
       d_sp_valid <= dbin && mb && ramblk;
       d_vdp_valid <= dbin && vdp_csr;
-      d_grom_valid <= dbin && gs;
+      d_mpx_hi_valid <= dbin && !(romen | (mb & ramblk)) && !vdp_csr;
+      d_mpx_lo_valid <= dbin && !(romen | (mb & ramblk));
+      d8_grom_valid <= dbin && gs;
    end
 
    clkgen #(.clk_multiplier(clk_multiplier),
@@ -146,13 +153,19 @@ module mainboard(input  clk,
 			    .sbe(sbe), .gs(gs), .ramblk(ramblk),
 			    .memex(memex));
 
+   multiplexer mpx(.clk(clk), .clk_en(cpu_clk_en),
+		   .start(memen & !(romen | (mb & ramblk))),
+		   .memen(memen), .sysrdy(sysrdy),
+		   .memen8(memen8), .ready(ready), .a15(a15),
+		   .d8(d8), .q8(q8), .d(d_mpx), .q(q));
+
    keymatrix matrix(.p_out(p_out[2:5]),
 		    .int_in(int_in[3:6]), .p_in(p_in[12:15]),
 		    .key_state(key_state), .alpha_state(alpha_state),
 		    .joy1(5'b00000), .joy2(5'b0000));
 
    tms9900_cpu cpu(.reset(reset), .clk(clk), .clk_en(cpu_clk_en),
-		   .memen_out(memen), .we(we), .iaq(iaq), .ready_in(sysrdy),
+		   .memen_out(memen), .we(we), .iaq(iaq), .ready_in(ready),
 		   .waiting(), .a(a), .d_in(d), .q(q), .dbin(dbin),
 		   .cruin(cruin), .cruout(cruout), .cruclk_out(cruclk),
 		   .intreq(intreq), .ic(4'b0001),
@@ -170,7 +183,7 @@ module mainboard(input  clk,
          .clk_en_next(vdp_clk_en_next),
 	 .sync_h(vdp_hsync), .sync_v(vdp_vsync), .cburst(vdp_cburst),
 	 .color(vdp_color), .extvideo(vdp_extvideo),
-	 .cd(q[0:7]), .cq(d_vdp[0:7]), .csr(vdp_csr), .csw(vdp_csw),
+	 .cd(q[0:7]), .cq(cd_vdp), .csr(vdp_csr), .csw(vdp_csw),
          .mode(a[14]), .int_pending(vdp_irq),
          .wb_adr_i(wb_adr_i), .wb_dat_i(wb_dat_i), .wb_dat_o(wb_dat_o),
          .wb_we_i(wb_we_i), .wb_sel_i(wb_sel_i), .wb_stb_i(wb_stb_i),
@@ -189,7 +202,7 @@ module mainboard(input  clk,
 		      .a(a), .d(q), .q(d_sp));
 
    groms grom(.clk(clk), .grclk_en(grom_clk_en), .m(dbin), .gs(gs),
-	      .mo(a[14]), .d(q[0:7]), .q(d_grom[0:7]), .gready(ready_grom),
+	      .mo(a[14]), .d(q8), .q(d8_grom), .gready(ready_grom),
 	      .grom_set(a[10:13]), .debug_grom_addr(debug_grom_addr));
 				      
 endmodule // mainboard
