@@ -25,6 +25,7 @@ module tms9900_cpu(input reset,
 		   input [0:3]	     ic,
 		   input	     hold,
 		   output reg	     holda,
+		   input	     load,
 
 		   output [0:15]     debug_pc,
 		   output [0:15]     debug_st,
@@ -363,14 +364,23 @@ module tms9900_cpu(input reset,
 		pc <= d;
 
 	     S_IFETCH_NOIRQ: begin
-		addr <= pc;
-		pc <= pc + 16'd2;
-		memen <= 1'b1;
-		iaq <= 1'b1;
-		state <= S_LOAD_IR;
+		if (load) begin
+		   state <= S_INTREQ_1;
+		   addr <= 16'hfffc;
+		end else begin
+		   addr <= pc;
+		   pc <= pc + 16'd2;
+		   memen <= 1'b1;
+		   iaq <= 1'b1;
+		   state <= S_LOAD_IR;
+		end
 	     end
 	     S_IFETCH: begin
-		if (intreq && ic <= st[12:15]) begin
+		if (load) begin
+		   state <= S_INTREQ_1;
+		   addr <= 16'hfffc;
+		   idling <= 1'b0;
+		end else if (intreq && ic <= st[12:15]) begin
 		   state <= S_INTREQ_1;
 		   addr <= { 10'h000, ic, 2'b00 };
 		   idling <= 1'b0;
