@@ -13,7 +13,22 @@ module groms(input            clk,      // Enabled cycles should give
    reg [0:2]  grom_id;
    reg [0:12] addr;
    reg	      addr_write;
-   reg [0:7]  grom_byte;
+   reg [0:7]  grom_byte0;
+   reg [0:7]  grom_byte1;
+   reg [0:7]  grom_byte2;
+   reg [0:7]  grom_byte3;
+   reg [0:7]  grom_byte4;
+   reg [0:7]  grom_byte5;
+   reg [0:7]  grom_byte6;
+   reg [0:7]  grom_byte7;
+   reg	      grom_valid0;
+   reg	      grom_valid1;
+   reg	      grom_valid2;
+   reg	      grom_valid3;
+   reg	      grom_valid4;
+   reg	      grom_valid5;
+   reg	      grom_valid6;
+   reg	      grom_valid7;
 
    assign gready = 1'b1;
    assign debug_grom_addr = { grom_id, addr };
@@ -39,7 +54,18 @@ module groms(input            clk,      // Enabled cycles should give
  
    initial begin
       addr_write <= 1'b0;
-      grom_byte <= 8'h00;
+      grom_byte4 <= 8'hff;
+      grom_byte5 <= 8'hff;
+      grom_byte6 <= 8'hff;
+      grom_byte7 <= 8'hff;
+      grom_valid0 <= 1'b0;
+      grom_valid1 <= 1'b0;
+      grom_valid2 <= 1'b0;
+      grom_valid3 <= 1'b0;
+      grom_valid4 <= 1'b0;
+      grom_valid5 <= 1'b0;
+      grom_valid6 <= 1'b0;
+      grom_valid7 <= 1'b0;
       $readmemh("994a_grom0.hex", grom0);
       $readmemh("994a_grom1.hex", grom1);
       $readmemh("994a_grom2.hex", grom2);
@@ -55,20 +81,52 @@ module groms(input            clk,      // Enabled cycles should give
 
    always @(posedge clk) begin
 
-      if (do_prefetch)
-	case (prefetch_grom_id)
-	  3'b000: grom_byte <= grom0[prefetch_addr];
-	  3'b001: grom_byte <= grom1[prefetch_addr];
-	  3'b010: grom_byte <= grom2[prefetch_addr];
-	  3'b011: grom_byte <= grom3[prefetch_addr];
+      if (do_prefetch) begin
+	 grom_valid0 <= 1'b0;
+	 grom_valid1 <= 1'b0;
+	 grom_valid2 <= 1'b0;
+	 grom_valid3 <= 1'b0;
+	 grom_valid4 <= 1'b0;
+	 grom_valid5 <= 1'b0;
+	 grom_valid6 <= 1'b0;
+	 grom_valid7 <= 1'b0;
+	 case (prefetch_grom_id)
+	   3'b000: begin
+	      grom_byte0 <= grom0[prefetch_addr];
+	      grom_valid0 <= 1'b1;
+	   end
+	   3'b001: begin
+	      grom_byte1 <= grom1[prefetch_addr];
+	      grom_valid1 <= 1'b1;
+	   end
+	   3'b010: begin
+	      grom_byte2 <= grom2[prefetch_addr];
+	      grom_valid2 <= 1'b1;
+	   end
+	   3'b011: begin
+	      grom_byte3 <= grom3[prefetch_addr];
+	      grom_valid3 <= 1'b1;
+	   end
 /*
-	  3'b100: grom_byte <= grom4[prefetch_addr];
-	  3'b101: grom_byte <= grom5[prefetch_addr];
-	  3'b110: grom_byte <= grom6[prefetch_addr];
-	  3'b111: grom_byte <= grom7[prefetch_addr];
+	   3'b100: begin
+	      grom_byte4 <= grom4[prefetch_addr];
+	      grom_valid4 <= 1'b1;
+	   end
+	   3'b101: begin
+	      grom_byte5 <= grom5[prefetch_addr];
+	      grom_valid5 <= 1'b1;
+	   end
+	   3'b110: begin
+	      grom_byte6 <= grom6[prefetch_addr];
+	      grom_valid6 <= 1'b1;
+	   end
+	   3'b111: begin
+	      grom_byte7 <= grom7[prefetch_addr];
+	      grom_valid7 <= 1'b1;
+	   end
 */
- 	  default: grom_byte <= 8'h00;
-	endcase // case (prefetch_grom_id)
+	 endcase // case (prefetch_grom_id)
+      end
 
       if (gs && m) begin
 	 // read data / addr
@@ -77,7 +135,14 @@ module groms(input            clk,      // Enabled cycles should give
 	    q <= { grom_id, addr[0:4] };
 	    { grom_id, addr[0:4] } <= addr[5:12];
 	 end else begin
-	    q <= grom_byte;
+	    q <= (grom_valid0 ? grom_byte0 : 8'hff) &
+		 (grom_valid1 ? grom_byte1 : 8'hff) &
+		 (grom_valid2 ? grom_byte2 : 8'hff) &
+		 (grom_valid3 ? grom_byte3 : 8'hff) &
+		 (grom_valid4 ? grom_byte4 : 8'hff) &
+		 (grom_valid5 ? grom_byte5 : 8'hff) &
+		 (grom_valid6 ? grom_byte6 : 8'hff) &
+		 (grom_valid7 ? grom_byte7 : 8'hff);
 	    addr <= addr + 13'h1;
 	 end
       end // if (gs && m)
