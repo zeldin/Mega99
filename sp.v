@@ -44,17 +44,22 @@ module sp(input         clk,
    reg [0:1]   db_subaddr;
    reg [0:31]  db_shiftreg;
 
-   reg [0:31]  boot_rom[0:2047];
-   reg [0:31]  boot_rom_data;
+   reg [0:7]   boot_mem0[0:2047];
+   reg [0:7]   boot_mem1[0:2047];
+   reg [0:7]   boot_mem2[0:2047];
+   reg [0:7]   boot_mem3[0:2047];
+   reg [0:31]  boot_mem_data;
+   reg	       boot_mem_i_access;
+   reg	       boot_mem_d_access;
 
    assign or1k_irq = 32'd0;
 
    assign or1k_i_err = 1'b0;
-   assign or1k_i_dati = boot_rom_data;
+   assign or1k_i_dati = boot_mem_data;
    assign or1k_i_rty = 1'b0;
    
    assign or1k_d_err = 1'b0;
-   assign or1k_d_dati = db_shiftreg;
+   assign or1k_d_dati = (or1k_d_adr[0] ? db_shiftreg : boot_mem_data);
    assign or1k_d_rty = 1'b0;
 
    assign wb_adr_o = { or1k_d_adr[8:29], db_subaddr };
@@ -64,21 +69,52 @@ module sp(input         clk,
    assign wb_we_o  = or1k_d_we;
    assign wb_sel_o = or1k_d_sel[db_subaddr];
    assign wb_stb_o = or1k_d_stb && !or1k_d_ack;
-   assign wb_cyc_o = or1k_d_cyc;
+   assign wb_cyc_o = or1k_d_cyc && (or1k_d_adr[0:7] == 8'h80);
 
-   initial $readmemh("or1k_boot_code.hex", boot_rom);
+   assign boot_mem_i_access = (!reset && !or1k_i_ack &&
+			       or1k_i_cyc && or1k_i_stb && !or1k_i_we &&
+			       or1k_i_adr[0:1] == 2'b00);
+   assign boot_mem_d_access = (!reset && !or1k_d_ack &&
+			       or1k_d_cyc && or1k_d_stb && !or1k_d_we &&
+			       or1k_d_adr[0:1] == 2'b00);
+
+   initial $readmemh("or1k_boot_code0.hex", boot_mem0);
+   initial $readmemh("or1k_boot_code1.hex", boot_mem1);
+   initial $readmemh("or1k_boot_code2.hex", boot_mem2);
+   initial $readmemh("or1k_boot_code3.hex", boot_mem3);
 
    always @(posedge clk) begin
+      if (boot_mem_i_access || boot_mem_d_access)
+	boot_mem_data <= {
+          boot_mem0[boot_mem_i_access ? or1k_i_adr[19:29] : or1k_d_adr[19:29]],
+          boot_mem1[boot_mem_i_access ? or1k_i_adr[19:29] : or1k_d_adr[19:29]],
+          boot_mem2[boot_mem_i_access ? or1k_i_adr[19:29] : or1k_d_adr[19:29]],
+          boot_mem3[boot_mem_i_access ? or1k_i_adr[19:29] : or1k_d_adr[19:29]]
+	};
+
       if (reset || or1k_i_ack)
 	or1k_i_ack <= 1'b0;
-      else if (or1k_i_cyc && or1k_i_stb) begin
-	 boot_rom_data <= boot_rom[or1k_i_adr[19:29]];
-	 or1k_i_ack <= 1'b1;
-      end
+      else if (or1k_i_cyc && or1k_i_stb)
+	or1k_i_ack <= 1'b1;
 
       if (reset || or1k_d_ack) begin
 	 or1k_d_ack <= 1'b0;
 	 db_subaddr <= 2'b00;
+      end else if (or1k_d_adr[0:1] == 2'b00) begin
+	 if (or1k_d_cyc && or1k_d_stb &&
+	     (or1k_d_we || !boot_mem_i_access)) begin
+	    if (or1k_d_we) begin
+	       if (or1k_d_sel[0])
+		 boot_mem0[or1k_d_adr[19:29]] <= or1k_d_dato[0:7];
+	       if (or1k_d_sel[1])
+		 boot_mem1[or1k_d_adr[19:29]] <= or1k_d_dato[8:15];
+	       if (or1k_d_sel[2])
+		 boot_mem2[or1k_d_adr[19:29]] <= or1k_d_dato[16:23];
+	       if (or1k_d_sel[3])
+		 boot_mem3[or1k_d_adr[19:29]] <= or1k_d_dato[24:31];
+	    end
+	    or1k_d_ack <= 1'b1;
+	 end
       end else if (wb_ack_i) begin
 	 db_shiftreg <= { db_shiftreg[8:31], wb_dat_i };
 	 if (db_subaddr == 2'b11)
