@@ -13,13 +13,6 @@ module sp(input         clk,
 	  output [0:31]	tp_pc,
 	  output [0:31]	tp_insn);
 
-   assign wb_adr_o = 24'h000000; // fixme
-   assign wb_dat_o = 8'h00;      // fixme
-   assign wb_we_o  = 1'b0;       // fixme
-   assign wb_sel_o = 1'b0;       // fixme
-   assign wb_stb_o = 1'b0;       // fixme
-   assign wb_cyc_o = 1'b0;       // fixme
-
    wire [0:31] or1k_i_adr;
    wire	       or1k_i_stb;
    wire	       or1k_i_cyc;
@@ -42,37 +35,57 @@ module sp(input         clk,
    wire [0:1]  or1k_d_bte;
    wire [0:31] or1k_d_dato;
    wire	       or1k_d_err;
-   wire	       or1k_d_ack;
+   reg	       or1k_d_ack;
    wire [0:31] or1k_d_dati;
    wire	       or1k_d_rty;
 
    wire [0:31] or1k_irq;
 
+   reg [0:1]   db_subaddr;
+   reg [0:31]  db_shiftreg;
+
    reg [0:31]  boot_rom[0:2047];
    reg [0:31]  boot_rom_data;
+
+   assign or1k_irq = 32'd0;
 
    assign or1k_i_err = 1'b0;
    assign or1k_i_dati = boot_rom_data;
    assign or1k_i_rty = 1'b0;
    
    assign or1k_d_err = 1'b0;
-   assign or1k_d_ack = 1'b0; // fixme
-   assign or1k_d_dati = 32'd0; // fixme
+   assign or1k_d_dati = db_shiftreg;
    assign or1k_d_rty = 1'b0;
 
-   assign or1k_irq = 32'd0;
+   assign wb_adr_o = { or1k_d_adr[8:29], db_subaddr };
+   assign wb_dat_o = ( db_subaddr[0] ?
+	       ( db_subaddr[1] ? or1k_d_dato[24:31] : or1k_d_dato[16:23] ) :
+	       ( db_subaddr[1] ? or1k_d_dato[8:15] : or1k_d_dato[0:7] ) );
+   assign wb_we_o  = or1k_d_we;
+   assign wb_sel_o = or1k_d_sel[db_subaddr];
+   assign wb_stb_o = or1k_d_stb && !or1k_d_ack;
+   assign wb_cyc_o = or1k_d_cyc;
 
    initial $readmemh("or1k_boot_code.hex", boot_rom);
 
    always @(posedge clk) begin
-      if (or1k_i_ack)
+      if (reset || or1k_i_ack)
 	or1k_i_ack <= 1'b0;
       else if (or1k_i_cyc && or1k_i_stb) begin
 	 boot_rom_data <= boot_rom[or1k_i_adr[19:29]];
 	 or1k_i_ack <= 1'b1;
       end
-   end
 
+      if (reset || or1k_d_ack) begin
+	 or1k_d_ack <= 1'b0;
+	 db_subaddr <= 2'b00;
+      end else if (wb_ack_i) begin
+	 db_shiftreg <= { db_shiftreg[8:31], wb_dat_i };
+	 if (db_subaddr == 2'b11)
+	   or1k_d_ack <= 1'b1;
+	 db_subaddr <= db_subaddr + 2'd1;
+      end
+   end
 
    mor1kx #(.OPTION_OPERAND_WIDTH(32), .BUS_IF_TYPE("WISHBONE32"),
 	    .FEATURE_TRACEPORT_EXEC("ENABLED"))
