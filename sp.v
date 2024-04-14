@@ -141,7 +141,7 @@ module sp(input         clk,
 	 .dwbm_err_i(or1k_d_err), .dwbm_ack_i(or1k_d_ack),
 	 .dwbm_dat_i(or1k_d_dati), .dwbm_rty_i(or1k_d_rty),
 
-	 .irq_i(irq_i),
+	 .irq_i(or1k_irq),
 
 	 .du_addr_i(16'h0000), .du_stb_i(1'b0), .du_dat_i(32'h00000000),
 	 .du_we_i(1'b0), .du_dat_o(), .du_ack_o(),
