@@ -29,7 +29,7 @@ module sp(input         clk,
    wire [0:1]  or1k_i_bte;
    wire [0:31] or1k_i_dato;
    wire	       or1k_i_err;
-   wire	       or1k_i_ack;
+   reg	       or1k_i_ack;
    wire [0:31] or1k_i_dati;
    wire	       or1k_i_rty;
 
@@ -48,9 +48,11 @@ module sp(input         clk,
 
    wire [0:31] or1k_irq;
 
+   reg [0:31]  boot_rom[0:2047];
+   reg [0:31]  boot_rom_data;
+
    assign or1k_i_err = 1'b0;
-   assign or1k_i_ack = 1'b0; // fixme
-   assign or1k_i_dati = 32'd0; // fixme
+   assign or1k_i_dati = boot_rom_data;
    assign or1k_i_rty = 1'b0;
    
    assign or1k_d_err = 1'b0;
@@ -59,6 +61,18 @@ module sp(input         clk,
    assign or1k_d_rty = 1'b0;
 
    assign or1k_irq = 32'd0;
+
+   initial $readmemh("or1k_boot_code.hex", boot_rom);
+
+   always @(posedge clk) begin
+      if (or1k_i_ack)
+	or1k_i_ack <= 1'b0;
+      else if (or1k_i_cyc && or1k_i_stb) begin
+	 boot_rom_data <= boot_rom[or1k_i_adr[19:29]];
+	 or1k_i_ack <= 1'b1;
+      end
+   end
+
 
    mor1kx #(.OPTION_OPERAND_WIDTH(32), .BUS_IF_TYPE("WISHBONE32"),
 	    .FEATURE_TRACEPORT_EXEC("ENABLED"))
