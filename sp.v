@@ -115,7 +115,7 @@ module sp(input         clk,
 	    end
 	    or1k_d_ack <= 1'b1;
 	 end
-      end else if (wb_ack_i) begin
+      end else if (or1k_d_cyc && or1k_d_stb && wb_ack_i) begin
 	 db_shiftreg <= { db_shiftreg[8:31], wb_dat_i };
 	 if (db_subaddr == 2'b11)
 	   or1k_d_ack <= 1'b1;
