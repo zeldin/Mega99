@@ -33,7 +33,7 @@ module spmmio_sdcard(input             clk,
 	4'h0: begin
 	   q[28] <= inserted;
 	   q[29] <= removed;
-	   q[30] <= cd_sync2 & wp_sync;
+	   q[30] <= wp_sync;
 	   q[31] <= cd_sync2;
 	end
       endcase // case (adr)
