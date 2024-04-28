@@ -9,7 +9,7 @@ void main()
   timer_init();
   display_init();
 
-  printstrn(SCREENPOS(0, 0), "Good morning world!", 19);
+  display_printf("Good %s world!\n\n", "morning");
 
   uint32_t last_timer = timer_read();
   uint32_t count = 0;
@@ -18,9 +18,9 @@ void main()
     if ((timer-last_timer) >= S_TO_TICKS(1u)) {
       count++;
       last_timer += S_TO_TICKS(1u);
+      display_printf("%x\n", count);
+      REGS_MISC.leds = (count & 1u) | 2u;
     }
-    printhex(SCREENPOS(2, 0), count);
-    REGS_MISC.leds = (count & 1u) | 2u;
   }
 
 }

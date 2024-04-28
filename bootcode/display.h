@@ -1,8 +1,12 @@
 #include <stdint.h>
 #include <stddef.h>
+#include <stdarg.h>
 
 extern void display_init(void);
-extern void printstrn(uint32_t offs, const char *s, size_t n);
-extern void printhex(uint32_t offs, uint32_t v);
-
-#define SCREENPOS(y, x) (((y) << 5) | (x))
+extern void display_putc(char c);
+extern void display_puts(const char *str);
+extern void display_puthex(uint32_t v);
+extern void display_vprintf(const char *fmt, va_list va)
+  __attribute__ ((__format__ (__printf__, 1, 0)));
+extern void display_printf(const char *fmt, ...)
+  __attribute__ ((__format__ (__printf__, 1, 2)));
