@@ -2,6 +2,7 @@
 
 #include "timer.h"
 #include "display.h"
+#include "regs.h"
 
 void main()
 {
@@ -19,6 +20,7 @@ void main()
       last_timer += S_TO_TICKS(1u);
     }
     printhex(SCREENPOS(2, 0), count);
+    REGS_MISC.leds = (count & 1u) | 2u;
   }
 
 }
