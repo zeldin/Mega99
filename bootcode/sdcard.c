@@ -69,22 +69,27 @@ static uint8_t sdcard_getresponse(void)
   return REGS_SDCARD.cmd;
 }
 
-static uint8_t sdcard_docmd_nodeselect(uint8_t cmd, uint32_t param, uint8_t crc)
+static uint8_t sdcard_docmd_nodeselect(uint8_t cmd, uint32_t param)
 {
   sdcard_sendbyte(cmd);
   sdcard_sendbyte(param >> 24);
   sdcard_sendbyte(param >> 16);
   sdcard_sendbyte(param >> 8);
   sdcard_sendbyte(param);
-  sdcard_sendbyte(crc);
+  sdcard_sendbyte(REGS_SDCARD.cmd >> 24);
   return sdcard_getresponse();
 }
 
-static uint8_t sdcard_docmd(uint8_t cmd, uint32_t param, uint8_t crc)
+static uint8_t sdcard_docmd(uint8_t cmd, uint32_t param)
 {
-  uint8_t r = sdcard_docmd_nodeselect(cmd, param, crc);
+  uint8_t r = sdcard_docmd_nodeselect(cmd, param);
   sdcard_deselect();
   return r;
+}
+
+static uint8_t sdcard_docmd_noparam(uint8_t cmd)
+{
+  return sdcard_docmd(cmd, 0u);
 }
 
 static uint32_t sdcard_getr7(void)
@@ -103,11 +108,11 @@ void sdcard_activate()
   display_printf("Activating card\n");
   REGS_SDCARD.ctrl = SPI_SPEED(400000) << 8u;
   sdcard_deselect();
-  uint8_t r1 = sdcard_docmd(0x40, 0, 0x95);
+  uint8_t r1 = sdcard_docmd_noparam(0x40);
   display_printf("CMD0, R1 = %x\n", r1);
   if (r1 != 0x01)
     return;
-  r1 = sdcard_docmd_nodeselect(0x48, 0x1aa, 0x87);
+  r1 = sdcard_docmd_nodeselect(0x48, 0x1aa);
   uint32_t r7 = sdcard_getr7();
   display_printf("CMD8, R7 = %x %x\n", r1, r7);
 }

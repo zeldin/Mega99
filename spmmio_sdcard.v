@@ -15,6 +15,7 @@ module spmmio_sdcard(input             clk,
 		     input	       sdcard_miso,
 		     output	       sdcard_mosi);
 
+   wire crc7_x;
 
    reg cd_sync0;
    reg cd_sync1;
@@ -30,9 +31,11 @@ module spmmio_sdcard(input             clk,
    reg [0:2] bitcnt;
    reg [0:7] cyclecnt;
    reg [0:7] divider;
+   reg [0:6] crc7;
    
    assign sdcard_mosi = sr_out[0];
-   
+   assign crc7_x = crc7[0] ^ sdcard_mosi;
+
    always @(*) begin
       q <= 32'h00000000;
       case (adr)
@@ -44,6 +47,7 @@ module spmmio_sdcard(input             clk,
 	   q[31] <= cd_sync2;
 	end
 	4'h1: begin
+	   q[0:7] <= { crc7, 1'b1 };
 	   q[19] <= sdcard_cs;
 	   q[22] <= wait_r;
 	   q[23] <= busy;
@@ -71,6 +75,7 @@ module spmmio_sdcard(input             clk,
 	 bitcnt <= 3'd0;
 	 cyclecnt <= 8'h00;
 	 divider <= 8'hff;
+	 crc7 <= 7'd0;
       end else begin
 	 if (cd_sync1 && !cd_sync2)
 	   inserted <= 1'b1;
@@ -81,6 +86,8 @@ module spmmio_sdcard(input             clk,
 	    if (cyclecnt == divider) begin
 	       cyclecnt <= 8'h00;
 	       if (sdcard_sck) begin
+		  crc7 <= { crc7[1:6], 1'b0 } ^
+			  { 3'b000, crc7_x, 2'b00, crc7_x };
 		  sr_in <= { sr_in[1:7], miso_sync };
 		  sr_out <= { sr_out[1:7], 1'b0 };
 		  if (bitcnt == 3'd7)
@@ -100,6 +107,8 @@ module spmmio_sdcard(input             clk,
 	   case (adr)
 	     4'h0: divider <= d[16:23];
 	     4'h1: begin
+		if (!sdcard_cs)
+		  crc7 <= 7'd0;
 		sdcard_cs <= d[19];
 		wait_r <= d[22];
 		busy <= d[23];
