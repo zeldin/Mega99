@@ -14,7 +14,14 @@ module sp(input         clk,
 	  output [0:31]	tp_insn,
 
 	  output	led_green,
-	  output	led_red);
+	  output	led_red,
+
+	  output	sdcard_cs,
+	  input		sdcard_cd,
+	  input		sdcard_wp,
+	  output	sdcard_sck,
+	  input		sdcard_miso,
+	  output	sdcard_mosi);
 
    wire [0:31] or1k_i_adr;
    wire	       or1k_i_stb;
@@ -148,6 +155,9 @@ module sp(input         clk,
 		 .cyc_i(or1k_d_cyc), .sel_i(or1k_d_sel),
 		 .we_i(or1k_d_we), .dat_i(or1k_d_dato),
 		 .ack_o(mmio_ack), .dat_o(mmio_data),
-		 .led_red(led_red), .led_green(led_green));
+		 .led_red(led_red), .led_green(led_green),
+		 .sdcard_cs(sdcard_cs), .sdcard_cd(sdcard_cd),
+		 .sdcard_wp(sdcard_wp),.sdcard_sck(sdcard_sck),
+		 .sdcard_miso(sdcard_miso), .sdcard_mosi(sdcard_mosi));
 
 endmodule // sp

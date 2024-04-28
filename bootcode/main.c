@@ -9,17 +9,16 @@ void main()
   timer_init();
   display_init();
 
+  REGS_MISC.leds = 1u;
+
   display_printf("Good %s world!\n\n", "morning");
 
-  uint32_t last_timer = timer_read();
-  uint32_t count = 0;
+  uint32_t last_sdctrl = ~0;
   for (;;) {
-    uint32_t timer = timer_read();
-    if ((timer-last_timer) >= S_TO_TICKS(1u)) {
-      count++;
-      last_timer += S_TO_TICKS(1u);
-      display_printf("%x\n", count);
-      REGS_MISC.leds = (count & 1u) | 2u;
+    uint32_t sdctrl = REGS_SDCARD.ctrl;
+    if (sdctrl != last_sdctrl) {
+      last_sdctrl = sdctrl;
+      display_printf("%x\n", sdctrl);
     }
   }
 
