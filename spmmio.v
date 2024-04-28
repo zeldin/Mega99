@@ -44,13 +44,13 @@ module spmmio(input             clk,
    end
 
    spmmio_misc misc(.clk(clk), .reset(reset),
-		    .adr(adr_i[20:23]), .cs(cyc_i && stb_misc),
+		    .adr(adr_i[18:21]), .cs(cyc_i && stb_misc),
 		    .sel(sel_i), .we(we_i), .d(dat_i), .q(dat_misc),
 
 		    .led_red(led_red), .led_green(led_green));
 
    spmmio_sdcard sdcard(.clk(clk), .reset(reset),
-			.adr(adr_i[20:23]), .cs(cyc_i && stb_sdcard),
+			.adr(adr_i[18:21]), .cs(cyc_i && stb_sdcard),
 			.sel(sel_i), .we(we_i), .d(dat_i), .q(dat_sdcard),
 
 			.sdcard_cs(sdcard_cs), .sdcard_cd(sdcard_cd),
