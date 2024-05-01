@@ -20,7 +20,7 @@ void main()
       last_sdstatus = sdstatus;
       display_printf("%x\n", sdstatus);
       if ((sdstatus & 5u) == 5u)
-	sdcard_activate();
+	display_printf("Activate => %x\n", sdcard_activate());
     }
   }
 
