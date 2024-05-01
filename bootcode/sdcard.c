@@ -14,8 +14,8 @@
 #define TIMEOUT_ACTIVE   MS_TO_TICKS(500)
 #define TIMEOUT_READBLK  MS_TO_TICKS(125)
 
-// #define DEBUG_PRINT(...) do { } while(0)
-#define DEBUG_PRINT(...) do { display_printf(__VA_ARGS__); } while(0)
+#define DEBUG_PRINT(...) do { } while(0)
+// #define DEBUG_PRINT(...) do { display_printf(__VA_ARGS__); } while(0)
 
 
 uint32_t sdcard_status(void)

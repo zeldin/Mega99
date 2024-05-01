@@ -3,6 +3,7 @@
 #include "display.h"
 #include "sdcard.h"
 #include "regs.h"
+#include "fatfs.h"
 
 void main()
 {
@@ -22,14 +23,9 @@ void main()
       if ((sdstatus & 5u) == 5u) {
 	sdcard_type_t card_type = sdcard_activate();
 	display_printf("Activate => %x\n", (uint32_t)card_type);
-	if (card_type == SDCARD_SDHC) {
-	  uint8_t buf[512];
-	  if (sdcard_read_block(8192u, buf)) {
-	    unsigned i;
-	    for (i=0; i<512; i++)
-	      display_putc(buf[i] < ' '? '_' : buf[i]);
-	  } else
-	    display_printf("Failed to read block\n");
+	if (card_type > SDCARD_INVALID) {
+	  fatfs_filehandle_t fh;
+	  display_printf("fatfs_open => %x\n", fatfs_open("TESTFILE.TXT", &fh));
 	}
       }
     }
