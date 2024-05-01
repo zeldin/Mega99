@@ -5,8 +5,10 @@ struct mmio_regs_misc {
 #define REGS_MISC (*(volatile struct mmio_regs_misc *)(void *)0xff000000)
 
 struct mmio_regs_sdcard {
-  uint32_t ctrl;
-  uint32_t cmd;
+  uint16_t ctrl;
+  uint16_t cmd;
+  uint8_t crc7;
+  uint8_t pad;
   uint16_t crc16;
 };
 

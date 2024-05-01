@@ -67,9 +67,14 @@ static uint8_t sdcard_sendbyte(uint8_t byte)
   return REGS_SDCARD.cmd;
 }
 
+static uint8_t sdcard_recvbyte(void)
+{
+  return sdcard_sendbyte(0xff);
+}
+
 static uint8_t sdcard_getresponse(void)
 {
-  REGS_SDCARD.cmd = 0x1300u;
+  REGS_SDCARD.cmd = 0x13ffu;
   uint32_t time0 = timer_read();
   while ((REGS_SDCARD.cmd & 0x100u))
     if ((timer_read() - time0) > TIMEOUT_RESPONSE) {
@@ -86,7 +91,7 @@ static uint8_t sdcard_docmd_nodeselect(uint8_t cmd, uint32_t param)
   sdcard_sendbyte(param >> 16);
   sdcard_sendbyte(param >> 8);
   sdcard_sendbyte(param);
-  sdcard_sendbyte(*(const uint8_t *)&REGS_SDCARD.cmd); // CRC7
+  sdcard_sendbyte(REGS_SDCARD.crc7);
   return sdcard_getresponse();
 }
 
@@ -104,10 +109,10 @@ static uint8_t sdcard_docmd_noparam(uint8_t cmd)
 
 static uint32_t sdcard_getextresponse(void)
 {
-  uint32_t r = sdcard_sendbyte(0);
-  r <<= 8; r |= sdcard_sendbyte(0);
-  r <<= 8; r |= sdcard_sendbyte(0);
-  r <<= 8; r |= sdcard_sendbyte(0);
+  uint32_t r = sdcard_recvbyte();
+  r <<= 8; r |= sdcard_recvbyte();
+  r <<= 8; r |= sdcard_recvbyte();
+  r <<= 8; r |= sdcard_recvbyte();
   sdcard_deselect();
   return r;
 }
@@ -182,17 +187,17 @@ bool sdcard_read_block(uint32_t blkid, uint8_t *ptr)
     uint32_t time0 = timer_read();
     uint8_t byt;
     do
-      byt = sdcard_sendbyte(0xff);
+      byt = sdcard_recvbyte();
     while(byt == 0xff && (REGS_SDCARD.ctrl & 1) &&
 	  (timer_read() - time0) < TIMEOUT_READBLK);
     if (byt == 0xfe) {
       REGS_SDCARD.crc16 = 0;
       unsigned i;
       for (i=0; i<512; i++)
-	ptr[i] = sdcard_sendbyte(0xff);
+	ptr[i] = sdcard_recvbyte();
       uint16_t crc16_calc = REGS_SDCARD.crc16;
-      uint16_t crc16_recv = sdcard_sendbyte(0xff);
-      crc16_recv <<= 8; crc16_recv |= sdcard_sendbyte(0xff);
+      uint16_t crc16_recv = sdcard_recvbyte();
+      crc16_recv <<= 8; crc16_recv |= sdcard_recvbyte();
       if (crc16_recv == crc16_calc)
 	result = true;
       DEBUG_PRINT("CRC16 = %x %x\n", crc16_recv, crc16_calc);
