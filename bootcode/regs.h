@@ -1,5 +1,3 @@
-#include <stdint.h>
-
 struct mmio_regs_misc {
   uint32_t leds;
 };

@@ -1,7 +1,4 @@
-#include <stdint.h>
-#include <stddef.h>
-#include <stdarg.h>
-
+#include "global.h"
 #include "display.h"
 
 #define VDPRAM ((uint8_t *)(void *)0x80000000)

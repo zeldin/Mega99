@@ -1,5 +1,4 @@
-#include <stdint.h>
-
+#include "global.h"
 #include "timer.h"
 #include "regs.h"
 #include "sdcard.h"

@@ -1,5 +1,3 @@
-#include <stdint.h>
-
 #ifdef __or1k__
 
 #include "or1k_spr.h"

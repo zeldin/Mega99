@@ -1,7 +1,3 @@
-#include <stdint.h>
-#include <stddef.h>
-#include <stdarg.h>
-
 extern void display_init(void);
 extern void display_putc(char c);
 extern void display_puts(const char *str);
