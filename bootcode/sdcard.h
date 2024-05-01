@@ -8,3 +8,4 @@ typedef enum {
 
 extern uint32_t sdcard_status(void);
 extern sdcard_type_t sdcard_activate(void);
+extern bool sdcard_read_block(uint32_t blkid, uint8_t *ptr);

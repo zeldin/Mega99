@@ -19,8 +19,19 @@ void main()
     if ((sdstatus & 4u) || sdstatus != last_sdstatus) {
       last_sdstatus = sdstatus;
       display_printf("%x\n", sdstatus);
-      if ((sdstatus & 5u) == 5u)
-	display_printf("Activate => %x\n", sdcard_activate());
+      if ((sdstatus & 5u) == 5u) {
+	sdcard_type_t card_type = sdcard_activate();
+	display_printf("Activate => %x\n", (uint32_t)card_type);
+	if (card_type == SDCARD_SDHC) {
+	  uint8_t buf[512];
+	  if (sdcard_read_block(8192u, buf)) {
+	    unsigned i;
+	    for (i=0; i<512; i++)
+	      display_putc(buf[i] < ' '? '_' : buf[i]);
+	  } else
+	    display_printf("Failed to read block\n");
+	}
+      }
     }
   }
 

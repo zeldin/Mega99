@@ -12,6 +12,7 @@
 #define TIMEOUT_RESPONSE MS_TO_TICKS(20)
 #define TIMEOUT_IDLE     MS_TO_TICKS(500)
 #define TIMEOUT_ACTIVE   MS_TO_TICKS(500)
+#define TIMEOUT_READBLK  MS_TO_TICKS(125)
 
 // #define DEBUG_PRINT(...) do { } while(0)
 #define DEBUG_PRINT(...) do { display_printf(__VA_ARGS__); } while(0)
@@ -85,7 +86,7 @@ static uint8_t sdcard_docmd_nodeselect(uint8_t cmd, uint32_t param)
   sdcard_sendbyte(param >> 16);
   sdcard_sendbyte(param >> 8);
   sdcard_sendbyte(param);
-  sdcard_sendbyte(REGS_SDCARD.cmd >> 24);
+  sdcard_sendbyte(*(const uint8_t *)&REGS_SDCARD.cmd); // CRC7
   return sdcard_getresponse();
 }
 
@@ -169,4 +170,36 @@ sdcard_type_t sdcard_activate()
   }
   REGS_SDCARD.ctrl = SPI_SPEED(16000000u) << 8u;
   return card_type;
+}
+
+bool sdcard_read_block(uint32_t blkid, uint8_t *ptr)
+{
+  bool result = false;
+  DEBUG_PRINT("Read block %x\n", blkid);
+  uint8_t r1 = sdcard_docmd_nodeselect(17, blkid);
+  DEBUG_PRINT("CMD17, R1 = %x\n", r1);
+  if (r1 == 0) {
+    uint32_t time0 = timer_read();
+    uint8_t byt;
+    do
+      byt = sdcard_sendbyte(0xff);
+    while(byt == 0xff && (REGS_SDCARD.ctrl & 1) &&
+	  (timer_read() - time0) < TIMEOUT_READBLK);
+    if (byt == 0xfe) {
+      REGS_SDCARD.crc16 = 0;
+      unsigned i;
+      for (i=0; i<512; i++)
+	ptr[i] = sdcard_sendbyte(0xff);
+      uint16_t crc16_calc = REGS_SDCARD.crc16;
+      uint16_t crc16_recv = sdcard_sendbyte(0xff);
+      crc16_recv <<= 8; crc16_recv |= sdcard_sendbyte(0xff);
+      if (crc16_recv == crc16_calc)
+	result = true;
+      DEBUG_PRINT("CRC16 = %x %x\n", crc16_recv, crc16_calc);
+    } else {
+      DEBUG_PRINT("No data from card\n");
+    }
+  }
+  sdcard_deselect();
+  return result;
 }
