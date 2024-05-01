@@ -41,12 +41,13 @@ uint32_t sdcard_status(void)
 	// Debounce complete
 	break;
     }
-    ctrl |= 4u;
+    ctrl |= SDCARD_STATUS_CHANGED;
   }
-  if (!(ctrl & 1u))
+  if (!(ctrl & SDCARD_STATUS_PRESENT))
     // Mask WP if no card inserted
-    ctrl &= ~2u;
-  return ctrl & 7u;
+    ctrl &= ~SDCARD_STATUS_WRITEPROT;
+  return ctrl &
+    (SDCARD_STATUS_PRESENT | SDCARD_STATUS_WRITEPROT | SDCARD_STATUS_CHANGED);
 }
 
 static void sdcard_deselect(void)
