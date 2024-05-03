@@ -25,7 +25,18 @@ void main()
 	display_printf("Activate => %x\n", (uint32_t)card_type);
 	if (card_type > SDCARD_INVALID) {
 	  fatfs_filehandle_t fh;
-	  display_printf("fatfs_open => %x\n", fatfs_open("TESTFILE.TXT", &fh));
+	  if (fatfs_open("TESTFILE.TXT", &fh) >= 0) {
+	    char buf[32];
+	    int i, r;
+	    display_printf("---vvv---\n");
+	    while ((r = fatfs_read(&fh, buf, sizeof(buf))) > 0)
+	      for (i=0; i<r; i++)
+		display_putc(buf[i]);
+	    display_printf("---^^^---\n");
+	    if (r < 0)
+	      display_printf("Error %x\n", (uint32_t)r);
+	  } else
+	    display_printf("fatfs_open failed\n");
 	}
       }
     }

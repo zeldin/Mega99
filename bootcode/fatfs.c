@@ -115,6 +115,8 @@ static int fatfs_block_read(uint32_t blkid, uint8_t *ptr, uint32_t card_id)
 static int fatfs_cluster_block_read(uint32_t cluster, uint32_t sub,
 				    uint8_t *ptr, uint32_t card_id)
 {
+  if ((cluster & FAT_EOC))
+    return ((cluster & FAT_ERROR)? (int16_t)(cluster & 0xffffu) : -ETRUNC);
   return fatfs_block_read(fatfs_cluster_block_id(cluster, sub), ptr, card_id);
 }
 
@@ -122,6 +124,8 @@ static uint32_t fatfs_get_fat_entry(uint32_t card_id, uint32_t cluster,
 				    uint8_t *buf)
 {
   uint8_t n;
+  if ((cluster & FAT_EOC))
+    return cluster;
   if (fatfs_fat32) {
     n = cluster&0x7f;
     cluster >>= 7;
@@ -131,7 +135,7 @@ static uint32_t fatfs_get_fat_entry(uint32_t card_id, uint32_t cluster,
   }
   int r = fatfs_block_read(fatfs_fat_start + cluster, buf, card_id);
   if (r < 0)
-    return FAT_ERROR|FAT_EOC;
+    return FAT_ERROR|FAT_EOC|(uint16_t)r;
   if (fatfs_fat32) {
     cluster = fatfs_get32(buf+(4*n)) & 0x0fffffff;
     if (cluster >= 0x0ffffff8)
@@ -142,7 +146,7 @@ static uint32_t fatfs_get_fat_entry(uint32_t card_id, uint32_t cluster,
       cluster |= FAT_EOC;
   }
   if (cluster < 2)
-    cluster |= FAT_ERROR|FAT_EOC;
+    cluster |= FAT_EOC;
   return cluster;
 }
 
@@ -270,7 +274,9 @@ static int fatfs_search_rootdir(uint32_t card_id, const char *filename,
 	DEBUG_PRINT("Found at cluster %x\n", file_start_cluster);
 	fh->card_id = card_id;
 	fh->start_cluster = file_start_cluster;
+	fh->current_cluster = file_start_cluster;
 	fh->size = fatfs_get32(p+28);
+	fh->filepos = 0;
 	return 0;
       }
     }
@@ -297,4 +303,64 @@ int fatfs_open(const char *filename, fatfs_filehandle_t *fh)
   if ((r = fatfs_check_card(0, OP_INIT)) < 0)
     return r;
   return fatfs_search_rootdir(current_card_id, filename, fh);
+}
+
+int fatfs_read(fatfs_filehandle_t *fh, void *p, uint32_t bytes)
+{
+  uint8_t buf[512];
+  int r;
+  uint32_t total = 0;
+  uint32_t card_id = fh->card_id;
+  if ((r = fatfs_check_card(card_id, OP_READ)) < 0)
+    return r;
+  uint32_t pos = fh->filepos;
+  if (!bytes || pos >= fh->size)
+    return 0;
+  if (bytes > fh->size - pos)
+    bytes = fh->size - pos;
+  uint32_t cluster = fh->current_cluster;
+  uint32_t sub = (pos >> 9) & (fatfs_blocks_per_cluster-1);
+  if ((pos & 0x1ff)) {
+    uint32_t fragment = ((~pos)&0x1ff)+1;
+    r = fatfs_cluster_block_read(cluster, sub, buf, card_id);
+    if (r < 0)
+      return r;
+    else if (fragment > bytes)
+      fragment = bytes;
+    else
+      ++sub;
+    __builtin_memcpy(p, buf+(pos & 0x1ff), fragment);
+    p = ((uint8_t *)p) + fragment;
+    total = fragment;
+    bytes -= fragment;
+    pos += fragment;
+    if (sub == fatfs_blocks_per_cluster) {
+      cluster = fatfs_get_fat_entry(card_id, cluster, buf);
+      sub = 0;
+    }
+  }
+  while (bytes >= 512) {
+    r = fatfs_cluster_block_read(cluster, sub, p, card_id);
+    if (r < 0)
+      return r;
+    p = ((uint8_t *)p) + 512;
+    total += 512;
+    bytes -= 512;
+    pos += 512;
+    if (++sub == fatfs_blocks_per_cluster) {
+      cluster = fatfs_get_fat_entry(card_id, cluster, buf);
+      sub = 0;
+    }
+  }
+  if (bytes > 0) {
+    r = fatfs_cluster_block_read(cluster, sub, buf, card_id);
+    if (r < 0)
+      return r;
+    __builtin_memcpy(p, buf, bytes);
+    total += bytes;
+    pos += bytes;
+  }
+  fh->current_cluster = cluster;
+  fh->filepos = pos;
+  return total;
 }
