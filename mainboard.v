@@ -1,6 +1,10 @@
 module mainboard(input  clk,
 		 input			   ext_reset,
 		 output			   sys_reset,
+		 input                     reset_9900,
+		 input                     reset_9901,
+		 input                     reset_9918,
+		 input                     reset_9919,
 		 input			   cpu_turbo,
 		 output			   vdp_clk_en,
 		 output			   vga_clk_en,
@@ -164,7 +168,7 @@ module mainboard(input  clk,
 		    .key_state(key_state), .alpha_state(alpha_state),
 		    .joy1(5'b00000), .joy2(5'b0000));
 
-   tms9900_cpu cpu(.reset(reset), .clk(clk), .clk_en(cpu_clk_en),
+   tms9900_cpu cpu(.reset(reset|reset_9900), .clk(clk), .clk_en(cpu_clk_en),
 		   .memen_out(memen), .we(we), .iaq(iaq), .ready_in(ready),
 		   .waiting(), .a(a), .d_in(d), .q(q), .dbin(dbin),
 		   .cruin(cruin), .cruout(cruout), .cruclk_out(cruclk),
@@ -172,14 +176,14 @@ module mainboard(input  clk,
 		   .debug_pc(debug_pc), .debug_st(debug_st),
 		   .debug_wp(debug_wp), .debug_ir(debug_ir));
 
-   tms9901_psi psi(.reset(reset), .clk(clk), .clk_en(clk_3mhz_en),
+   tms9901_psi psi(.reset(reset|reset_9901), .clk(clk), .clk_en(clk_3mhz_en),
 		   .cruout(cruout), .cruin(cruin), .cruclk(cruclk),
 		   .s(a[10:14]), .ce(ramblk),
 		   .int_in(int_in), .p_in(p_in), .p_out(p_out), .p_dir(p_dir),
 		   .intreq(intreq), .ic());
 
    tms9918_wrapper
-     vdp(.reset(reset), .clk(clk), .clk_en(vdp_clk_en),
+     vdp(.reset(reset|reset_9918), .clk(clk), .clk_en(vdp_clk_en),
          .clk_en_next(vdp_clk_en_next),
 	 .sync_h(vdp_hsync), .sync_v(vdp_vsync), .cburst(vdp_cburst),
 	 .color(vdp_color), .extvideo(vdp_extvideo),
@@ -191,7 +195,7 @@ module mainboard(input  clk,
 	 .debug_vdp_addr(debug_vdp_addr));
    
    tms9919_sgc #(.audio_bits(audio_bits))
-     sgc(.reset(reset), .clk(clk), .clk_en(clk_3mhz_en),
+     sgc(.reset(reset|reset_9919), .clk(clk), .clk_en(clk_3mhz_en),
 	 .d(q[0:7]), .cs(sound_sel), .we(we), .ready(ready_sgc),
 	 .audioin((audio_gate? {audio_bits{1'b0}} : audio_in)),
          .audioout(audio_out));
