@@ -7,6 +7,9 @@
 
 void main()
 {
+  REGS_MISC.reset = 0xf;
+  REGS_MISC.reset = 0xd; // Release VDP from reset
+
   timer_init();
   display_init();
 
@@ -35,6 +38,8 @@ void main()
 	    display_printf("---^^^---\n");
 	    if (r < 0)
 	      display_printf("Error %x\n", (uint32_t)r);
+	    else
+	      REGS_MISC.reset = 0x0; // Release CPU from reset
 	  } else
 	    display_printf("fatfs_open failed\n");
 	}

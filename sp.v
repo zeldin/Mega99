@@ -15,6 +15,7 @@ module sp(input         clk,
 
 	  output	led_green,
 	  output	led_red,
+	  output [0:3]  sw_reset,
 
 	  output	sdcard_cs,
 	  input		sdcard_cd,
@@ -157,6 +158,7 @@ module sp(input         clk,
 		 .we_i(or1k_d_we), .dat_i(or1k_d_dato),
 		 .ack_o(mmio_ack), .dat_o(mmio_data),
 		 .led_red(led_red), .led_green(led_green),
+		 .sw_reset(sw_reset),
 		 .sdcard_cs(sdcard_cs), .sdcard_cd(sdcard_cd),
 		 .sdcard_wp(sdcard_wp),.sdcard_sck(sdcard_sck),
 		 .sdcard_miso(sdcard_miso), .sdcard_mosi(sdcard_mosi));

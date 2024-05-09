@@ -1,5 +1,6 @@
 struct mmio_regs_misc {
   uint32_t leds;
+  uint32_t reset;
 };
 
 #define REGS_MISC (*(volatile struct mmio_regs_misc *)(void *)0xff000000)

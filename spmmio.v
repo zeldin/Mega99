@@ -12,6 +12,7 @@ module spmmio(input             clk,
 
 	      output		led_red,
 	      output		led_green,
+	      output [0:3]	sw_reset,
 
 	      output		sdcard_cs,
 	      input		sdcard_cd,
@@ -48,7 +49,8 @@ module spmmio(input             clk,
 		    .adr(adr_i[21 -: 4]), .cs(cyc_i && stb_misc),
 		    .sel(sel_i), .we(we_i), .d(dat_i), .q(dat_misc),
 
-		    .led_red(led_red), .led_green(led_green));
+		    .led_red(led_red), .led_green(led_green),
+		    .sw_reset(sw_reset));
 
    spmmio_sdcard sdcard(.clk(clk), .reset(reset),
 			.adr(adr_i[21 -: 4]), .cs(cyc_i && stb_sdcard),
