@@ -19,6 +19,7 @@ module spmmio_misc(input             clk,
 	   q[30] <= led_red;
 	   q[31] <= led_green;
 	end
+	default: ;
       endcase // case (adr)
    end
 

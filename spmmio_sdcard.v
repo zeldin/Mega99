@@ -57,6 +57,7 @@ module spmmio_sdcard(input             clk,
 	   q[0:7] <= { crc7, 1'b1 };
 	   q[16:31] <= crc16;
 	end
+	default: ;
       endcase // case (adr)
    end
 

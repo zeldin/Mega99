@@ -1,7 +1,7 @@
 module spmmio(input             clk,
 	      input		reset,
 
-	      input [0:23]	adr_i,
+	      input [0:23]	adr_i, // 21 is last significant bit
 	      input		stb_i,
 	      input		cyc_i,
 	      input [0:3]	sel_i,
@@ -31,7 +31,7 @@ module spmmio(input             clk,
 
       stb_misc <= 1'b0;
       stb_sdcard <= 1'b0;
-      case (adr_i[0:7])
+      case (adr_i[0 +: 8])
 	8'h00: begin
 	   stb_misc <= stb_i;
 	   dat_o <= dat_misc;
@@ -40,17 +40,18 @@ module spmmio(input             clk,
 	   stb_sdcard <= stb_i;
 	   dat_o <= dat_sdcard;
 	end
-      endcase // case (adr_i[0:7])
+	default: ;
+      endcase // case (adr_i[0 +: 8])
    end
 
    spmmio_misc misc(.clk(clk), .reset(reset),
-		    .adr(adr_i[18:21]), .cs(cyc_i && stb_misc),
+		    .adr(adr_i[21 -: 4]), .cs(cyc_i && stb_misc),
 		    .sel(sel_i), .we(we_i), .d(dat_i), .q(dat_misc),
 
 		    .led_red(led_red), .led_green(led_green));
 
    spmmio_sdcard sdcard(.clk(clk), .reset(reset),
-			.adr(adr_i[18:21]), .cs(cyc_i && stb_sdcard),
+			.adr(adr_i[21 -: 4]), .cs(cyc_i && stb_sdcard),
 			.sel(sel_i), .we(we_i), .d(dat_i), .q(dat_sdcard),
 
 			.sdcard_cs(sdcard_cs), .sdcard_cd(sdcard_cd),
