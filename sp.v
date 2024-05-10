@@ -97,6 +97,7 @@ module sp(input         clk,
    end
 
    mor1kx #(.OPTION_OPERAND_WIDTH(32), .BUS_IF_TYPE("WISHBONE32"),
+	    .OPTION_RESET_PC(32'h00000000),
 	    .FEATURE_CMOV("ENABLED"), .FEATURE_EXT("ENABLED"),
 	    .FEATURE_ATOMIC("NONE"), .FEATURE_TRACEPORT_EXEC("ENABLED"))
    or1k (.clk(clk), .rst(reset),

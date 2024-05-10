@@ -4,7 +4,7 @@
 	.globl boot
 
 	
-	.org 0x100
+	.org 0
 
 boot:
 	l.xor   r0,r0,r0
