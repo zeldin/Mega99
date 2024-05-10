@@ -4,10 +4,10 @@
 
 #include "display.h"
 
-// #define DEBUG_PRINT(...) do { } while(0)
-// #define DEBUG_PUTC(c) do { } while(0)
-#define DEBUG_PRINT(...) do { display_printf(__VA_ARGS__); } while(0)
-#define DEBUG_PUTC(c) do { display_putc(c); } while(0)
+#define DEBUG_PRINT(...) do { } while(0)
+#define DEBUG_PUTC(c) do { } while(0)
+// #define DEBUG_PRINT(...) do { display_printf(__VA_ARGS__); } while(0)
+// #define DEBUG_PUTC(c) do { display_putc(c); } while(0)
 
 
 #define FAT_EOC   0x80000000
@@ -44,6 +44,30 @@ static bool fatfs_filename_compare(const char *entry, const char *fn)
     } else if (*fn++ != entry[8+i])
       return false;
   return !*fn;
+}
+
+static bool fatfs_filename_long_compare(const char *entry, const char *fn)
+{
+  unsigned i = 1;
+  while (i < 32) {
+    if (entry[i] != *fn++ || entry[i+1] != 0)
+      return false;
+    if (!entry[i])
+      return true;
+    if ((i += 2) == 0x1a)
+      i += 2;
+    else if (i == 0x0b)
+      i += 3;
+  }
+  return true;
+}
+
+static uint8_t fatfs_filename_checksum(const uint8_t *entry)
+{
+  uint8_t r = 0;
+  for (unsigned i = 0; i < 11; i++)
+    r = ((r >> 1) | (r << 7)) + *entry++;
+  return r;
 }
 
 static inline uint16_t fatfs_get16(const uint8_t *p)
@@ -238,12 +262,24 @@ static int fatfs_check_fs(uint32_t card_id)
   return -ENOFS;
 }
 
+static inline uint8_t fatfs_compute_lfn_key(const char *filename)
+{
+  unsigned n = 845;
+  if (*filename++)
+    while (*filename++)
+      if (++n == 1099)
+	break;
+  return n / 13;
+}
+
 static int fatfs_search_rootdir(uint32_t card_id, const char *filename,
 				fatfs_filehandle_t *fh)
 {
   uint32_t blk = fatfs_root_dir_start;
   uint16_t rde = fatfs_root_dir_entries;
   uint8_t entry = 0, cnr = 0;
+  uint16_t lfn_match = ~0;
+  uint8_t lfn_key = fatfs_compute_lfn_key(filename);
   uint8_t buf[512];
   const uint8_t *p;
   for (;;) {
@@ -261,13 +297,47 @@ static int fatfs_search_rootdir(uint32_t card_id, const char *filename,
     }
     if (!*p)
       break;
-    if (*p != 0xe5 && (p[11]&0x3f) != 0x0f) {
+    if ((p[11]&0x3f) == 0x0f) {
+      DEBUG_PRINT("LFN %x ", p[0] | (p[0xb] << 24) | (p[0xd] << 16));
+      unsigned i = 1;
+      while (i < 32) {
+	if (p[i+1])
+	  DEBUG_PUTC('@');
+	else
+	  DEBUG_PUTC(p[i]);
+	if ((i += 2) == 0x1a)
+	  i += 2;
+	else if (i == 0x0b)
+	  i += 3;
+      }
+      if (*p == lfn_key)
+	lfn_match = (p[0xd]<<8)|(lfn_key - 0x40);
+      else if (!*p || (*p & 0xc0) || ((p[0xd] << 8)|*p) != lfn_match)
+	lfn_match = ~0;
+      if (!(lfn_match & 0x80)) {
+	--lfn_match;
+	if (fatfs_filename_long_compare((const char *)p,
+					filename+13*(0xff&lfn_match))) {
+	  DEBUG_PRINT(" +\n");
+	} else {
+	  DEBUG_PRINT(" -\n");
+	  lfn_match = ~0;
+	}
+      } else
+	DEBUG_PRINT(" !\n");
+    } else if (*p == 0xe5)
+      lfn_match = ~0;
+    else {
       DEBUG_PRINT("Entry ");
       int i;
       for(i=0; i<11; i++)
 	DEBUG_PUTC(p[i]);
-      DEBUG_PUTC('\n');
-      if (fatfs_filename_compare((const char *)p, filename)) {
+      if (!(lfn_match & 0xff))
+	DEBUG_PRINT(" CS %x\n", fatfs_filename_checksum(p));
+      else
+	DEBUG_PUTC('\n');
+      if (fatfs_filename_compare((const char *)p, filename) ||
+	  lfn_match == (fatfs_filename_checksum(p) << 8)) {
 	uint32_t file_start_cluster = fatfs_get16(p+26);
 	if (fatfs_fat32)
 	  file_start_cluster |= fatfs_get16(p+20) << 16;
@@ -279,6 +349,7 @@ static int fatfs_search_rootdir(uint32_t card_id, const char *filename,
 	fh->filepos = 0;
 	return 0;
       }
+      lfn_match = ~0;
     }
     p += 32;
     --rde;

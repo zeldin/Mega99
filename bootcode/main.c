@@ -34,8 +34,8 @@ void main()
 
   REGS_MISC.leds = 1u;
 
-  load_rom("994A_R~1.U61", CPUROMH, 4096);
-  load_rom("994A_R~2.U61", CPUROML, 4096);
+  load_rom("994a_rom_hb.u610", CPUROMH, 4096);
+  load_rom("994a_rom_lb.u611", CPUROML, 4096);
 
   uint32_t last_sdstatus = ~0;
   for (;;) {
