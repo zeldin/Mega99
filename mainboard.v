@@ -36,13 +36,13 @@ module mainboard(input  clk,
 		 output [0:13]		   debug_vdp_addr,
 		 output [0:15]		   debug_grom_addr,
 
-		 input [0:14]		   wb_adr_i,
+		 input [0:23]		   wb_adr_i,
 		 input [0:7]		   wb_dat_i,
-		 output [0:7]		   wb_dat_o,
+		 output reg [0:7]	   wb_dat_o,
 		 input			   wb_we_i,
 		 input [0:0]		   wb_sel_i,
 		 input			   wb_stb_i,
-		 output			   wb_ack_o,
+		 output reg		   wb_ack_o,
 		 input			   wb_cyc_i);
 
    // clk rate is this number times 10.738635 MHz
@@ -109,6 +109,13 @@ module mainboard(input  clk,
    wire [0:15] p_in;
    wire [0:15] p_out;
    wire [0:15] p_dir;
+
+   wire [0:7]  wb_dat_vdp;
+   wire [0:7]  wb_dat_rom;
+   wire	       wb_ack_vdp;
+   wire	       wb_ack_rom;
+   reg	       wb_stb_vdp;
+   reg	       wb_stb_rom;
    
    assign sys_reset = reset;
    
@@ -139,6 +146,26 @@ module mainboard(input  clk,
       d_mpx_hi_valid <= dbin && !(romen | (mb & ramblk)) && !vdp_csr;
       d_mpx_lo_valid <= dbin && !(romen | (mb & ramblk));
       d8_grom_valid <= dbin && gs;
+   end
+
+   always @(*) begin
+      wb_dat_o <= 8'h00;
+      wb_ack_o <= 1'b0;
+      wb_stb_vdp <= 1'b0;
+      wb_stb_rom <= 1'b0;
+      case (wb_adr_i[0 +: 8])
+	8'h00: begin
+	   wb_stb_vdp <= wb_stb_i;
+	   wb_dat_o <= wb_dat_vdp;
+	   wb_ack_o <= wb_ack_vdp;
+	end
+	8'h01: begin
+	   wb_stb_rom <= wb_stb_i;
+	   wb_dat_o <= wb_dat_rom;
+	   wb_ack_o <= wb_ack_rom;
+	end
+	default: ;
+      endcase // case (wb_adr_i[0 +: 8])
    end
 
    clkgen #(.clk_multiplier(clk_multiplier),
@@ -189,9 +216,9 @@ module mainboard(input  clk,
 	 .color(vdp_color), .extvideo(vdp_extvideo),
 	 .cd(q[0:7]), .cq(cd_vdp), .csr(vdp_csr), .csw(vdp_csw),
          .mode(a[14]), .int_pending(vdp_irq),
-         .wb_adr_i(wb_adr_i), .wb_dat_i(wb_dat_i), .wb_dat_o(wb_dat_o),
-         .wb_we_i(wb_we_i), .wb_sel_i(wb_sel_i), .wb_stb_i(wb_stb_i),
-	 .wb_ack_o(wb_ack_o), .wb_cyc_i(wb_cyc_i),
+         .wb_adr_i(wb_adr_i[23 -: 15]), .wb_dat_i(wb_dat_i),
+	 .wb_dat_o(wb_dat_vdp), .wb_we_i(wb_we_i), .wb_sel_i(wb_sel_i),
+	 .wb_stb_i(wb_stb_vdp), .wb_ack_o(wb_ack_vdp), .wb_cyc_i(wb_cyc_i),
 	 .debug_vdp_addr(debug_vdp_addr));
    
    tms9919_sgc #(.audio_bits(audio_bits))
@@ -200,7 +227,11 @@ module mainboard(input  clk,
 	 .audioin((audio_gate? {audio_bits{1'b0}} : audio_in)),
          .audioout(audio_out));
 
-   console_rom rom(.clk(clk), .cs(romen), .a(a), .q(d_rom));
+   console_rom rom(.clk(clk), .cs(romen), .a(a), .q(d_rom),
+		   .wb_adr_i(wb_adr_i[23 -: 16]), .wb_dat_i(wb_dat_i),
+		   .wb_dat_o(wb_dat_rom), .wb_we_i(wb_we_i),
+		   .wb_sel_i(wb_sel_i), .wb_stb_i(wb_stb_rom),
+		   .wb_ack_o(wb_ack_rom), .wb_cyc_i(wb_cyc_i));
 
    scratchpad_ram ram(.clk(clk), .cs(mb && ramblk), .we(we),
 		      .a(a), .d(q), .q(d_sp));
