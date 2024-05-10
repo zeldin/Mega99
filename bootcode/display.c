@@ -1,9 +1,6 @@
 #include "global.h"
 #include "display.h"
-
-#define VDPRAM ((uint8_t *)(void *)0x80000000)
-#define VDPREG (VDPRAM+0x4000)
-#define FLUSH do { __asm__("" : : : "memory"); } while(0)
+#include "mem.h"
 
 #define SCREENPOS(y, x) (((y) << 5) | (x))
 

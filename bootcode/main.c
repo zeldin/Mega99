@@ -4,6 +4,25 @@
 #include "sdcard.h"
 #include "regs.h"
 #include "fatfs.h"
+#include "mem.h"
+
+static void load_rom(const char *filename, uint8_t *ptr, uint32_t len)
+{
+  display_printf("%s...", filename);
+  fatfs_filehandle_t fh;
+  int r = fatfs_open(filename, &fh);
+  if (r >= 0) {
+    r = fatfs_read(&fh, ptr, len);
+    if (r >= 0 && r < len) {
+      display_printf("Short file\n");
+      return;
+    }
+  }
+  if (r < 0)
+    display_printf("%x\n", (uint32_t)r);
+  else
+    display_printf("Loaded\n");
+}
 
 void main()
 {
@@ -15,7 +34,8 @@ void main()
 
   REGS_MISC.leds = 1u;
 
-  display_printf("Good %s world!\n\n", "morning");
+  load_rom("994A_R~1.U61", CPUROMH, 4096);
+  load_rom("994A_R~2.U61", CPUROML, 4096);
 
   uint32_t last_sdstatus = ~0;
   for (;;) {
@@ -27,21 +47,7 @@ void main()
 	sdcard_type_t card_type = sdcard_activate();
 	display_printf("Activate => %x\n", (uint32_t)card_type);
 	if (card_type > SDCARD_INVALID) {
-	  fatfs_filehandle_t fh;
-	  if (fatfs_open("TESTFILE.TXT", &fh) >= 0) {
-	    char buf[32];
-	    int i, r;
-	    display_printf("---vvv---\n");
-	    while ((r = fatfs_read(&fh, buf, sizeof(buf))) > 0)
-	      for (i=0; i<r; i++)
-		display_putc(buf[i]);
-	    display_printf("---^^^---\n");
-	    if (r < 0)
-	      display_printf("Error %x\n", (uint32_t)r);
-	    else
-	      REGS_MISC.reset = 0x0; // Release CPU from reset
-	  } else
-	    display_printf("fatfs_open failed\n");
+	  REGS_MISC.reset = 0x0; // Release CPU from reset
 	}
       }
     }

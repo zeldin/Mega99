@@ -22,11 +22,6 @@ module console_rom(input             clk,
 
    assign readaddr = (cs ? a[3:14] : wb_adr_i[4:15]);
 
-   initial begin
-      $readmemh("994a_rom_hb.hex", romh);
-      $readmemh("994a_rom_lb.hex", roml);
-   end
-
    always @(posedge clk) begin
 
       // Read port
