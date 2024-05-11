@@ -8,7 +8,20 @@ module groms(input            clk,      // Enabled cycles should give
 	     output	      gready,
 	     input [0:3]      grom_set,
 
-	     output [0:15]    debug_grom_addr);
+	     output [0:15]    debug_grom_addr,
+
+	     // GROM access wishbone slave
+	     input [0:15]     wb_adr_i,
+	     input [0:7]      wb_dat_i,
+	     output [0:7]     wb_dat_o,
+	     input	      wb_we_i,
+	     input [0:0]      wb_sel_i,
+	     input	      wb_stb_i,
+	     output           wb_ack_o,
+	     input	      wb_cyc_i);
+
+   assign wb_dat_o = 8'h00;
+   assign wb_ack_o = wb_cyc_i && wb_stb_i && wb_we_i;
 
    reg [0:2]  grom_id;
    reg [0:12] addr;
@@ -80,6 +93,16 @@ module groms(input            clk,      // Enabled cycles should give
     end
 
    always @(posedge clk) begin
+
+      if (wb_cyc_i && wb_stb_i && wb_we_i && wb_sel_i[0] &&
+	  wb_adr_i[3:4] != 2'b11)
+	case (wb_adr_i[0:2])
+	  3'b000: grom0[wb_adr_i[3:15]] <= wb_dat_i;
+	  3'b001: grom1[wb_adr_i[3:15]] <= wb_dat_i;
+	  3'b010: grom2[wb_adr_i[3:15]] <= wb_dat_i;
+	  3'b011: grom3[wb_adr_i[3:15]] <= wb_dat_i;
+	  default: ;
+	endcase // case (wb_adr_i[0:2])
 
       if (do_prefetch) begin
 	 grom_valid0 <= 1'b0;

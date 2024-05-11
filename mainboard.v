@@ -112,10 +112,13 @@ module mainboard(input  clk,
 
    wire [0:7]  wb_dat_vdp;
    wire [0:7]  wb_dat_rom;
+   wire [0:7]  wb_dat_grom;
    wire	       wb_ack_vdp;
    wire	       wb_ack_rom;
+   wire	       wb_ack_grom;
    reg	       wb_stb_vdp;
    reg	       wb_stb_rom;
+   reg	       wb_stb_grom;
    
    assign sys_reset = reset;
    
@@ -153,6 +156,7 @@ module mainboard(input  clk,
       wb_ack_o <= 1'b0;
       wb_stb_vdp <= 1'b0;
       wb_stb_rom <= 1'b0;
+      wb_stb_grom <= 1'b0;
       case (wb_adr_i[0 +: 8])
 	8'h00: begin
 	   wb_stb_vdp <= wb_stb_i;
@@ -163,6 +167,11 @@ module mainboard(input  clk,
 	   wb_stb_rom <= wb_stb_i;
 	   wb_dat_o <= wb_dat_rom;
 	   wb_ack_o <= wb_ack_rom;
+	end
+	8'h02: begin
+	   wb_stb_grom <= wb_stb_i;
+	   wb_dat_o <= wb_dat_grom;
+	   wb_ack_o <= wb_ack_grom;
 	end
 	default: ;
       endcase // case (wb_adr_i[0 +: 8])
@@ -238,6 +247,10 @@ module mainboard(input  clk,
 
    groms grom(.clk(clk), .grclk_en(grom_clk_en), .m(dbin), .gs(gs),
 	      .mo(a[14]), .d(q8), .q(d8_grom), .gready(ready_grom),
-	      .grom_set(a[10:13]), .debug_grom_addr(debug_grom_addr));
+	      .grom_set(a[10:13]), .debug_grom_addr(debug_grom_addr),
+	      .wb_adr_i(wb_adr_i[23 -: 16]), .wb_dat_i(wb_dat_i),
+	      .wb_dat_o(wb_dat_grom), .wb_we_i(wb_we_i),
+	      .wb_sel_i(wb_sel_i), .wb_stb_i(wb_stb_grom),
+	      .wb_ack_o(wb_ack_grom), .wb_cyc_i(wb_cyc_i));
 				      
 endmodule // mainboard
