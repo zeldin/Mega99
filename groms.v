@@ -79,17 +79,6 @@ module groms(input            clk,      // Enabled cycles should give
       grom_valid5 <= 1'b0;
       grom_valid6 <= 1'b0;
       grom_valid7 <= 1'b0;
-      $readmemh("994a_grom0.hex", grom0);
-      $readmemh("994a_grom1.hex", grom1);
-      $readmemh("994a_grom2.hex", grom2);
-      $readmemh("phm3032g.hex", grom3);
-/*
-      $readmemh("phm3042g0.hex", grom3);
-      $readmemh("phm3042g1.hex", grom4);
-      $readmemh("phm3042g2.hex", grom5);
-      $readmemh("phm3042g3.hex", grom6);
-      $readmemh("phm3042g4.hex", grom7);
-*/
     end
 
    always @(posedge clk) begin

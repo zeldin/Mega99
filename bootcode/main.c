@@ -36,6 +36,10 @@ void main()
 
   load_rom("994a_rom_hb.u610", CPUROMH, 4096);
   load_rom("994a_rom_lb.u611", CPUROML, 4096);
+  load_rom("994a_grom0.u500", GROM(0), 6144);
+  load_rom("994a_grom1.u501", GROM(1), 6144);
+  load_rom("994a_grom2.u502", GROM(2), 6144);
+  load_rom("phm3023g.bin", GROM(3), 6144);
 
   uint32_t last_sdstatus = ~0;
   for (;;) {
