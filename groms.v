@@ -32,19 +32,14 @@ module groms(input            clk,      // Enabled cycles should give
    reg [0:7]  grom_page1_byte;
    reg [0:7]  grom_page2_byte;
    reg [0:2]  grom_page_active;
+   reg	      do_prefetch;
 
-   assign gready = 1'b1;
+   assign gready = ~do_prefetch;
    assign debug_grom_addr = { grom_id, addr };
 
-   wire	       do_prefetch;
-   wire [0:2]  prefetch_grom_id;
-   wire [0:12] prefetch_addr;
    wire [0:13] prefetch_page_addr;
 
-   assign do_prefetch = ((gs && m && !mo) || (gs && !m && mo && addr_write));
-   assign prefetch_grom_id = (mo ? addr[5:7] : grom_id);
-   assign prefetch_addr = (mo ? { addr[8:12], d } : addr );
-   assign prefetch_page_addr = { prefetch_grom_id, prefetch_addr[2:12] };
+   assign prefetch_page_addr = { grom_id, addr[2:12] };
 
    reg [0:7] grom_page0[0:(2048*NUM_GROMS-1)];
    reg [0:7] grom_page1[0:(2048*NUM_GROMS-1)];
@@ -53,6 +48,7 @@ module groms(input            clk,      // Enabled cycles should give
    initial begin
       addr_write <= 1'b0;
       grom_page_active <= 3'b000;
+      do_prefetch <= 1'b0;
    end
 
    always @(posedge clk) begin
@@ -70,38 +66,38 @@ module groms(input            clk,      // Enabled cycles should give
 	 grom_page0_byte <= grom_page0[prefetch_page_addr];
 	 grom_page1_byte <= grom_page1[prefetch_page_addr];
 	 grom_page2_byte <= grom_page2[prefetch_page_addr];
-	 if (prefetch_grom_id < NUM_GROMS)
-	   grom_page_active <= { prefetch_addr[0:1] == 2'b00,
-				 prefetch_addr[1] == 1'b1,
-				 prefetch_addr[0] == 1'b1 };
+	 if (grom_id < NUM_GROMS)
+	   grom_page_active <= { addr[0:1] == 2'b00,
+				 addr[1] == 1'b1, addr[0] == 1'b1 };
 	 else
 	   grom_page_active <= 3'b000;
-      end
-
-      if (gs && m) begin
-	 // read data / addr
-	 addr_write <= 1'b0;
-	 if (mo) begin
-	    q <= { grom_id, addr[0:4] };
-	    { grom_id, addr[0:4] } <= addr[5:12];
-	 end else begin
-	    q <= (grom_page_active[0] ? grom_page0_byte : 8'h00) |
-		 (grom_page_active[1] ? grom_page1_byte : 8'h00) |
-		 (grom_page_active[2] ? grom_page2_byte : 8'h00);
-	    addr <= addr + 13'h1;
-	 end
-      end // if (gs && m)
-      if (gs && !m) begin
-	 // write data / addr
-	 if (mo) begin
-	    grom_id <= addr[5:7];
-	    if (addr_write)
-	      addr <= { addr[8:12], d } + 13'h1;
-	    else
-	      addr <= { addr[8:12], d };
-	    addr_write <= ~addr_write;
-	 end
-      end // if (gs && !m)
+	 addr <= addr + 13'h1;
+	 do_prefetch <= 1'b0;
+      end else begin
+	 if (gs && m) begin
+	    // read data / addr
+	    addr_write <= 1'b0;
+	    if (mo) begin
+	       q <= { grom_id, addr[0:4] };
+	       { grom_id, addr[0:4] } <= addr[5:12];
+	    end else begin
+	       q <= (grom_page_active[0] ? grom_page0_byte : 8'h00) |
+		    (grom_page_active[1] ? grom_page1_byte : 8'h00) |
+		    (grom_page_active[2] ? grom_page2_byte : 8'h00);
+	       do_prefetch <= 1'b1;
+	    end
+	 end // if (gs && m)
+	 else if (gs && !m) begin
+	    // write data / addr
+	    if (mo) begin
+	       grom_id <= addr[5:7];
+	       addr <= { addr[8:12], d };
+	       if (addr_write)
+		 do_prefetch <= 1'b1;
+	       addr_write <= ~addr_write;
+	    end
+	 end // if (gs && !m)
+      end // else: !if(do_prefetch)
    end // always @ (posedge clk)
 
 endmodule // groms
