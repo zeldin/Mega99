@@ -20,7 +20,7 @@ module groms(input            clk,      // Enabled cycles should give
 	     output	      wb_ack_o,
 	     input	      wb_cyc_i);
 
-   localparam NUM_GROMS = 4;
+   localparam NUM_GROMS = 8;
 
    reg [0:2]  grom_id;
    reg [0:12] addr;
