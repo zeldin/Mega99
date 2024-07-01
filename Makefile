@@ -83,11 +83,11 @@ nexys_a7-100t: proj/mega99_nexys_a7-100t.runs/impl_1/mega99_top_a7.bit
 proj/mega99_nexys_a7%.runs/impl_1/mega99_top_a7.bit : proj/mega99_nexys_a7%.xpr vivado/build.tcl $(COMMON_SOURCES) $(MOR1KX_SOURCES) $(NEXYS_A7_SOURCES) $(BOOTHEX)
 	$(VIVADO) -mode batch -source vivado/build.tcl proj/mega99_nexys_a7$*.xpr
 
-proj/mega99_nexys_a7-50t.xpr : vivado/mega99_nexys_a7.tcl $(BOOTHEX)
+proj/mega99_nexys_a7-50t.xpr : vivado/mega99_nexys_a7.tcl | $(BOOTHEX)
 	@rm -rf proj/mega99_nexys_a7-50t.*
 	$(VIVADO) -mode batch -source vivado/mega99_nexys_a7.tcl -tclargs --project_name mega99_nexys_a7-50t --part xc7a50ticsg324-1L
 
-proj/mega99_nexys_a7-100t.xpr : vivado/mega99_nexys_a7.tcl $(BOOTHEX)
+proj/mega99_nexys_a7-100t.xpr : vivado/mega99_nexys_a7.tcl | $(BOOTHEX)
 	@rm -rf proj/mega99_nexys_a7-100t.*
 	$(VIVADO) -mode batch -source vivado/mega99_nexys_a7.tcl -tclargs --project_name mega99_nexys_a7-100t --part xc7a100tcsg324-1
 
