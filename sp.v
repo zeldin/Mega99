@@ -9,13 +9,22 @@ module sp(input         clk,
 	  input		wb_ack_i,
 	  output	wb_cyc_o,
 
+	  output [2:31]	xmem_adr_o,
+	  output [0:31]	xmem_dat_o,
+	  input [0:31]	xmem_dat_i,
+	  output	xmem_we_o,
+	  output [0:3]	xmem_sel_o,
+	  output	xmem_stb_o,
+	  input		xmem_ack_i,
+	  output	xmem_cyc_o,
+
 	  output	tp_valid,
 	  output [0:31]	tp_pc,
 	  output [0:31]	tp_insn,
 
 	  output	led_green,
 	  output	led_red,
-	  output [0:3]  sw_reset,
+	  output [0:3]	sw_reset,
 
 	  output	sdcard_cs,
 	  input		sdcard_cd,
@@ -150,7 +159,12 @@ module sp(input         clk,
 	    .sp_d_cyc(or1k_d_cyc), .sp_d_sel(or1k_d_sel),
 	    .sp_d_we(or1k_d_we), .sp_d_cti(or1k_d_cti),
 	    .sp_d_bte(or1k_d_bte), .sp_d_dato(or1k_d_dato),
-	    .sp_d_ack(mem_ack), .sp_d_dati(mem_data));
+	    .sp_d_ack(mem_ack), .sp_d_dati(mem_data),
+	    .xmem_adr_o(xmem_adr_o),
+	    .xmem_stb_o(xmem_stb_o), .xmem_cyc_o(xmem_cyc_o),
+	    .xmem_sel_o(xmem_sel_o), .xmem_we_o(xmem_we_o),
+	    .xmem_dat_o(xmem_dat_o), .xmem_ack_i(xmem_ack_i),
+	    .xmem_dat_i(xmem_dat_i));
 
    spmmio spregs(.clk(clk), .reset(reset),
 		 .adr_i(or1k_d_adr[8:31]),
