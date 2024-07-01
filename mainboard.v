@@ -1,4 +1,12 @@
-module mainboard(input  clk,
+module mainboard #(
+		   // clk rate is this number times 10.738635 MHz
+		   parameter integer clk_multiplier = 1,
+		   // set to 1 to geneate hdmi_clk_en
+		   parameter integer generate_hdmi_clk_en = 0,
+		   // should be > 8 for full dynamic range
+		   parameter	     audio_bits = 16
+		)
+                (input                     clk,
 		 input			   ext_reset,
 		 output			   sys_reset,
 		 input                     reset_9900,
@@ -44,14 +52,6 @@ module mainboard(input  clk,
 		 input			   wb_stb_i,
 		 output reg		   wb_ack_o,
 		 input			   wb_cyc_i);
-
-   // clk rate is this number times 10.738635 MHz
-   parameter integer clk_multiplier = 1;
-   // set to 1 to geneate hdmi_clk_en
-   parameter integer generate_hdmi_clk_en = 0;
-
-   parameter audio_bits = 16; // should be > 8 for full dynamic range
-
 
    wire	       reset;
    wire	       vdp_clk_en_next;

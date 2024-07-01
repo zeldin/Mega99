@@ -1,11 +1,11 @@
-module tms9918_color_to_rgb(input[0:3] color,
-			    output reg [0:(red_bits-1)] red,
-			    output reg [0:(green_bits-1)] green,
-			    output reg [0:(blue_bits-1)] blue);
-
-   parameter red_bits = 8;
-   parameter green_bits = red_bits;
-   parameter blue_bits = red_bits;
+module tms9918_color_to_rgb
+  #(parameter red_bits = 8,
+    parameter green_bits = red_bits,
+    parameter blue_bits = red_bits)
+   (input[0:3] color,
+    output reg [0:(red_bits-1)]	  red,
+    output reg [0:(green_bits-1)] green,
+    output reg [0:(blue_bits-1)]  blue);
 
    localparam max_red = (1 << red_bits) - 1;
    localparam max_green = (1 << green_bits) - 1;

@@ -1,4 +1,6 @@
-module tms9919_sgc(input reset,
+module tms9919_sgc
+       #(parameter audio_bits = 16) // should be > 8 for full dynamic range
+                  (input reset,
 		   input clk, // Enabled cycles should give
 		   input clk_en, // 3.579545 MHz
 
@@ -8,8 +10,6 @@ module tms9919_sgc(input reset,
 		   output			 ready,
 		   input [0:(audio_bits-1)]	 audioin,
 		   output reg [0:(audio_bits-1)] audioout);
-
-   parameter audio_bits = 16; // should be > 8 for full dynamic range
 
    reg  [0:2] r;
    wire [0:2] raddr;
