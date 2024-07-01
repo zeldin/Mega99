@@ -202,7 +202,7 @@ module mainboard #(
    keymatrix matrix(.p_out(p_out[2:5]),
 		    .int_in(int_in[3:6]), .p_in(p_in[12:15]),
 		    .key_state(key_state), .alpha_state(alpha_state),
-		    .joy1(5'b00000), .joy2(5'b0000));
+		    .joy1(joy1), .joy2(joy2));
 
    tms9900_cpu cpu(.reset(reset|reset_9900), .clk(clk), .clk_en(cpu_clk_en),
 		   .memen_out(memen), .we(we), .iaq(iaq), .ready_in(ready),
