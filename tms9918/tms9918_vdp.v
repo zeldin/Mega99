@@ -141,7 +141,7 @@ module tms9918_vdp(input             reset,
    assign int_pending = f & ie;
    assign extvideo = (ev && color == 0);
 
-   task automatic sprite_ymatch (input wire [0:7] spr_vpos,
+   task automatic sprite_ymatch (input [0:7] spr_vpos,
 				 output reg [0:3] line,
 				 output reg valid);
       reg [0:7] offset;
