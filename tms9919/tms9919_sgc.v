@@ -41,13 +41,16 @@ module tms9919_sgc
    genvar i;
    generate
       for (i = 0; i <= 3; i = i+1) begin : GENERATOR
-	 reg [0:3] a;
+	 localparam fbits = (i == 3 ? 2 : 10);
+	 reg [0:3]  a;
+	 reg [0:(fbits-1)] f;
+	 reg [0:9]  decrementer;
+	 reg	    tick;
+	 reg	    tickout;
+	 reg	    fb;
+	 reg [0:14] shiftreg;
+	 wire	    feedback;
 	 if (i == 3) begin
-	    reg        fb;
-	    reg [0:1]  f;
-	    reg	       tick;
-	    reg [0:14] shiftreg;
-	    wire       feedback;
 	    assign feedback = (fb ? ~(shiftreg[13] ^ shiftreg[14]) :
 			       shiftreg[14]);
 	    always @(posedge clk)
@@ -58,12 +61,9 @@ module tms9919_sgc
 		2'b11: tick <= tickgen2;
 	      endcase // case (f)
 	 end else begin
-	    reg [0:9] f;
-	    reg [0:9] decrementer;
-	    wire      tick;
-	    assign tick = tick16;
+	    always @(tick16)
+	      tick = tick16;
 	    if (i == 2) begin
-	       reg tickout;
 	       assign tickgen2 = tickout;
 	    end
 	 end
@@ -78,7 +78,7 @@ module tms9919_sgc
 	      end else begin
 		 f <= 10'h000;
 		 decrementer <= 10'd0;
-	      end;
+	      end
 	      on <= 1'b0;
 	      if (i == 2)
 		tickout <= 1'b0;
