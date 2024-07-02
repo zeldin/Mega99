@@ -49,9 +49,9 @@ module address_decoder(input        memen,
 	  if (a15 == 1'b0) // G2B
 	    case (a[3:5])
 	      3'b000: ;                  // >8000 - >83FF
-	      3'b001: sound_sel <= 1'b1; // >8400 - >87FF
-	      3'b010: vdp_csr <= 1'b1;   // >8800 - >8BFF
-	      3'b011: vdp_csw <= we;     // >8C00 - >8FFF
+	      3'b001: sound_sel = 1'b1;  // >8400 - >87FF
+	      3'b010: vdp_csr = 1'b1;    // >8800 - >8BFF
+	      3'b011: vdp_csw = we;      // >8C00 - >8FFF
 	      3'b100: sbe = 1'b1;        // >9000 - >93FF
 	      3'b101: sbe = 1'b1;        // >9400 - >97FF
 	      3'b110: gs = 1'b1;         // >9800 - >9BFF

@@ -208,7 +208,8 @@ module mainboard #(
 		   .memen_out(memen), .we(we), .iaq(iaq), .ready_in(ready),
 		   .waiting(), .a(a), .d_in(d), .q(q), .dbin(dbin),
 		   .cruin(cruin), .cruout(cruout), .cruclk_out(cruclk),
-		   .intreq(intreq), .ic(4'b0001), .load(1'b0),
+		   .intreq(intreq), .ic(4'b0001),
+		   .hold(1'b0), .holda(), .load(1'b0),
 		   .debug_pc(debug_pc), .debug_st(debug_st),
 		   .debug_wp(debug_wp), .debug_ir(debug_ir));
 

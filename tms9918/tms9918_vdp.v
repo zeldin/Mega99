@@ -423,7 +423,7 @@ module tms9918_vdp(input             reset,
 	 pattern_bits <= 8'h00;
 	 pattern_color <= 8'h00;
 	 textpos <= 10'h000;
-	 new_sprite <= 1'b0;
+	 new_sprite = 1'b0;
 	 
       end else if(clk_en) begin
 
@@ -451,7 +451,7 @@ module tms9918_vdp(input             reset,
 
 	 pattern_bits <= { pattern_bits[1:7], 1'b0 };
 
-	 new_sprite <= 1'b0;
+	 new_sprite = 1'b0;
 	 if (sprite_attr_line && !m1 && hpos < HACTIVE && hpos[6:8] == 3'b001)
 	   // Sprite VPOS attribute
 	   if (vdp_rdata == 8'hD0)
