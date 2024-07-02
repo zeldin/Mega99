@@ -31,7 +31,10 @@ module sp(input         clk,
 	  input		sdcard_wp,
 	  output	sdcard_sck,
 	  input		sdcard_miso,
-	  output	sdcard_mosi);
+	  output	sdcard_mosi,
+
+	  output	uart_txd,
+	  input		uart_rxd);
 
    wire [0:31] or1k_i_adr;
    wire	       or1k_i_stb;
@@ -176,6 +179,7 @@ module sp(input         clk,
 		 .sw_reset(sw_reset),
 		 .sdcard_cs(sdcard_cs), .sdcard_cd(sdcard_cd),
 		 .sdcard_wp(sdcard_wp),.sdcard_sck(sdcard_sck),
-		 .sdcard_miso(sdcard_miso), .sdcard_mosi(sdcard_mosi));
+		 .sdcard_miso(sdcard_miso), .sdcard_mosi(sdcard_mosi),
+		 .uart_txd(uart_txd), .uart_rxd(uart_rxd));
 
 endmodule // sp

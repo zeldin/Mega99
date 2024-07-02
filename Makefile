@@ -25,6 +25,7 @@ COMMON_SOURCES += spmem.v
 COMMON_SOURCES += spmmio.v
 COMMON_SOURCES += spmmio_misc.v
 COMMON_SOURCES += spmmio_sdcard.v
+COMMON_SOURCES += spmmio_uart.v
 
 MOR1KX_SOURCES  = $(MOR1KXPATH)/mor1kx-defines.v
 MOR1KX_SOURCES += $(MOR1KXPATH)/mor1kx-sprs.v
@@ -102,7 +103,7 @@ TARGET_LDSCRIPT = bootcode/main.lds
 TARGET_LDFLAGS = -nostartfiles -nodefaultlibs -Wl,--no-warn-rwx-segments \
 	-Wl,--defsym,__stack=0x2000,-T,$(TARGET_LDSCRIPT),--gc-sections,-eboot
 
-BOOT_OBJS = entry.o main.o display.o sdcard.o fatfs.o
+BOOT_OBJS = entry.o main.o display.o uart.o sdcard.o fatfs.o
 
 PYTHON = python
 

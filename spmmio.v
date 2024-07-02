@@ -19,12 +19,17 @@ module spmmio(input             clk,
 	      input		sdcard_wp,
 	      output		sdcard_sck,
 	      input		sdcard_miso,
-	      output		sdcard_mosi);
+	      output		sdcard_mosi,
+
+	      output		uart_txd,
+	      input		uart_rxd);
 
    reg	       stb_misc;
    reg	       stb_sdcard;
+   reg	       stb_uart;
    wire [0:31] dat_misc;
    wire [0:31] dat_sdcard;
+   wire [0:31] dat_uart;
 
    always @(*) begin
       ack_o <= stb_i;
@@ -32,6 +37,7 @@ module spmmio(input             clk,
 
       stb_misc <= 1'b0;
       stb_sdcard <= 1'b0;
+      stb_uart <= 1'b0;
       case (adr_i[0 +: 8])
 	8'h00: begin
 	   stb_misc <= stb_i;
@@ -40,6 +46,10 @@ module spmmio(input             clk,
 	8'h01: begin
 	   stb_sdcard <= stb_i;
 	   dat_o <= dat_sdcard;
+	end
+	8'h02: begin
+	   stb_uart <= stb_i;
+	   dat_o <= dat_uart;
 	end
 	default: ;
       endcase // case (adr_i[0 +: 8])
@@ -59,5 +69,11 @@ module spmmio(input             clk,
 			.sdcard_cs(sdcard_cs), .sdcard_cd(sdcard_cd),
 			.sdcard_wp(sdcard_wp),.sdcard_sck(sdcard_sck),
 			.sdcard_miso(sdcard_miso), .sdcard_mosi(sdcard_mosi));
+
+   spmmio_uart uart(.clk(clk), .reset(reset),
+		    .adr(adr_i[21 -: 3]), .cs(cyc_i && stb_uart),
+		    .sel(sel_i), .we(we_i), .d(dat_i), .q(dat_uart),
+
+		    .uart_txd(uart_txd), .uart_rxd(uart_rxd));
 
 endmodule // spmmio

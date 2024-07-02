@@ -2,6 +2,7 @@
 #include "timer.h"
 #include "display.h"
 #include "sdcard.h"
+#include "uart.h"
 #include "regs.h"
 #include "fatfs.h"
 #include "mem.h"
@@ -30,6 +31,7 @@ void main()
   REGS_MISC.reset = 0xd; // Release VDP from reset
 
   timer_init();
+  uart_init();
   display_init();
 
   REGS_MISC.leds = 1u;

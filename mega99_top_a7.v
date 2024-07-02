@@ -21,6 +21,9 @@ module mega99_top_a7(input         CLK100MHZ,
 		     inout	   AUD_PWM,
 		     output	   AUD_SD,
 
+		     input	   UART_RXD,
+		     output        UART_TXD,
+
 		     input [1:4]   JAlo,
 		     input [8:8]   JAhi,
 		     input [1:4]   JBlo,
@@ -172,7 +175,8 @@ module mega99_top_a7(input         CLK100MHZ,
 				   reset_9918, reset_9919}),
 			.sdcard_cs(sdcard_cs), .sdcard_cd(~SD_CD),
 			.sdcard_wp(1'b0), .sdcard_sck(SD_SCK),
-			.sdcard_miso(SD_DAT[0]), .sdcard_mosi(SD_CMD));
+			.sdcard_miso(SD_DAT[0]), .sdcard_mosi(SD_CMD),
+			.uart_txd(UART_TXD), .uart_rxd(UART_RXD));
 
    mainboard #(.clk_multiplier(5), .audio_bits(16))
    mb(.clk(clk), .ext_reset(~clk_locked), .sys_reset(reset),
