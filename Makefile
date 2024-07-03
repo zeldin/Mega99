@@ -96,16 +96,15 @@ proj/mega99_nexys_a7-100t.xpr : vivado/mega99_nexys_a7.tcl | $(BOOTHEX)
 
 SP_OBJCOPY_BIN = or1k-elf-objcopy -O binary
 SP_CC = or1k-elf-gcc
-SP_CFLAGS = -std=c23 -Os -ffunction-sections -fdata-sections \
-	-fno-move-loop-invariants \
+SP_CFLAGS = -std=c23 -ffunction-sections -fdata-sections \
 	-mcmov -msext -msfimm -mshftimm -funsigned-char \
 	-ffreestanding -finline-stringops \
 	-I spsrc/common -DTICKS_PER_SEC=53693175u
-SP_LDSCRIPT = spsrc/boot/main.lds
-SP_LDFLAGS = -nostartfiles -nodefaultlibs -Wl,--no-warn-rwx-segments \
-	-Wl,--defsym,__stack=0x2000,-T,$(SP_LDSCRIPT),--gc-sections,-eboot
 
-SP_BOOT_BUILD = build/spboot
+SP_BOOT_CFLAGS = $(SP_CFLAGS) -Os -fno-move-loop-invariants
+SP_BOOT_LDSCRIPT = spsrc/boot/main.lds
+SP_BOOT_LDFLAGS = -nostartfiles -nodefaultlibs -Wl,--no-warn-rwx-segments \
+	-Wl,--defsym,__stack=0x2000,-T,$(SP_BOOT_LDSCRIPT),--gc-sections,-eboot
 
 SP_BOOT_SRCS  = boot/entry.S
 SP_BOOT_SRCS += boot/main.c
@@ -114,7 +113,20 @@ SP_BOOT_SRCS += common/uart.c
 SP_BOOT_SRCS += common/sdcard.c
 SP_BOOT_SRCS += common/fatfs.c
 
+SP_MAIN_CFLAGS = $(SP_CFLAGS) -O2
+SP_MAIN_LDFLAGS = -nostartfiles -nodefaultlibs \
+	-Wl,-Ttext=0x40000000,--gc-sections,-estart
+
+SP_MAIN_SRCS  = main/entry.S
+SP_MAIN_SRCS += main/main.c
+SP_MAIN_SRCS += common/display.c
+SP_MAIN_SRCS += common/uart.c
+
+SP_BOOT_BUILD = build/spboot
+SP_MAIN_BUILD = build/spmain
+
 SP_BOOT_OBJS = $(addprefix $(SP_BOOT_BUILD)/,$(patsubst %.c,%.o,$(patsubst %.S,%.o,$(SP_BOOT_SRCS))))
+SP_MAIN_OBJS = $(addprefix $(SP_MAIN_BUILD)/,$(patsubst %.c,%.o,$(patsubst %.S,%.o,$(SP_MAIN_SRCS))))
 
 PYTHON = python
 
@@ -128,15 +140,30 @@ or1k_boot_code1.hex or1k_boot_code2.hex or1k_boot_code3.hex : or1k_boot_code0.he
 $(SP_BOOT_BUILD)/or1k_boot_code.bin : $(SP_BOOT_BUILD)/or1k_boot_code.elf
 	$(SP_OBJCOPY_BIN) $< $@
 
-$(SP_BOOT_BUILD)/or1k_boot_code.elf : $(SP_BOOT_OBJS) $(SP_LDSCRIPT)
-	$(SP_CC) $(SP_CFLAGS) $(SP_LDFLAGS) -o $@ $(SP_BOOT_OBJS)
+$(SP_BOOT_BUILD)/or1k_boot_code.elf : $(SP_BOOT_OBJS) $(SP_BOOT_LDSCRIPT)
+	$(SP_CC) $(SP_BOOT_CFLAGS) $(SP_BOOT_LDFLAGS) -o $@ $(SP_BOOT_OBJS)
 
 $(SP_BOOT_BUILD)/%.o : spsrc/%.S
 	@mkdir -p $(@D)
-	$(SP_CC) $(SP_CFLAGS) -MMD -c -o $@ $<
+	$(SP_CC) $(SP_BOOT_CFLAGS) -MMD -c -o $@ $<
 
 $(SP_BOOT_BUILD)/%.o : spsrc/%.c
 	@mkdir -p $(@D)
-	$(SP_CC) $(SP_CFLAGS) -MMD -c -o $@ $<
+	$(SP_CC) $(SP_BOOT_CFLAGS) -MMD -c -o $@ $<
+
+mega99sp.bin : $(SP_MAIN_BUILD)/mega99sp.elf
+	$(SP_OBJCOPY_BIN) $< $@
+
+$(SP_MAIN_BUILD)/mega99sp.elf : $(SP_MAIN_OBJS)
+	$(SP_CC) $(SP_MAIN_CFLAGS) $(SP_MAIN_LDFLAGS) -o $@ $(SP_MAIN_OBJS)
+
+$(SP_MAIN_BUILD)/%.o : spsrc/%.S
+	@mkdir -p $(@D)
+	$(SP_CC) $(SP_MAIN_CFLAGS) -MMD -c -o $@ $<
+
+$(SP_MAIN_BUILD)/%.o : spsrc/%.c
+	@mkdir -p $(@D)
+	$(SP_CC) $(SP_MAIN_CFLAGS) -MMD -c -o $@ $<
 
 -include $(SP_BOOT_OBJS:.o=.d)
+-include $(SP_MAIN_OBJS:.o=.d)
