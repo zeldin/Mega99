@@ -1,9 +1,6 @@
 /proj/
-/or1k_boot_code.bin
-/or1k_boot_code.elf
-/or1k_boot_code.hex
+/build/
 /or1k_boot_code0.hex
 /or1k_boot_code1.hex
 /or1k_boot_code2.hex
 /or1k_boot_code3.hex
-*.o

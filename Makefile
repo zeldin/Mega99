@@ -94,35 +94,49 @@ proj/mega99_nexys_a7-100t.xpr : vivado/mega99_nexys_a7.tcl | $(BOOTHEX)
 
 
 
-TARGET_OBJCOPY_BIN = or1k-elf-objcopy -O binary
-TARGET_CC = or1k-elf-gcc
-TARGET_CFLAGS = -std=c23 -Os -ffunction-sections -fdata-sections \
+SP_OBJCOPY_BIN = or1k-elf-objcopy -O binary
+SP_CC = or1k-elf-gcc
+SP_CFLAGS = -std=c23 -Os -ffunction-sections -fdata-sections \
 	-fno-move-loop-invariants \
 	-mcmov -msext -msfimm -mshftimm -funsigned-char \
-	-ffreestanding -finline-stringops -DTICKS_PER_SEC=53693175u
-TARGET_LDSCRIPT = bootcode/main.lds
-TARGET_LDFLAGS = -nostartfiles -nodefaultlibs -Wl,--no-warn-rwx-segments \
-	-Wl,--defsym,__stack=0x2000,-T,$(TARGET_LDSCRIPT),--gc-sections,-eboot
+	-ffreestanding -finline-stringops \
+	-I spsrc/common -DTICKS_PER_SEC=53693175u
+SP_LDSCRIPT = spsrc/boot/main.lds
+SP_LDFLAGS = -nostartfiles -nodefaultlibs -Wl,--no-warn-rwx-segments \
+	-Wl,--defsym,__stack=0x2000,-T,$(SP_LDSCRIPT),--gc-sections,-eboot
 
-BOOT_OBJS = entry.o main.o display.o uart.o sdcard.o fatfs.o
+SP_BOOT_BUILD = build/spboot
+
+SP_BOOT_SRCS  = boot/entry.S
+SP_BOOT_SRCS += boot/main.c
+SP_BOOT_SRCS += common/display.c
+SP_BOOT_SRCS += common/uart.c
+SP_BOOT_SRCS += common/sdcard.c
+SP_BOOT_SRCS += common/fatfs.c
+
+SP_BOOT_OBJS = $(addprefix $(SP_BOOT_BUILD)/,$(patsubst %.c,%.o,$(patsubst %.S,%.o,$(SP_BOOT_SRCS))))
 
 PYTHON = python
 
 .DELETE_ON_ERROR:
 
-or1k_boot_code0.hex : or1k_boot_code.bin
+or1k_boot_code0.hex : $(SP_BOOT_BUILD)/or1k_boot_code.bin
 	$(PYTHON) genhex.py -o or1k_boot_code.hex -n 4 $<
 
 or1k_boot_code1.hex or1k_boot_code2.hex or1k_boot_code3.hex : or1k_boot_code0.hex
 
-or1k_boot_code.bin : or1k_boot_code.elf
-	$(TARGET_OBJCOPY_BIN) $^ $@
+$(SP_BOOT_BUILD)/or1k_boot_code.bin : $(SP_BOOT_BUILD)/or1k_boot_code.elf
+	$(SP_OBJCOPY_BIN) $< $@
 
-or1k_boot_code.elf : $(BOOT_OBJS) $(TARGET_LDSCRIPT)
-	$(TARGET_CC) $(TARGET_CFLAGS) $(TARGET_LDFLAGS) -o $@ $(BOOT_OBJS)
+$(SP_BOOT_BUILD)/or1k_boot_code.elf : $(SP_BOOT_OBJS) $(SP_LDSCRIPT)
+	$(SP_CC) $(SP_CFLAGS) $(SP_LDFLAGS) -o $@ $(SP_BOOT_OBJS)
 
-%.o : bootcode/%.S
-	$(TARGET_CC) $(TARGET_CFLAGS) -c -o $@ $^
+$(SP_BOOT_BUILD)/%.o : spsrc/%.S
+	@mkdir -p $(@D)
+	$(SP_CC) $(SP_CFLAGS) -MMD -c -o $@ $<
 
-%.o : bootcode/%.c
-	$(TARGET_CC) $(TARGET_CFLAGS) -c -o $@ $^
+$(SP_BOOT_BUILD)/%.o : spsrc/%.c
+	@mkdir -p $(@D)
+	$(SP_CC) $(SP_CFLAGS) -MMD -c -o $@ $<
+
+-include $(SP_BOOT_OBJS:.o=.d)
