@@ -25,6 +25,7 @@ proc checkRequiredFiles { origin_dir} {
  "[file normalize "$origin_dir/multiplexer.v"]"\
  "[file normalize "$origin_dir/keymatrix.v"]"\
  "[file normalize "$origin_dir/groms.v"]"\
+ "[file normalize "$origin_dir/cartridge_rom.v"]"\
  "[file normalize "$origin_dir/console_rom.v"]"\
  "[file normalize "$origin_dir/scratchpad_ram.v"]"\
  "[file normalize "$origin_dir/tms9900/tms9900_cpu.v"]"\
@@ -218,6 +219,7 @@ set files [list \
  [file normalize "${origin_dir}/multiplexer.v"] \
  [file normalize "${origin_dir}/keymatrix.v"] \
  [file normalize "${origin_dir}/groms.v"] \
+ [file normalize "${origin_dir}/cartridge_rom.v"] \
  [file normalize "${origin_dir}/console_rom.v"] \
  [file normalize "${origin_dir}/scratchpad_ram.v"] \
  [file normalize "${origin_dir}/tms9900/tms9900_cpu.v"] \

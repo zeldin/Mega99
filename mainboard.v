@@ -83,6 +83,7 @@ module mainboard #(
    wire [0:15] d_mpx;
    wire [0:7]  d8;
    wire [0:7]  d8_grom;
+   wire [0:7]  d8_crom;
    wire [0:7]  cd_vdp;
    wire [0:7]  q8;
    reg	       d_rom_valid;
@@ -91,6 +92,7 @@ module mainboard #(
    reg	       d_mpx_hi_valid;
    reg	       d_mpx_lo_valid;
    reg	       d8_grom_valid;
+   reg	       d8_crom_valid;
 
    wire	       romen;
    wire	       mbe;
@@ -113,12 +115,15 @@ module mainboard #(
    wire [0:7]  wb_dat_vdp;
    wire [0:7]  wb_dat_rom;
    wire [0:7]  wb_dat_grom;
+   wire [0:7]  wb_dat_crom;
    wire	       wb_ack_vdp;
    wire	       wb_ack_rom;
    wire	       wb_ack_grom;
+   wire	       wb_ack_crom;
    reg	       wb_stb_vdp;
    reg	       wb_stb_rom;
    reg	       wb_stb_grom;
+   reg	       wb_stb_crom;
    
    assign sys_reset = reset;
    
@@ -139,7 +144,8 @@ module mainboard #(
 	      (d_mpx_hi_valid ? { d_mpx[0:7], 8'hff }  : 16'hffff) &
 	      (d_mpx_lo_valid ? { 8'hff, d_mpx[8:15] } : 16'hffff);
    assign d8 = 8'hff &
-	       (d8_grom_valid ? d8_grom : 8'hff);
+	       (d8_grom_valid ? d8_grom : 8'hff) &
+	       (d8_crom_valid ? d8_crom : 8'hff);
    assign sysrdy = (ready_grom | ~gs) & ready_sgc;
 
    always @(posedge clk) begin
@@ -149,6 +155,7 @@ module mainboard #(
       d_mpx_hi_valid <= dbin && !(romen | (mb & ramblk)) && !vdp_csr;
       d_mpx_lo_valid <= dbin && !(romen | (mb & ramblk));
       d8_grom_valid <= dbin && gs;
+      d8_crom_valid <= dbin && romg;
    end
 
    always @(*) begin
@@ -172,6 +179,11 @@ module mainboard #(
 	   wb_stb_grom <= wb_stb_i;
 	   wb_dat_o <= wb_dat_grom;
 	   wb_ack_o <= wb_ack_grom;
+	end
+	8'h03: begin
+	   wb_stb_crom <= wb_stb_i;
+	   wb_dat_o <= wb_dat_crom;
+	   wb_ack_o <= wb_ack_crom;
 	end
 	default: ;
       endcase // case (wb_adr_i[0 +: 8])
@@ -253,5 +265,11 @@ module mainboard #(
 	      .wb_dat_o(wb_dat_grom), .wb_we_i(wb_we_i),
 	      .wb_sel_i(wb_sel_i), .wb_stb_i(wb_stb_grom),
 	      .wb_ack_o(wb_ack_grom), .wb_cyc_i(wb_cyc_i));
+
+   cartridge_rom crom(.clk(clk), .cs(romg), .a({a[3:14], a15}), .q(d8_crom),
+		      .wb_adr_i(wb_adr_i[23 -: 16]), .wb_dat_i(wb_dat_i),
+		      .wb_dat_o(wb_dat_crom), .wb_we_i(wb_we_i),
+		      .wb_sel_i(wb_sel_i), .wb_stb_i(wb_stb_crom),
+		      .wb_ack_o(wb_ack_crom), .wb_cyc_i(wb_cyc_i));
 				      
 endmodule // mainboard

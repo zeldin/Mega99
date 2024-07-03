@@ -7,6 +7,7 @@ COMMON_SOURCES += address_decoder.v
 COMMON_SOURCES += multiplexer.v
 COMMON_SOURCES += keymatrix.v
 COMMON_SOURCES += groms.v
+COMMON_SOURCES += cartridge_rom.v
 COMMON_SOURCES += console_rom.v
 COMMON_SOURCES += scratchpad_ram.v
 
