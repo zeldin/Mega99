@@ -121,6 +121,8 @@ SP_MAIN_SRCS  = main/entry.S
 SP_MAIN_SRCS += main/main.c
 SP_MAIN_SRCS += common/display.c
 SP_MAIN_SRCS += common/uart.c
+SP_MAIN_SRCS += common/sdcard.c
+SP_MAIN_SRCS += common/fatfs.c
 
 SP_BOOT_BUILD = build/spboot
 SP_MAIN_BUILD = build/spmain
