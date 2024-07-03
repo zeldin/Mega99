@@ -97,6 +97,7 @@ proj/mega99_nexys_a7-100t.xpr : vivado/mega99_nexys_a7.tcl | $(BOOTHEX)
 TARGET_OBJCOPY_BIN = or1k-elf-objcopy -O binary
 TARGET_CC = or1k-elf-gcc
 TARGET_CFLAGS = -std=c23 -Os -ffunction-sections -fdata-sections \
+	-fno-move-loop-invariants \
 	-mcmov -msext -msfimm -mshftimm -funsigned-char \
 	-ffreestanding -finline-stringops -DTICKS_PER_SEC=53693175u
 TARGET_LDSCRIPT = bootcode/main.lds
