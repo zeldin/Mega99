@@ -36,6 +36,7 @@ module spmem(input         clk,
 
    wire xmem_i_access;
    wire xmem_d_access;
+   reg	xmem_d_in_progress;
 
    reg [0:7]   boot_mem0[0:2047];
    reg [0:7]   boot_mem1[0:2047];
@@ -48,14 +49,14 @@ module spmem(input         clk,
    wire	       boot_mem_d_access;
 
    assign xmem_i_access = (!reset && sp_i_cyc && sp_i_stb && !sp_i_we &&
-			   sp_i_adr[1] == 1'b1);
+			   sp_i_adr[1] == 1'b1 && !xmem_d_in_progress);
    assign xmem_d_access = (!reset && sp_d_cyc && sp_d_stb &&
 			   sp_d_adr[1] == 1'b1);
 
    assign sp_i_ack = (xmem_i_access ? xmem_ack_i : boot_mem_i_ack);
    assign sp_d_ack = (xmem_d_access && !xmem_i_access ? xmem_ack_i : boot_mem_d_ack);
 
-   assign xmem_adr_o = (xmem_i_access ? sp_i_adr[2:31] : sp_d_adr[2:31]);
+   assign xmem_adr_o = { (xmem_i_access ? sp_i_adr[2:29] : sp_d_adr[2:29]), 2'b00 };
    assign xmem_stb_o = xmem_i_access || xmem_d_access;
    assign xmem_cyc_o = xmem_i_access || xmem_d_access;
    assign xmem_sel_o = sp_d_sel;
@@ -77,6 +78,11 @@ module spmem(input         clk,
    initial $readmemh({boot_mem_init_file, "3.hex"}, boot_mem3);
 
    always @(posedge clk) begin
+
+      if (xmem_d_access && !xmem_i_access)
+	xmem_d_in_progress <= 1'b1;
+      if (reset || xmem_ack_i)
+	xmem_d_in_progress <= 1'b0;
 
       if (boot_mem_i_access || boot_mem_d_access)
 	boot_mem_data <= {
