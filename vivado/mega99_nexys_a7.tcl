@@ -37,6 +37,20 @@ proc checkRequiredFiles { origin_dir} {
  "[file normalize "$origin_dir/gateware/tms9918/tms9918_cpuifc.v"]"\
  "[file normalize "$origin_dir/gateware/tms9918/tms9918_wrapper.v"]"\
  "[file normalize "$origin_dir/gateware/tms9919/tms9919_sgc.v"]"\
+ "[file normalize "$origin_dir/gateware/tms5200/tms5200_bstack.v"]"\
+ "[file normalize "$origin_dir/gateware/tms5200/tms5200_chirp_rom.hex"]"\
+ "[file normalize "$origin_dir/gateware/tms5200/tms5200_crom.v"]"\
+ "[file normalize "$origin_dir/gateware/tms5200/tms5200_dac.v"]"\
+ "[file normalize "$origin_dir/gateware/tms5200/tms5200_fifo.v"]"\
+ "[file normalize "$origin_dir/gateware/tms5200/tms5200_kstack.v"]"\
+ "[file normalize "$origin_dir/gateware/tms5200/tms5200_multiplier.v"]"\
+ "[file normalize "$origin_dir/gateware/tms5200/tms5200_parameter_rom.hex"]"\
+ "[file normalize "$origin_dir/gateware/tms5200/tms5200_pram.v"]"\
+ "[file normalize "$origin_dir/gateware/tms5200/tms5200_prom.v"]"\
+ "[file normalize "$origin_dir/gateware/tms5200/tms5200_vsp.v"]"\
+ "[file normalize "$origin_dir/gateware/tms5200/tms5200_wrapper.v"]"\
+ "[file normalize "$origin_dir/gateware/tms5200/tms6100_vsm.v"]"\
+ "[file normalize "$origin_dir/speechrom.hex"]"\
  "[file normalize "$origin_dir/mor1kx/rtl/verilog/mor1kx-defines.v"]"\
  "[file normalize "$origin_dir/mor1kx/rtl/verilog/mor1kx-sprs.v"]"\
  "[file normalize "$origin_dir/mor1kx/rtl/verilog/mor1kx_utils.vh"]"\
@@ -231,6 +245,20 @@ set files [list \
  [file normalize "${origin_dir}/gateware/tms9918/tms9918_cpuifc.v"] \
  [file normalize "${origin_dir}/gateware/tms9918/tms9918_wrapper.v"] \
  [file normalize "${origin_dir}/gateware/tms9919/tms9919_sgc.v"] \
+ [file normalize "${origin_dir}/gateware/tms5200/tms5200_bstack.v"] \
+ [file normalize "${origin_dir}/gateware/tms5200/tms5200_chirp_rom.hex"] \
+ [file normalize "${origin_dir}/gateware/tms5200/tms5200_crom.v"] \
+ [file normalize "${origin_dir}/gateware/tms5200/tms5200_dac.v"] \
+ [file normalize "${origin_dir}/gateware/tms5200/tms5200_fifo.v"] \
+ [file normalize "${origin_dir}/gateware/tms5200/tms5200_kstack.v"] \
+ [file normalize "${origin_dir}/gateware/tms5200/tms5200_multiplier.v"] \
+ [file normalize "${origin_dir}/gateware/tms5200/tms5200_parameter_rom.hex"] \
+ [file normalize "${origin_dir}/gateware/tms5200/tms5200_pram.v"] \
+ [file normalize "${origin_dir}/gateware/tms5200/tms5200_prom.v"] \
+ [file normalize "${origin_dir}/gateware/tms5200/tms5200_vsp.v"] \
+ [file normalize "${origin_dir}/gateware/tms5200/tms5200_wrapper.v"] \
+ [file normalize "${origin_dir}/gateware/tms5200/tms6100_vsm.v"] \
+ [file normalize "${origin_dir}/speechrom.hex"] \
  [file normalize "${origin_dir}/mor1kx/rtl/verilog/mor1kx-defines.v"] \
  [file normalize "${origin_dir}/mor1kx/rtl/verilog/mor1kx-sprs.v"] \
  [file normalize "${origin_dir}/mor1kx/rtl/verilog/mor1kx_utils.vh"] \

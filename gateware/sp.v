@@ -24,7 +24,7 @@ module sp(input         clk,
 
 	  output	led_green,
 	  output	led_red,
-	  output [0:3]	sw_reset,
+	  output [0:4]	sw_reset,
 
 	  output	sdcard_cs,
 	  input		sdcard_cd,

@@ -12,7 +12,7 @@ module spmmio(input             clk,
 
 	      output		led_red,
 	      output		led_green,
-	      output [0:3]	sw_reset,
+	      output [0:4]	sw_reset,
 
 	      output		sdcard_cs,
 	      input		sdcard_cd,

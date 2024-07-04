@@ -28,8 +28,8 @@ static int load_rom(const char *filename, uint8_t *ptr, uint32_t len)
 
 void main()
 {
-  REGS_MISC.reset = 0xf;
-  REGS_MISC.reset = 0xd; // Release VDP from reset
+  REGS_MISC.reset = 0xff;
+  REGS_MISC.reset = 0xdf; // Release VDP from reset
 
   timer_init();
   uart_init();
@@ -47,9 +47,9 @@ void main()
       load_rom("994a_grom0.u500", GROM(0), 6144) >= 0 &&
       load_rom("994a_grom1.u501", GROM(1), 6144) >= 0 &&
       load_rom("994a_grom2.u502", GROM(2), 6144) >= 0) {
-    REGS_MISC.reset = 0xf;
+    REGS_MISC.reset = 0xff;
     __builtin_memset(VDPRAM, 0, 0x1000);
-    REGS_MISC.reset = 0x0; // Release CPU from reset
+    REGS_MISC.reset = 0x00; // Release CPU from reset
   } else
       display_printf("ROM Loading failed!\n");
 }

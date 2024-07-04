@@ -26,9 +26,9 @@ static int load_rom(const char *filename, uint8_t *ptr, uint32_t len)
 
 void main()
 {
-  REGS_MISC.reset = 0xf;
+  REGS_MISC.reset = 0xff;
   uart_puts("Main SP binary entered\n");
-  REGS_MISC.reset = 0xd; // Release VDP from reset
+  REGS_MISC.reset = 0xdf; // Release VDP from reset
 
   display_init();
 
@@ -44,10 +44,10 @@ void main()
     return;
   }
 
-  REGS_MISC.reset = 0xf;  
+  REGS_MISC.reset = 0xff;
   __builtin_memset(VDPRAM, 0, 0x1000);
-  REGS_MISC.reset = 0xd;
+  REGS_MISC.reset = 0xdf;
 
   uart_puts("Starting TMS9900\n");
-  REGS_MISC.reset = 0x0;
+  REGS_MISC.reset = 0x00;
 }

@@ -104,6 +104,7 @@ module mega99_top_a7(input         CLK100MHZ,
    wire	       reset_9901;
    wire	       reset_9918;
    wire	       reset_9919;
+   wire	       reset_5200;
 
    wire	       tp_valid;
    wire [0:31] tp_pc;
@@ -172,7 +173,7 @@ module mega99_top_a7(input         CLK100MHZ,
 
 			.led_green(LED16_G), .led_red(LED17_R),
 			.sw_reset({reset_9900, reset_9901,
-				   reset_9918, reset_9919}),
+				   reset_9918, reset_9919, reset_5200}),
 			.sdcard_cs(sdcard_cs), .sdcard_cd(~SD_CD),
 			.sdcard_wp(1'b0), .sdcard_sck(SD_SCK),
 			.sdcard_miso(SD_DAT[0]), .sdcard_mosi(SD_CMD),
@@ -182,7 +183,7 @@ module mega99_top_a7(input         CLK100MHZ,
    mb(.clk(clk), .ext_reset(~clk_locked), .sys_reset(reset),
       .reset_9900(reset_9900), .reset_9901(reset_9901),
       .reset_9918(reset_9918), .reset_9919(reset_9919),
-      .cpu_turbo(cpu_turbo),
+      .reset_5200(reset_5200), .cpu_turbo(cpu_turbo),
       .vdp_clk_en(vdp_clk_en), .vga_clk_en(vga_clk_en),
       .hdmi_clk_en(),
       .vdp_hsync(vdp_hsync), .vdp_vsync(vdp_vsync),

@@ -9,7 +9,8 @@ module clkgen(input      ext_reset_in,
 	      output	 hdmi_clk_en,     // HDMI pixel clock, 21.47727 MHz
 	      output reg cpu_clk_en,
 	      output	 clk_3mhz_en,     // Peripheral clock, 3.579545 MHz
-	      output reg grom_clk_en      // GROM clock, 447.443125 kHz
+	      output reg grom_clk_en,     // GROM clock, 447.443125 kHz
+	      output reg vsp_clk_en       // VSP clock, 160 kHz
 	      );
 
    // clk rate is this number times 10.738635 MHz
@@ -27,6 +28,7 @@ module clkgen(input      ext_reset_in,
    reg [1:vga_n] vga_divisor;
    reg [1:cpu_n] cpu_divisor;
    reg [0:2]	 grom_cnt;
+   reg [0:6]	 vsp_cnt;
 
    assign reset_out = ~reset_cnt[0];
    assign vdp_clk_en = vdp_divisor[1];
@@ -64,6 +66,8 @@ module clkgen(input      ext_reset_in,
         cpu_clk_en <= 1'b1;
         grom_clk_en <= 1'b1;
         grom_cnt <= 3'b000;
+        vsp_clk_en <= 1'b1;
+        vsp_cnt <= 7'd0;
 	reset_cnt <= 5'd0;
 	init_done <= 1'b1;
      end else begin
@@ -81,6 +85,13 @@ module clkgen(input      ext_reset_in,
 	end
 	if (cpu_divisor[2])
 	  grom_cnt <= grom_cnt + 3'b001;
+	vsp_clk_en <= 1'b0;
+	if (vga_clk_en)
+	  if (vsp_cnt == 7'd66) begin
+	     vsp_clk_en <= 1'b1;
+	     vsp_cnt <= 7'd0;
+	  end else
+	    vsp_cnt <= vsp_cnt + 7'd1;
 	vdp_divisor <= { vdp_divisor[2:vdp_n], vdp_divisor[1] };
 	vga_divisor <= { vga_divisor[2:vga_n], vga_divisor[1] };
 	cpu_divisor <= { cpu_divisor[2:cpu_n], cpu_divisor[1] };

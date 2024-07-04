@@ -9,10 +9,11 @@ module mainboard #(
                 (input                     clk,
 		 input			   ext_reset,
 		 output			   sys_reset,
-		 input                     reset_9900,
-		 input                     reset_9901,
-		 input                     reset_9918,
-		 input                     reset_9919,
+		 input			   reset_9900,
+		 input			   reset_9901,
+		 input			   reset_9918,
+		 input			   reset_9919,
+		 input			   reset_5200,
 		 input			   cpu_turbo,
 		 output			   vdp_clk_en,
 		 output			   vga_clk_en,
@@ -58,6 +59,7 @@ module mainboard #(
    wire	       cpu_clk_en;
    wire	       clk_3mhz_en;
    wire	       grom_clk_en;
+   wire	       vsp_clk_en;
 
    wire	       memen;
    wire	       memen8; // use for 8-bit RAM/ROM, not needed for MB
@@ -71,6 +73,7 @@ module mainboard #(
    wire	       sysrdy;
    wire	       ready_grom;
    wire	       ready_sgc;
+   wire	       ready_vsp;
    wire	       cruin;
    wire	       cruout;
    wire	       cruclk;
@@ -84,6 +87,7 @@ module mainboard #(
    wire [0:7]  d8;
    wire [0:7]  d8_grom;
    wire [0:7]  d8_crom;
+   wire [0:7]  d8_vsp;
    wire [0:7]  cd_vdp;
    wire [0:7]  q8;
    reg	       d_rom_valid;
@@ -93,6 +97,7 @@ module mainboard #(
    reg	       d_mpx_lo_valid;
    reg	       d8_grom_valid;
    reg	       d8_crom_valid;
+   reg	       d8_vsp_valid;
 
    wire	       romen;
    wire	       mbe;
@@ -111,6 +116,10 @@ module mainboard #(
    wire [0:15] p_in;
    wire [0:15] p_out;
    wire [0:15] p_dir;
+
+   wire [0:(audio_bits-1)] audio_vsp;
+   wire [0:audio_bits] audio_mix;
+   wire [0:(audio_bits-1)] audio_mix_sat;
 
    wire [0:7]  wb_dat_vdp;
    wire [0:7]  wb_dat_rom;
@@ -145,8 +154,15 @@ module mainboard #(
 	      (d_mpx_lo_valid ? { 8'hff, d_mpx[8:15] } : 16'hffff);
    assign d8 = 8'hff &
 	       (d8_grom_valid ? d8_grom : 8'hff) &
-	       (d8_crom_valid ? d8_crom : 8'hff);
-   assign sysrdy = (ready_grom | ~gs) & ready_sgc;
+	       (d8_crom_valid ? d8_crom : 8'hff) &
+	       (d8_vsp_valid ? d8_vsp : 8'hff);
+   assign sysrdy = (ready_grom | ~gs) & ready_sgc & ready_vsp;
+
+   assign audio_mix = {audio_in[0], audio_in} + {audio_vsp[0], audio_vsp};
+   assign audio_mix_sat = (audio_gate? audio_vsp :
+			   (audio_mix[0:1] == 2'b00 ||
+			    audio_mix[0:1] == 2'b11 ? audio_mix :
+			    {audio_mix[0], {(audio_bits-1){audio_mix[0]}}}));
 
    always @(posedge clk) begin
       d_rom_valid <= dbin && romen;
@@ -156,6 +172,7 @@ module mainboard #(
       d_mpx_lo_valid <= dbin && !(romen | (mb & ramblk));
       d8_grom_valid <= dbin && gs;
       d8_crom_valid <= dbin && romg;
+      d8_vsp_valid <= dbin && sbe;
    end
 
    always @(*) begin
@@ -205,7 +222,7 @@ module mainboard #(
       .vdp_clk_en(vdp_clk_en), .vdp_clk_en_next(vdp_clk_en_next),
       .vga_clk_en(vga_clk_en), .hdmi_clk_en(hdmi_clk_en),
       .cpu_clk_en(cpu_clk_en), .clk_3mhz_en(clk_3mhz_en),
-      .grom_clk_en(grom_clk_en));
+      .grom_clk_en(grom_clk_en), .vsp_clk_en(vsp_clk_en));
 
    address_decoder addr_dec(.memen(memen), .we(we), .dbin(dbin), .a(a),
 			    .a15(a15), .romen(romen), .mbe(mbe),
@@ -255,8 +272,12 @@ module mainboard #(
    tms9919_sgc #(.audio_bits(audio_bits))
      sgc(.reset(reset|reset_9919), .clk(clk), .clk_en(clk_3mhz_en),
 	 .d(q[0:7]), .cs(sound_sel), .we(we), .ready(ready_sgc),
-	 .audioin((audio_gate? {audio_bits{1'b0}} : audio_in)),
-         .audioout(audio_out));
+	 .audioin(audio_mix_sat), .audioout(audio_out));
+
+   tms5200_wrapper #(.audio_bits(audio_bits), .vsm_size(32768))
+     vsp(.reset(reset|reset_5200), .clk(clk), .clk_en(vsp_clk_en),
+	 .dd(q8), .dq(d8_vsp), .rs(sbe && !a[5]), .ws(sbe && a[5]),
+	 .rdy(ready_vsp), .int(), .audioout(audio_vsp));
 
    console_rom rom(.clk(clk), .cs(romen), .a(a), .q(d_rom),
 		   .wb_adr_i(wb_adr_i[23 -: 16]), .wb_dat_i(wb_dat_i),
