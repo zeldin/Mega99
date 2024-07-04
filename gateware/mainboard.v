@@ -125,14 +125,17 @@ module mainboard #(
    wire [0:7]  wb_dat_rom;
    wire [0:7]  wb_dat_grom;
    wire [0:7]  wb_dat_crom;
+   wire [0:7]  wb_dat_sprom;
    wire	       wb_ack_vdp;
    wire	       wb_ack_rom;
    wire	       wb_ack_grom;
    wire	       wb_ack_crom;
+   wire	       wb_ack_sprom;
    reg	       wb_stb_vdp;
    reg	       wb_stb_rom;
    reg	       wb_stb_grom;
    reg	       wb_stb_crom;
+   reg	       wb_stb_sprom;
    
    assign sys_reset = reset;
    
@@ -182,6 +185,7 @@ module mainboard #(
       wb_stb_rom <= 1'b0;
       wb_stb_grom <= 1'b0;
       wb_stb_crom <= 1'b0;
+      wb_stb_sprom <= 1'b0;
       case (wb_adr_i[0 +: 4])
 	4'h0:
 	  case (wb_adr_i[4 +: 4])
@@ -211,6 +215,11 @@ module mainboard #(
 	   wb_stb_crom <= wb_stb_i;
 	   wb_dat_o <= wb_dat_crom;
 	   wb_ack_o <= wb_ack_crom;
+	end
+	4'h3: begin
+	   wb_stb_sprom <= wb_stb_i;
+	   wb_dat_o <= wb_dat_sprom;
+	   wb_ack_o <= wb_ack_sprom;
 	end
 	default: ;
       endcase // case (wb_adr_i[0 +: 8])
@@ -278,7 +287,11 @@ module mainboard #(
    tms5200_wrapper #(.audio_bits(audio_bits), .vsm_size(32768))
      vsp(.reset(reset|reset_5200), .clk(clk), .clk_en(vsp_clk_en),
 	 .dd(q8), .dq(d8_vsp), .rs(sbe && !a[5]), .ws(sbe && a[5]),
-	 .rdy(ready_vsp), .int(), .audioout(audio_vsp));
+	 .rdy(ready_vsp), .int(), .audioout(audio_vsp),
+	 .wb_adr_i(wb_adr_i[23 -: 18]), .wb_dat_i(wb_dat_i),
+	 .wb_dat_o(wb_dat_sprom), .wb_we_i(wb_we_i),
+	 .wb_sel_i(wb_sel_i), .wb_stb_i(wb_stb_sprom),
+	 .wb_ack_o(wb_ack_sprom), .wb_cyc_i(wb_cyc_i));
 
    console_rom rom(.clk(clk), .cs(romen), .a(a), .q(d_rom),
 		   .wb_adr_i(wb_adr_i[23 -: 16]), .wb_dat_i(wb_dat_i),

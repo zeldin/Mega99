@@ -6,7 +6,17 @@ module tms6100_vsm(input  clk,
 		   input  add4,
 		   input  add2,
 		   input  add1,
-		   output data_out);
+		   output data_out,
+
+		   // ROM access wishbone slave
+		   input [17:0] wb_adr_i,
+		   input [7:0]  wb_dat_i,
+		   output [7:0] wb_dat_o,
+		   input	wb_we_i,
+		   input [0:0]  wb_sel_i,
+		   input	wb_stb_i,
+		   output reg   wb_ack_o,
+		   input	wb_cyc_i);
 
    parameter vsm_size = 16384;
 
@@ -23,15 +33,18 @@ module tms6100_vsm(input  clk,
    reg [2:0] load_pointer = 3'b000;
 
    assign data_out = shift_reg[0];
+   assign wb_dat_o = rom_data;
 
-   initial $readmemh("speechrom.hex", rom);
-   
    always @(posedge clk) begin
+      if (wb_cyc_i && wb_stb_i && wb_we_i && wb_sel_i[0])
+	rom[wb_adr_i] <= wb_dat_i;
+      wb_ack_o <= wb_cyc_i && wb_stb_i && !wb_ack_o &&
+		  (wb_we_i || !do_prefetch);
       if (prefetch_done)
 	prefetch_data <= rom_data;
       prefetch_done <= do_prefetch;
-      if (do_prefetch)
-	rom_data <= rom[rom_addr];
+      if (do_prefetch || (wb_cyc_i && wb_stb_i && !wb_we_i))
+	rom_data <= rom[(do_prefetch ? rom_addr : wb_adr_i)];
       if (do_prefetch) begin
 	 rom_addr <= rom_addr + 18'd1;
 	 do_prefetch <= 1'b0;

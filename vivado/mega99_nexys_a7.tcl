@@ -50,7 +50,6 @@ proc checkRequiredFiles { origin_dir} {
  "[file normalize "$origin_dir/gateware/tms5200/tms5200_vsp.v"]"\
  "[file normalize "$origin_dir/gateware/tms5200/tms5200_wrapper.v"]"\
  "[file normalize "$origin_dir/gateware/tms5200/tms6100_vsm.v"]"\
- "[file normalize "$origin_dir/speechrom.hex"]"\
  "[file normalize "$origin_dir/mor1kx/rtl/verilog/mor1kx-defines.v"]"\
  "[file normalize "$origin_dir/mor1kx/rtl/verilog/mor1kx-sprs.v"]"\
  "[file normalize "$origin_dir/mor1kx/rtl/verilog/mor1kx_utils.vh"]"\
@@ -258,7 +257,6 @@ set files [list \
  [file normalize "${origin_dir}/gateware/tms5200/tms5200_vsp.v"] \
  [file normalize "${origin_dir}/gateware/tms5200/tms5200_wrapper.v"] \
  [file normalize "${origin_dir}/gateware/tms5200/tms6100_vsm.v"] \
- [file normalize "${origin_dir}/speechrom.hex"] \
  [file normalize "${origin_dir}/mor1kx/rtl/verilog/mor1kx-defines.v"] \
  [file normalize "${origin_dir}/mor1kx/rtl/verilog/mor1kx-sprs.v"] \
  [file normalize "${origin_dir}/mor1kx/rtl/verilog/mor1kx_utils.vh"] \

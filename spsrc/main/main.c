@@ -39,6 +39,8 @@ void main()
       load_rom("994a_grom0.u500", GROM(0), 6144) < 0 ||
       load_rom("994a_grom1.u501", GROM(1), 6144) < 0 ||
       load_rom("994a_grom2.u502", GROM(2), 6144) < 0 ||
+      load_rom("cd2325a.vsm", SPEECHROM, 16384) < 0 ||
+      load_rom("cd2326a.vsm", SPEECHROM+16384, 16384) < 0 ||
       load_rom("phm3023g.bin", GROM(3), 6144) < 0) {
     display_printf("ROM Loading failed!\n");
     return;
