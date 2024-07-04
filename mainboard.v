@@ -267,7 +267,7 @@ module mainboard #(
 	      .wb_ack_o(wb_ack_grom), .wb_cyc_i(wb_cyc_i));
 
    cartridge_rom crom(.clk(clk), .cs(romg), .we(we),
-		      .a({a[3:14], a15}), .q(d8_crom),
+		      .a({a[3:14], a15}), .d(q8), .q(d8_crom),
 		      .wb_adr_i(wb_adr_i[23 -: 18]), .wb_dat_i(wb_dat_i),
 		      .wb_dat_o(wb_dat_crom), .wb_we_i(wb_we_i),
 		      .wb_sel_i(wb_sel_i), .wb_stb_i(wb_stb_crom),
