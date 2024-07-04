@@ -2,41 +2,41 @@
 proc checkRequiredFiles { origin_dir} {
   set status true
   set files [list \
- "[file normalize "$origin_dir/mega99_top_a7.v"]"\
- "[file normalize "$origin_dir/clkwiz_a7.v"]"\
- "[file normalize "$origin_dir/mig_wrapper_nexys.v"]"\
- "[file normalize "$origin_dir/cdc_flag.v"]"\
- "[file normalize "$origin_dir/ps2com.v"]"\
- "[file normalize "$origin_dir/keyboard_ps2.v"]"\
- "[file normalize "$origin_dir/sigmadelta.v"]"\
- "[file normalize "$origin_dir/sp.v"]"\
- "[file normalize "$origin_dir/spmem.v"]"\
- "[file normalize "$origin_dir/spmmio.v"]"\
- "[file normalize "$origin_dir/spmmio_misc.v"]"\
- "[file normalize "$origin_dir/spmmio_sdcard.v"]"\
- "[file normalize "$origin_dir/spmmio_uart.v"]"\
+ "[file normalize "$origin_dir/gateware/mega99_top_a7.v"]"\
+ "[file normalize "$origin_dir/gateware/clkwiz_a7.v"]"\
+ "[file normalize "$origin_dir/gateware/mig_wrapper_nexys.v"]"\
+ "[file normalize "$origin_dir/gateware/cdc_flag.v"]"\
+ "[file normalize "$origin_dir/gateware/ps2com.v"]"\
+ "[file normalize "$origin_dir/gateware/keyboard_ps2.v"]"\
+ "[file normalize "$origin_dir/gateware/sigmadelta.v"]"\
+ "[file normalize "$origin_dir/gateware/sp.v"]"\
+ "[file normalize "$origin_dir/gateware/spmem.v"]"\
+ "[file normalize "$origin_dir/gateware/spmmio.v"]"\
+ "[file normalize "$origin_dir/gateware/spmmio_misc.v"]"\
+ "[file normalize "$origin_dir/gateware/spmmio_sdcard.v"]"\
+ "[file normalize "$origin_dir/gateware/spmmio_uart.v"]"\
  "[file normalize "$origin_dir/or1k_boot_code0.hex"]"\
  "[file normalize "$origin_dir/or1k_boot_code1.hex"]"\
  "[file normalize "$origin_dir/or1k_boot_code2.hex"]"\
  "[file normalize "$origin_dir/or1k_boot_code3.hex"]"\
- "[file normalize "$origin_dir/mainboard.v"]"\
- "[file normalize "$origin_dir/clkgen.v"]"\
- "[file normalize "$origin_dir/address_decoder.v"]"\
- "[file normalize "$origin_dir/multiplexer.v"]"\
- "[file normalize "$origin_dir/keymatrix.v"]"\
- "[file normalize "$origin_dir/groms.v"]"\
- "[file normalize "$origin_dir/cartridge_rom.v"]"\
- "[file normalize "$origin_dir/console_rom.v"]"\
- "[file normalize "$origin_dir/scratchpad_ram.v"]"\
- "[file normalize "$origin_dir/tms9900/tms9900_cpu.v"]"\
- "[file normalize "$origin_dir/tms9900/tms9901_psi.v"]"\
- "[file normalize "$origin_dir/tms9918/tms9918_vdp.v"]"\
- "[file normalize "$origin_dir/tms9918/tms9918_scandoubler.v"]"\
- "[file normalize "$origin_dir/tms9918/tms9918_color_to_rgb.v"]"\
- "[file normalize "$origin_dir/tms9918/tms9918_vdpram.v"]"\
- "[file normalize "$origin_dir/tms9918/tms9918_cpuifc.v"]"\
- "[file normalize "$origin_dir/tms9918/tms9918_wrapper.v"]"\
- "[file normalize "$origin_dir/tms9919/tms9919_sgc.v"]"\
+ "[file normalize "$origin_dir/gateware/mainboard.v"]"\
+ "[file normalize "$origin_dir/gateware/clkgen.v"]"\
+ "[file normalize "$origin_dir/gateware/address_decoder.v"]"\
+ "[file normalize "$origin_dir/gateware/multiplexer.v"]"\
+ "[file normalize "$origin_dir/gateware/keymatrix.v"]"\
+ "[file normalize "$origin_dir/gateware/groms.v"]"\
+ "[file normalize "$origin_dir/gateware/cartridge_rom.v"]"\
+ "[file normalize "$origin_dir/gateware/console_rom.v"]"\
+ "[file normalize "$origin_dir/gateware/scratchpad_ram.v"]"\
+ "[file normalize "$origin_dir/gateware/tms9900/tms9900_cpu.v"]"\
+ "[file normalize "$origin_dir/gateware/tms9900/tms9901_psi.v"]"\
+ "[file normalize "$origin_dir/gateware/tms9918/tms9918_vdp.v"]"\
+ "[file normalize "$origin_dir/gateware/tms9918/tms9918_scandoubler.v"]"\
+ "[file normalize "$origin_dir/gateware/tms9918/tms9918_color_to_rgb.v"]"\
+ "[file normalize "$origin_dir/gateware/tms9918/tms9918_vdpram.v"]"\
+ "[file normalize "$origin_dir/gateware/tms9918/tms9918_cpuifc.v"]"\
+ "[file normalize "$origin_dir/gateware/tms9918/tms9918_wrapper.v"]"\
+ "[file normalize "$origin_dir/gateware/tms9919/tms9919_sgc.v"]"\
  "[file normalize "$origin_dir/mor1kx/rtl/verilog/mor1kx-defines.v"]"\
  "[file normalize "$origin_dir/mor1kx/rtl/verilog/mor1kx-sprs.v"]"\
  "[file normalize "$origin_dir/mor1kx/rtl/verilog/mor1kx_utils.vh"]"\
@@ -196,41 +196,41 @@ if {[string equal [get_filesets -quiet sources_1] ""]} {
 # Set 'sources_1' fileset object
 set obj [get_filesets sources_1]
 set files [list \
- [file normalize "${origin_dir}/mega99_top_a7.v"] \
- [file normalize "${origin_dir}/clkwiz_a7.v"] \
- [file normalize "${origin_dir}/mig_wrapper_nexys.v"] \
- [file normalize "${origin_dir}/cdc_flag.v"] \
- [file normalize "${origin_dir}/ps2com.v"] \
- [file normalize "${origin_dir}/keyboard_ps2.v"] \
- [file normalize "${origin_dir}/sigmadelta.v"] \
- [file normalize "${origin_dir}/sp.v"] \
- [file normalize "${origin_dir}/spmem.v"] \
- [file normalize "${origin_dir}/spmmio.v"] \
- [file normalize "${origin_dir}/spmmio_misc.v"] \
- [file normalize "${origin_dir}/spmmio_sdcard.v"] \
- [file normalize "${origin_dir}/spmmio_uart.v"] \
+ [file normalize "${origin_dir}/gateware/mega99_top_a7.v"] \
+ [file normalize "${origin_dir}/gateware/clkwiz_a7.v"] \
+ [file normalize "${origin_dir}/gateware/mig_wrapper_nexys.v"] \
+ [file normalize "${origin_dir}/gateware/cdc_flag.v"] \
+ [file normalize "${origin_dir}/gateware/ps2com.v"] \
+ [file normalize "${origin_dir}/gateware/keyboard_ps2.v"] \
+ [file normalize "${origin_dir}/gateware/sigmadelta.v"] \
+ [file normalize "${origin_dir}/gateware/sp.v"] \
+ [file normalize "${origin_dir}/gateware/spmem.v"] \
+ [file normalize "${origin_dir}/gateware/spmmio.v"] \
+ [file normalize "${origin_dir}/gateware/spmmio_misc.v"] \
+ [file normalize "${origin_dir}/gateware/spmmio_sdcard.v"] \
+ [file normalize "${origin_dir}/gateware/spmmio_uart.v"] \
  [file normalize "${origin_dir}/or1k_boot_code0.hex"] \
  [file normalize "${origin_dir}/or1k_boot_code1.hex"] \
  [file normalize "${origin_dir}/or1k_boot_code2.hex"] \
  [file normalize "${origin_dir}/or1k_boot_code3.hex"] \
- [file normalize "${origin_dir}/mainboard.v"] \
- [file normalize "${origin_dir}/clkgen.v"] \
- [file normalize "${origin_dir}/address_decoder.v"] \
- [file normalize "${origin_dir}/multiplexer.v"] \
- [file normalize "${origin_dir}/keymatrix.v"] \
- [file normalize "${origin_dir}/groms.v"] \
- [file normalize "${origin_dir}/cartridge_rom.v"] \
- [file normalize "${origin_dir}/console_rom.v"] \
- [file normalize "${origin_dir}/scratchpad_ram.v"] \
- [file normalize "${origin_dir}/tms9900/tms9900_cpu.v"] \
- [file normalize "${origin_dir}/tms9900/tms9901_psi.v"] \
- [file normalize "${origin_dir}/tms9918/tms9918_vdp.v"] \
- [file normalize "${origin_dir}/tms9918/tms9918_scandoubler.v"] \
- [file normalize "${origin_dir}/tms9918/tms9918_color_to_rgb.v"] \
- [file normalize "${origin_dir}/tms9918/tms9918_vdpram.v"] \
- [file normalize "${origin_dir}/tms9918/tms9918_cpuifc.v"] \
- [file normalize "${origin_dir}/tms9918/tms9918_wrapper.v"] \
- [file normalize "${origin_dir}/tms9919/tms9919_sgc.v"] \
+ [file normalize "${origin_dir}/gateware/mainboard.v"] \
+ [file normalize "${origin_dir}/gateware/clkgen.v"] \
+ [file normalize "${origin_dir}/gateware/address_decoder.v"] \
+ [file normalize "${origin_dir}/gateware/multiplexer.v"] \
+ [file normalize "${origin_dir}/gateware/keymatrix.v"] \
+ [file normalize "${origin_dir}/gateware/groms.v"] \
+ [file normalize "${origin_dir}/gateware/cartridge_rom.v"] \
+ [file normalize "${origin_dir}/gateware/console_rom.v"] \
+ [file normalize "${origin_dir}/gateware/scratchpad_ram.v"] \
+ [file normalize "${origin_dir}/gateware/tms9900/tms9900_cpu.v"] \
+ [file normalize "${origin_dir}/gateware/tms9900/tms9901_psi.v"] \
+ [file normalize "${origin_dir}/gateware/tms9918/tms9918_vdp.v"] \
+ [file normalize "${origin_dir}/gateware/tms9918/tms9918_scandoubler.v"] \
+ [file normalize "${origin_dir}/gateware/tms9918/tms9918_color_to_rgb.v"] \
+ [file normalize "${origin_dir}/gateware/tms9918/tms9918_vdpram.v"] \
+ [file normalize "${origin_dir}/gateware/tms9918/tms9918_cpuifc.v"] \
+ [file normalize "${origin_dir}/gateware/tms9918/tms9918_wrapper.v"] \
+ [file normalize "${origin_dir}/gateware/tms9919/tms9919_sgc.v"] \
  [file normalize "${origin_dir}/mor1kx/rtl/verilog/mor1kx-defines.v"] \
  [file normalize "${origin_dir}/mor1kx/rtl/verilog/mor1kx-sprs.v"] \
  [file normalize "${origin_dir}/mor1kx/rtl/verilog/mor1kx_utils.vh"] \

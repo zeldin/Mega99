@@ -1,32 +1,34 @@
 
 MOR1KXPATH = mor1kx/rtl/verilog
 
-COMMON_SOURCES  = mainboard.v
-COMMON_SOURCES += clkgen.v
-COMMON_SOURCES += address_decoder.v
-COMMON_SOURCES += multiplexer.v
-COMMON_SOURCES += keymatrix.v
-COMMON_SOURCES += groms.v
-COMMON_SOURCES += cartridge_rom.v
-COMMON_SOURCES += console_rom.v
-COMMON_SOURCES += scratchpad_ram.v
+GATEWARE = gateware
 
-COMMON_SOURCES += tms9900/tms9900_cpu.v
-COMMON_SOURCES += tms9900/tms9901_psi.v
-COMMON_SOURCES += tms9918/tms9918_vdp.v
-COMMON_SOURCES += tms9918/tms9918_scandoubler.v
-COMMON_SOURCES += tms9918/tms9918_color_to_rgb.v
-COMMON_SOURCES += tms9918/tms9918_vdpram.v
-COMMON_SOURCES += tms9918/tms9918_cpuifc.v
-COMMON_SOURCES += tms9918/tms9918_wrapper.v
-COMMON_SOURCES += tms9919/tms9919_sgc.v
+COMMON_SOURCES  = $(GATEWARE)/mainboard.v
+COMMON_SOURCES += $(GATEWARE)/clkgen.v
+COMMON_SOURCES += $(GATEWARE)/address_decoder.v
+COMMON_SOURCES += $(GATEWARE)/multiplexer.v
+COMMON_SOURCES += $(GATEWARE)/keymatrix.v
+COMMON_SOURCES += $(GATEWARE)/groms.v
+COMMON_SOURCES += $(GATEWARE)/cartridge_rom.v
+COMMON_SOURCES += $(GATEWARE)/console_rom.v
+COMMON_SOURCES += $(GATEWARE)/scratchpad_ram.v
 
-COMMON_SOURCES += sp.v
-COMMON_SOURCES += spmem.v
-COMMON_SOURCES += spmmio.v
-COMMON_SOURCES += spmmio_misc.v
-COMMON_SOURCES += spmmio_sdcard.v
-COMMON_SOURCES += spmmio_uart.v
+COMMON_SOURCES += $(GATEWARE)/tms9900/tms9900_cpu.v
+COMMON_SOURCES += $(GATEWARE)/tms9900/tms9901_psi.v
+COMMON_SOURCES += $(GATEWARE)/tms9918/tms9918_vdp.v
+COMMON_SOURCES += $(GATEWARE)/tms9918/tms9918_scandoubler.v
+COMMON_SOURCES += $(GATEWARE)/tms9918/tms9918_color_to_rgb.v
+COMMON_SOURCES += $(GATEWARE)/tms9918/tms9918_vdpram.v
+COMMON_SOURCES += $(GATEWARE)/tms9918/tms9918_cpuifc.v
+COMMON_SOURCES += $(GATEWARE)/tms9918/tms9918_wrapper.v
+COMMON_SOURCES += $(GATEWARE)/tms9919/tms9919_sgc.v
+
+COMMON_SOURCES += $(GATEWARE)/sp.v
+COMMON_SOURCES += $(GATEWARE)/spmem.v
+COMMON_SOURCES += $(GATEWARE)/spmmio.v
+COMMON_SOURCES += $(GATEWARE)/spmmio_misc.v
+COMMON_SOURCES += $(GATEWARE)/spmmio_sdcard.v
+COMMON_SOURCES += $(GATEWARE)/spmmio_uart.v
 
 MOR1KX_SOURCES  = $(MOR1KXPATH)/mor1kx-defines.v
 MOR1KX_SOURCES += $(MOR1KXPATH)/mor1kx-sprs.v
@@ -63,13 +65,13 @@ BOOTHEX += or1k_boot_code1.hex
 BOOTHEX += or1k_boot_code2.hex
 BOOTHEX += or1k_boot_code3.hex
 
-NEXYS_A7_SOURCES  = mega99_top_a7.v
-NEXYS_A7_SOURCES += clkwiz_a7.v
-NEXYS_A7_SOURCES += mig_wrapper_nexys.v
-NEXYS_A7_SOURCES += cdc_flag.v
-NEXYS_A7_SOURCES += ps2com.v
-NEXYS_A7_SOURCES += keyboard_ps2.v
-NEXYS_A7_SOURCES += sigmadelta.v
+NEXYS_A7_SOURCES  = $(GATEWARE)/mega99_top_a7.v
+NEXYS_A7_SOURCES += $(GATEWARE)/clkwiz_a7.v
+NEXYS_A7_SOURCES += $(GATEWARE)/mig_wrapper_nexys.v
+NEXYS_A7_SOURCES += $(GATEWARE)/cdc_flag.v
+NEXYS_A7_SOURCES += $(GATEWARE)/ps2com.v
+NEXYS_A7_SOURCES += $(GATEWARE)/keyboard_ps2.v
+NEXYS_A7_SOURCES += $(GATEWARE)/sigmadelta.v
 
 NEXYS_A7_SOURCES += vivado/mega99_nexys_a7.xdc
 NEXYS_A7_SOURCES += vivado/mig_a.prj
