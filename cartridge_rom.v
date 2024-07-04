@@ -6,7 +6,7 @@ module cartridge_rom(input             clk,
 		     output reg [0:7]  q,
 
 		     // CROM access wishbone slave
-		     input [0:17]      wb_adr_i,
+		     input [0:20]      wb_adr_i,
 		     input [0:7]       wb_dat_i,
 		     output [0:7]      wb_dat_o,
 		     input	       wb_we_i,
@@ -31,15 +31,15 @@ module cartridge_rom(input             clk,
 
    assign cpu_array_read = cs && !we;
    assign cpu_array_write = cs && we && mm && a[3];
-   assign wb_control = wb_adr_i[0];
+   assign wb_control = !wb_adr_i[0];
    assign wb_array_read = wb_cyc_i && wb_stb_i && !wb_we_i && !wb_control;
    assign wb_array_write = wb_cyc_i && wb_stb_i && wb_we_i && !wb_control && wb_sel_i[0];
 
    assign wb_dat_o = (wb_control ? { 3'b000, bank, 2'b00, mm, banked } : q);
    assign readaddr = (cpu_array_read ? { bank, a[3:15] } :
-		      wb_adr_i[4:17]);
+		      wb_adr_i[20 -: 14]);
    assign writeaddr = (cpu_array_write ? { 2'b01, a[4:15] } :
-		       wb_adr_i[4:17]);
+		       wb_adr_i[20 -: 14]);
 
    always @(posedge clk) begin
 

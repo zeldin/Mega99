@@ -164,23 +164,32 @@ module mainboard #(
       wb_stb_vdp <= 1'b0;
       wb_stb_rom <= 1'b0;
       wb_stb_grom <= 1'b0;
-      case (wb_adr_i[0 +: 8])
-	8'h00: begin
-	   wb_stb_vdp <= wb_stb_i;
-	   wb_dat_o <= wb_dat_vdp;
-	   wb_ack_o <= wb_ack_vdp;
-	end
-	8'h01: begin
-	   wb_stb_rom <= wb_stb_i;
-	   wb_dat_o <= wb_dat_rom;
-	   wb_ack_o <= wb_ack_rom;
-	end
-	8'h02: begin
+      case (wb_adr_i[0 +: 4])
+	4'h0:
+	  case (wb_adr_i[4 +: 4])
+	    4'h0: begin
+	       wb_stb_vdp <= wb_stb_i;
+	       wb_dat_o <= wb_dat_vdp;
+	       wb_ack_o <= wb_ack_vdp;
+	    end
+	    4'h1: begin
+	       wb_stb_rom <= wb_stb_i;
+	       wb_dat_o <= wb_dat_rom;
+	       wb_ack_o <= wb_ack_rom;
+	    end
+	    4'h3: begin
+	       wb_stb_crom <= wb_stb_i;
+	       wb_dat_o <= wb_dat_crom;
+	       wb_ack_o <= wb_ack_crom;
+	    end
+	    default: ;
+	  endcase // case (wb_adr_i[4 +: 4])
+	4'h1: begin
 	   wb_stb_grom <= wb_stb_i;
 	   wb_dat_o <= wb_dat_grom;
 	   wb_ack_o <= wb_ack_grom;
 	end
-	8'h03, 8'h04, 8'h05: begin
+	4'h2: begin
 	   wb_stb_crom <= wb_stb_i;
 	   wb_dat_o <= wb_dat_crom;
 	   wb_ack_o <= wb_ack_crom;
@@ -268,7 +277,8 @@ module mainboard #(
 
    cartridge_rom crom(.clk(clk), .cs(romg), .we(we),
 		      .a({a[3:14], a15}), .d(q8), .q(d8_crom),
-		      .wb_adr_i(wb_adr_i[23 -: 18]), .wb_dat_i(wb_dat_i),
+		      .wb_adr_i({wb_adr_i[2], wb_adr_i[23 -: 20]}),
+		      .wb_dat_i(wb_dat_i),
 		      .wb_dat_o(wb_dat_crom), .wb_we_i(wb_we_i),
 		      .wb_sel_i(wb_sel_i), .wb_stb_i(wb_stb_crom),
 		      .wb_ack_o(wb_ack_crom), .wb_cyc_i(wb_cyc_i));
