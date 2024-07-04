@@ -5,6 +5,19 @@
 #include "display.h"
 #include "fatfs.h"
 
+void exception_handler(uint32_t vector)
+{
+  unsigned i;
+  REGS_MISC.leds = 2u;
+  uart_puts("Got exception #0x");
+  for(i=0; i<8; i++) {
+    unsigned d = vector >> 28;
+    vector <<= 4;
+    uart_write((d < 10? d + '0' : d + ('A'-10)));
+  }
+  uart_puts(", system halted\n");
+}
+
 static int load_rom(const char *filename, uint8_t *ptr, uint32_t len)
 {
   display_printf("%s...", filename);
