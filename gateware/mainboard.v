@@ -181,6 +181,7 @@ module mainboard #(
       wb_stb_vdp <= 1'b0;
       wb_stb_rom <= 1'b0;
       wb_stb_grom <= 1'b0;
+      wb_stb_crom <= 1'b0;
       case (wb_adr_i[0 +: 4])
 	4'h0:
 	  case (wb_adr_i[4 +: 4])
