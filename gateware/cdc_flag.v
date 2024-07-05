@@ -6,13 +6,13 @@ module cdc_flag(input  a_rst_n,
 		output b_flag);
 
    reg flag;
-   always @(posedge a_clk or negedge a_rst_n) begin
+   always @(posedge a_clk) begin
       if(~a_rst_n) flag <= 0;
       else flag <= flag ^ a_flag;
    end
 
    (* ASYNC_REG = "TRUE" *) reg[2:0] flag_sync;
-   always @(posedge b_clk or negedge b_rst_n) begin
+   always @(posedge b_clk) begin
       if(~b_rst_n) flag_sync <= 3'h0;
       else flag_sync <= {flag_sync[1:0], flag};
    end
