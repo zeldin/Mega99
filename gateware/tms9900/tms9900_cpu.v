@@ -311,7 +311,32 @@ module tms9900_cpu(input reset,
 		    4'b1010: state <= S_BL_1; // BL
 		    default: state <= S_SINGLE_OP_1; // CLR/NEG/INV/INC(T)/DEC(T)/SWPB/SETO/ABS
 		  endcase // case (ir[6:9])
+	     end // case: S_TS_COMPLETE
+
+	     // A(B) / C(B) / S(B) / SOC(B) / SZC(B) / MOV(B)
+	     S_DUAL_MULTI_OP_2: begin
+		if (bytemode) begin
+		   // byte operand
+		   q <= { (addr[15] ? d_latch[8:15] : d_latch[0:7]), 8'h00 };
+		   if (addr[15])
+		     d_latch <= { d_latch[8:15], d_latch[0:7] };
+		end else
+		  q <= d_latch;
 	     end
+	     // CLR / NEG / INV / INC(T) / DEC(T) / SWPB / SETO / ABS
+	     S_SINGLE_OP_4:
+	       case (ir[6:9])
+		 4'b0011: q <= 16'h0000; // CLR
+		 4'b0100: { st[3], q } <= 17'h00001 + { 1'b0, ~d_latch }; // NEG
+		 4'b0101: q <= ~d_latch; // INV
+		 4'b0110: { st[3], q } <= { 1'b0, d_latch } + 17'd1; // INC
+		 4'b0111: { st[3], q } <= { 1'b0, d_latch } + 17'd2; // INCT
+		 4'b1000: { st[3], q } <= { 1'b0, d_latch } + 17'hffff; // DEC
+		 4'b1001: { st[3], q } <= { 1'b0, d_latch } + 17'hfffe; // DECT
+		 4'b1011: q <= { d_latch[8:15], d_latch[0:7] }; // SWPB
+		 4'b1100: q <= 16'hffff; // SETO
+		 4'b1101: q <= d_latch; // ABS
+	       endcase // case (ir[6:9])
 	   endcase // case (state)
 	end else begin
 	   phase <= 1'b1;
@@ -410,9 +435,9 @@ module tms9900_cpu(input reset,
 		addr <= { wp[0:10], ir[12:15], 1'b0 };
 		if (ir[8:10] == 3'b000 || ir[8:10] == 3'b111)
 		  state <= S_IOP;
+		else
+		  memen <= 1'b1;
 	     end
-	     S_GET_IOP_3:
-	       memen <= 1'b1;
 	     S_IOP:
 	       if (ir[7])
 		 state <= S_LIMI_1; // LIMI
@@ -423,23 +448,23 @@ module tms9900_cpu(input reset,
 	       end else begin
 		case (ir[8:10])
 		  3'b000: q <= operand; // LI
-		  3'b001: {st[3], q} <= {1'b0, operand} + {1'b0, d}; // AI
-		  3'b010: q <= operand & d; // ANDI
-		  3'b011: q <= operand | d; // ORI
-		  3'b100: q <= operand - d; // CI
+		  3'b001: {st[3], q} <= {1'b0, operand} + {1'b0, d_latch}; // AI
+		  3'b010: q <= operand & d_latch; // ANDI
+		  3'b011: q <= operand | d_latch; // ORI
+		  3'b100: q <= operand - d_latch; // CI
 		endcase // case (ir[8:10])
 	     end
 	     S_IOP_WRITEBACK: begin
 		if (ir[8:10] == 3'b001)
 		  // AI
-		  st[4] <= (d[0] == operand[0]) && (d[0] != q[0]);
+		  st[4] <= (d_latch[0] == operand[0]) && (d_latch[0] != q[0]);
 		st[2] <= ~|q;
 		if (ir[8]) begin
 		   // CI
-		   st[1] <= (!d[0] && operand[0]) ||
-			    (d[0] == operand[0] && q[0]);
-		   st[0] <= (d[0] && !operand[0]) ||
-			    (d[0] == operand[0] && q[0]);
+		   st[1] <= (!d_latch[0] && operand[0]) ||
+			    (d_latch[0] == operand[0] && q[0]);
+		   st[0] <= (d_latch[0] && !operand[0]) ||
+			    (d_latch[0] == operand[0] && q[0]);
 		end else begin
 		   st[1] <= !q[0] && |q;
 		   st[0] <= |q;
@@ -468,6 +493,11 @@ module tms9900_cpu(input reset,
 	     // JEQ / JGT / JH / JHE / JL / JLE / JLT / JMP / JNC / JNE / JNO / JOC / JOP
 	     S_JUMP_1: begin
 		operand <= { {8{ir[8]}}, ir[8:15] };
+		if (ir[4:5] == 2'b11 && ir[6:7] != 2'b00) begin
+		   // SBO / SBZ / TB
+		   addr <= { wp[0:10], 4'd12, 1'b0 };
+		   memen <= 1'b1;
+		end
 	     end
 	     S_JUMP_2: begin
 		case (ir[4:7])
@@ -483,12 +513,7 @@ module tms9900_cpu(input reset,
 		  4'b1010: if (st[0] != 1'b0 || st[2] != 1'b0) state <= S_IFETCH;
 		  4'b1011: if (st[0] != 1'b1 || st[2] != 1'b0) state <= S_IFETCH;
 		  4'b1100: if (st[5] != 1'b1) state <= S_IFETCH;
-		  4'b1101, 4'b1110, 4'b1111: begin
-		     // SBO / SBZ / TB
-		     state <= S_CRU_SINGLE_1;
-		     addr <= { wp[0:10], 4'd12, 1'b0 };
-		     memen <= 1'b1;
-		  end
+		  4'b1101, 4'b1110, 4'b1111: state <= S_CRU_SINGLE_1; // SBO / SBZ / TB
 		endcase // case (ir[4:7])
 	     end
 	     S_JUMP_3: begin
@@ -519,10 +544,10 @@ module tms9900_cpu(input reset,
 	     S_GET_TS_AUTOINC_1: begin
 		addr <= d;
 		extra <= d;
-		q <= (bytemode? d + 16'd1 : d + 16'd2);
 		memen <= 1'b1;
 	     end
 	     S_GET_TS_AUTOINC_2: begin
+		q <= (bytemode? extra + 16'd1 : extra + 16'd2);
 		addr <= { wp[0:10], ir[12:15], 1'b0 };
 		memen <= 1'b1;
 		we <= 1'b1;
@@ -532,18 +557,17 @@ module tms9900_cpu(input reset,
 		addr <= extra;
 		state <= S_TS_COMPLETE;
 	     end
-	     S_GET_TS_INDEXED_1:
-	       if (ir[12:15] == 4'h0)
-		 q = 16'h0000;
-	       else
-		 q <= d;
 	     S_GET_TS_INDEXED_2: begin
+		if (ir[12:15] == 4'h0)
+		  q = 16'h0000;
+		else
+		  q <= d_latch;
 		addr <= pc;
 		pc <= pc + 16'd2;
 		memen <= 1'b1;
 	     end
-	     S_GET_TS_INDEXED_3: addr <= d+q;
 	     S_GET_TS_INDEXED_4: begin
+		addr <= d_latch + q;
 		memen <= 1'b1;
 		state <= S_TS_COMPLETE;
 	     end
@@ -578,10 +602,10 @@ module tms9900_cpu(input reset,
 	     S_GET_TD_AUTOINC_1: begin
 		addr <= d;
 		extra <= d;
-		q <= (bytemode? d + 16'd1 : d + 16'd2);
 		memen <= 1'b1;
 	     end
 	     S_GET_TD_AUTOINC_2: begin
+		q <= (bytemode? extra + 16'd1 : extra + 16'd2);
 		addr <= { wp[0:10], ir[6:9], 1'b0 };
 		memen <= 1'b1;
 		we <= 1'b1;
@@ -591,32 +615,22 @@ module tms9900_cpu(input reset,
 		addr <= extra;
 		state <= S_DUAL_MULTI_OP_1;
 	     end
-	     S_GET_TD_INDEXED_1:
-	       if (ir[6:9] == 4'h0)
-		 q = 16'h0000;
-	       else
-		 q <= d;
 	     S_GET_TD_INDEXED_2: begin
+		if (ir[6:9] == 4'h0)
+		  q = 16'h0000;
+		else
+		  q <= d_latch;
 		addr <= pc;
 		pc <= pc + 16'd2;
 		memen <= 1'b1;
 	     end
-	     S_GET_TD_INDEXED_3: addr <= d + q;
 	     S_GET_TD_INDEXED_4: begin
+		addr <= d_latch + q;
 		memen <= 1'b1;
 		state <= S_DUAL_MULTI_OP_1;
 	     end
 
 	     // A(B) / C(B) / S(B) / SOC(B) / SZC(B) / MOV(B)
-	     S_DUAL_MULTI_OP_1: begin
-		if (bytemode) begin
-		   // byte operand
-		   q <= { (addr[15] ? d[8:15] : d[0:7]), 8'h00 };
-		   if (addr[15])
-		     d_latch <= { d[8:15], d[0:7] };
-		end else
-		  q <= d;
-	     end
 	     S_DUAL_MULTI_OP_2: begin
 		case (ir[0:2])
 		  3'b010: q <= q & ~operand; // SZC
@@ -630,17 +644,17 @@ module tms9900_cpu(input reset,
 	     S_DUAL_MULTI_OP_3: begin
 		if (ir[0:2] == 3'b101)
 		  // A
-		  st[4] <= (d[0] == operand[0]) && (d[0] != q[0]);
+		  st[4] <= (d_latch[0] == operand[0]) && (d_latch[0] != q[0]);
 		else if (ir[0:2] == 3'b011)
 		  // S
-		  st[4] <= (d[0] != operand[0]) && (d[0] != q[0]);
+		  st[4] <= (d_latch[0] != operand[0]) && (d_latch[0] != q[0]);
 		st[2] <= ~|q;
 		if (ir[0:2] == 3'b100) begin
 		   // C
-		   st[1] <= (!operand[0] && d[0]) ||
-			    (operand[0] == d[0] && q[0]);
-		   st[0] <= (operand[0] && !d[0]) ||
-			    (operand[0] == d[0] && q[0]);
+		   st[1] <= (!operand[0] && d_latch[0]) ||
+			    (operand[0] == d_latch[0] && q[0]);
+		   st[0] <= (operand[0] && !d_latch[0]) ||
+			    (operand[0] == d_latch[0] && q[0]);
 		end else begin
 		   st[1] <= !q[0] && |q;
 		   st[0] <= |q;
@@ -661,21 +675,21 @@ module tms9900_cpu(input reset,
 	     end // case: S_DUAL_MULTI_OP_3
 
 	     // SLA / SRA / SRC / SRL
-	     S_SHIFT_1:
-	       if (c != 4'b000)
-		 state <= S_SHIFT_6;
-	     S_SHIFT_2: begin
+	     S_SHIFT_1: begin
 		addr <= { wp[0:10], 4'd0, 1'b0 };
 		memen <= 1'b1;
+		if (c != 4'b000) begin
+		   addr <= { wp[0:10], ir[12:15], 1'b0 };
+		   state <= S_SHIFT_6;
+		end
 	     end
-	     S_SHIFT_3:
-	       c <= d[12:15];
-	     S_SHIFT_6: begin
+	     S_SHIFT_3: begin
+		c <= d_latch[12:15];
 		addr <= { wp[0:10], ir[12:15], 1'b0 };
 		memen <= 1'b1;
 	     end
 	     S_SHIFT_7: begin
-		q <= d;
+		q <= d_latch;
 		if (ir[6:7] == 2'b10)
 		  st[4] <= 1'b0;
 	     end
@@ -723,26 +737,14 @@ module tms9900_cpu(input reset,
 	     S_SINGLE_OP_1: begin
 		state <= S_SINGLE_OP_4;
 		case (ir[6:9])
-		  4'b0011: q <= 16'h0000; // CLR
-		  4'b0100: begin
-		     { st[3], q } <= 17'h00001 + { 1'b0, ~d }; // NEG
-		     state <= S_SINGLE_OP_3;
-		  end
-		  4'b0101: q <= ~d; // INV
-		  4'b0110: { st[3], q } <= { 1'b0, d } + 17'd1; // INC
-		  4'b0111: { st[3], q } <= { 1'b0, d } + 17'd2; // INCT
-		  4'b1000: { st[3], q } <= { 1'b0, d } + 17'hffff; // DEC
-		  4'b1001: { st[3], q } <= { 1'b0, d } + 17'hfffe; // DECT
-		  4'b1011: q <= { d[8:15], d[0:7] }; // SWPB
-		  4'b1100: q <= 16'hffff; // SETO
-		  4'b1101: begin
-		     q <= d; // ABS
-		     if (d[0] == 1'b1)
-		       state <= S_SINGLE_OP_2;
-		     else
-		       state <= S_SINGLE_OP_3;
-		  end
+		  4'b0100: state <= S_SINGLE_OP_3; // NEG: one extra cycle
+		  4'b1101: state <= S_SINGLE_OP_2; // ABS: one or two extra
+		  default: state <= S_SINGLE_OP_4;
 		endcase // case (ir[6:9])
+	     end
+	     S_SINGLE_OP_2: begin
+		if (d_latch[0] == 1'b0)
+		  state <= S_SINGLE_OP_4; // ABS: Second extra only if negative
 	     end
 	     S_SINGLE_OP_4: begin
 		memen <= 1'b1;
@@ -752,9 +754,9 @@ module tms9900_cpu(input reset,
 		   case (ir[6:9])	
 		     4'b0100: st[4] <= (q == 16'h8000); // NEG
 		     4'b0110, 4'b0111:
-		       st[4] <= (d[0] == 1'b0 && q[0] == 1'b1); // INC(T)
+		       st[4] <= (d_latch[0] == 1'b0 && q[0] == 1'b1); // INC(T)
 		     4'b1000, 4'b1001:
-		       st[4] <= (d[0] == 1'b1 && q[0] == 1'b0); // DEC(T)
+		       st[4] <= (d_latch[0] == 1'b1 && q[0] == 1'b0); // DEC(T)
 		     4'b1101: // ABS
 		       if (q[0]) begin
 			  st[4] <= (q == 16'h8000);
@@ -775,17 +777,16 @@ module tms9900_cpu(input reset,
 	     end // case: S_SINGLE_OP_4
 
 	     // COC / CZC / XOR
-	     S_BIT_OP_1:
-	       operand <= d;
-	     S_BIT_OP_2: begin
+	     S_BIT_OP_1: begin
+		operand <= d;
 		addr <= { wp[0:10], ir[6:9], 1'b0 };
 		memen <= 1'b1;
 	     end
 	     S_BIT_OP_3: begin
 		case (ir[4:5])
-		  2'b00: q <= (~d) & operand; // COC
-		  2'b01: q <= d & operand; // CZC
-		  2'b10: q <= d ^ operand; // XOR
+		  2'b00: q <= (~d_latch) & operand; // COC
+		  2'b01: q <= d_latch & operand; // CZC
+		  2'b10: q <= d_latch ^ operand; // XOR
 		endcase // case (ir[4:5])
 	     end
 	     S_BIT_OP_4: begin
@@ -822,7 +823,7 @@ module tms9900_cpu(input reset,
 
 	     // SBO / SBZ / TB
 	     S_CRU_SINGLE_1: begin
-		addr <= { operand[1:15], 1'b0 } + d;
+		addr <= { operand[1:15], 1'b0 } + d_latch;
 		addr[0:2] <= 3'b000;
 		cru_cycle <= 1'b1;
 		if (ir[6:7] != 2'b11) begin
@@ -874,7 +875,7 @@ module tms9900_cpu(input reset,
 	     S_CRU_MULTIPLE_1: begin
 		if (ir[5] == 1'b1) begin
 		   operand <= addr;
-		   q <= d;
+		   extra <= d;
 		end else if (bytemode)
 		  operand <= { 8'h00, (addr[15]? d[8:15] : d[0:7]) };
 		else
@@ -886,7 +887,7 @@ module tms9900_cpu(input reset,
 		addr <= d;
 		addr[0:2] <= 3'b000;
 		if (ir[5] == 1'b1)
-		   d_latch <= q;
+		   d_latch <= extra;
 		// Fix timing
 		if (ir[5] == 1'b0)
 		  extra[0:2] <= 3'd3;
@@ -941,7 +942,7 @@ module tms9900_cpu(input reset,
 		  cru_cycle <= 1'b1;
 		  c <= c - 4'b0001;
 		end
-	     end // case: S_CRU_MULTIPLE_3
+	     end // case: S_CRU_MULTIPLE_4
 	     S_CRU_MULTIPLE_5: begin
 		st[0] <= |q;
 		st[1] <= !q[0] && |q;
@@ -964,17 +965,18 @@ module tms9900_cpu(input reset,
 
 	     // MPY
 	     S_MPY_1: begin
-		q <= d;
+		extra <= d;
 		addr <= { wp[0:10], ir[6:9], 1'b0 };
 		memen <= 1'b1;
 	     end
 	     S_MPY_2: begin	
+		q <= extra;
 		extra <= 16'h0000;
 		c <= 4'b1111;
 	     end
 	     S_MPY_3: begin
 		if (q[0])
-		  { q, extra } <= { q[1:15], extra, 1'b0 } + { 16'h0000, d };
+		  { q, extra } <= { q[1:15], extra, 1'b0 } + { 16'h0000, d_latch };
 		else
 		  { q, extra } <= { q[1:15], extra, 1'b0 };
 		if (c != 4'b0000)
@@ -1005,15 +1007,14 @@ module tms9900_cpu(input reset,
 		if (operand <= extra) begin
 		   st[4] <= 1'b1;
 		   state <= S_DIV_13;
-		end else
-		  st[4] <= 1'b0;
-	     end
-	     S_DIV_4: begin
-		addr <= addr + 16'd2;
-		memen <= 1'b1;
+		end else begin
+		   st[4] <= 1'b0;
+		   addr <= addr + 16'd2;
+		   memen <= 1'b1;
+		end
 	     end
 	     S_DIV_5: begin
-		q <= d;
+		q <= d_latch;
 		c <= 4'b1111;
 	     end
 	     S_DIV_6: begin
