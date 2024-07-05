@@ -109,6 +109,9 @@ proj/mega99_nexys_a7-100t.xpr : vivado/mega99_nexys_a7.tcl | $(BOOTHEX)
 	$(VIVADO) -mode batch -source vivado/mega99_nexys_a7.tcl -tclargs --project_name mega99_nexys_a7-100t --part xc7a100tcsg324-1
 
 
+TOOLCHAIN_DIR = build/toolchain
+TCSTAMP = $(TOOLCHAIN_DIR)/.stamp
+export PATH := $(TOOLCHAIN_DIR)/bin:${PATH}
 
 SP_OBJCOPY_BIN = or1k-elf-objcopy -O binary
 SP_CC = or1k-elf-gcc
@@ -155,33 +158,37 @@ or1k_boot_code0.hex : $(SP_BOOT_BUILD)/or1k_boot_code.bin
 
 or1k_boot_code1.hex or1k_boot_code2.hex or1k_boot_code3.hex : or1k_boot_code0.hex
 
-$(SP_BOOT_BUILD)/or1k_boot_code.bin : $(SP_BOOT_BUILD)/or1k_boot_code.elf
+$(SP_BOOT_BUILD)/or1k_boot_code.bin : $(SP_BOOT_BUILD)/or1k_boot_code.elf | $(TCSTAMP)
 	$(SP_OBJCOPY_BIN) $< $@
 
-$(SP_BOOT_BUILD)/or1k_boot_code.elf : $(SP_BOOT_OBJS) $(SP_BOOT_LDSCRIPT)
+$(SP_BOOT_BUILD)/or1k_boot_code.elf : $(SP_BOOT_OBJS) $(SP_BOOT_LDSCRIPT) | $(TCSTAMP)
 	$(SP_CC) $(SP_BOOT_CFLAGS) $(SP_BOOT_LDFLAGS) -o $@ $(SP_BOOT_OBJS)
 
-$(SP_BOOT_BUILD)/%.o : spsrc/%.S
+$(SP_BOOT_BUILD)/%.o : spsrc/%.S | $(TCSTAMP)
 	@mkdir -p $(@D)
 	$(SP_CC) $(SP_BOOT_CFLAGS) -MMD -c -o $@ $<
 
-$(SP_BOOT_BUILD)/%.o : spsrc/%.c
+$(SP_BOOT_BUILD)/%.o : spsrc/%.c | $(TCSTAMP)
 	@mkdir -p $(@D)
 	$(SP_CC) $(SP_BOOT_CFLAGS) -MMD -c -o $@ $<
 
-mega99sp.bin : $(SP_MAIN_BUILD)/mega99sp.elf
+mega99sp.bin : $(SP_MAIN_BUILD)/mega99sp.elf | $(TCSTAMP)
 	$(SP_OBJCOPY_BIN) $< $@
 
-$(SP_MAIN_BUILD)/mega99sp.elf : $(SP_MAIN_OBJS)
+$(SP_MAIN_BUILD)/mega99sp.elf : $(SP_MAIN_OBJS) | $(TCSTAMP)
 	$(SP_CC) $(SP_MAIN_CFLAGS) $(SP_MAIN_LDFLAGS) -o $@ $(SP_MAIN_OBJS)
 
-$(SP_MAIN_BUILD)/%.o : spsrc/%.S
+$(SP_MAIN_BUILD)/%.o : spsrc/%.S | $(TCSTAMP)
 	@mkdir -p $(@D)
 	$(SP_CC) $(SP_MAIN_CFLAGS) -MMD -c -o $@ $<
 
-$(SP_MAIN_BUILD)/%.o : spsrc/%.c
+$(SP_MAIN_BUILD)/%.o : spsrc/%.c | $(TCSTAMP)
 	@mkdir -p $(@D)
 	$(SP_CC) $(SP_MAIN_CFLAGS) -MMD -c -o $@ $<
+
+$(TOOLCHAIN_DIR)/.stamp :
+	./toolchain.sh $(TOOLCHAIN_DIR)
+	touch $@
 
 -include $(SP_BOOT_OBJS:.o=.d)
 -include $(SP_MAIN_OBJS:.o=.d)
