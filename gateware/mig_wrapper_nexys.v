@@ -1,4 +1,5 @@
 module mig_wrapper_nexys(input             clk_mem,
+			 input		   clk_ref,
 			 input		   rst_n,
 
 			 inout [15:0]	   ddr2_dq,
@@ -95,6 +96,7 @@ module mig_wrapper_nexys(input             clk_mem,
             .app_wdf_mask(mem_wdf_mask),
 
             .sys_clk_i(clk_mem),
+	    .clk_ref_i(clk_ref),
             .sys_rst(rst_n));
 
    wire rstrobe_sync, wstrobe_sync;

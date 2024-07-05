@@ -115,7 +115,7 @@ SP_CC = or1k-elf-gcc
 SP_CFLAGS = -std=c23 -ffunction-sections -fdata-sections \
 	-mcmov -msext -msfimm -mshftimm -funsigned-char \
 	-ffreestanding -finline-stringops \
-	-I spsrc/common -DTICKS_PER_SEC=53693175u
+	-I spsrc/common -DTICKS_PER_SEC=107386350u
 
 SP_BOOT_CFLAGS = $(SP_CFLAGS) -Os -fno-move-loop-invariants
 SP_BOOT_LDSCRIPT = spsrc/boot/main.lds

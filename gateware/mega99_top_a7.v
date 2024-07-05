@@ -46,6 +46,7 @@ module mega99_top_a7(input         CLK100MHZ,
 
    wire        clk;
    wire	       clk_mem;
+   wire	       clk_ref;
    wire	       clk_locked;
    wire	       reset;
    
@@ -121,10 +122,10 @@ module mega99_top_a7(input         CLK100MHZ,
    assign SD_DAT[3] = ~sdcard_cs;
 
 
-   clkwiz_a7 clkgen(.clk_mem(clk_mem), .clk_sys(clk),
+   clkwiz_a7 clkgen(.clk_mem(clk_mem), .clk_sys(clk), .clk_ref(clk_ref),
                     .locked(clk_locked), .clk_in1(CLK100MHZ));
 
-   mig_wrapper_nexys mig(.clk_mem(clk_mem), .rst_n(~reset),
+   mig_wrapper_nexys mig(.clk_mem(clk_mem), .clk_ref(clk_ref), .rst_n(~reset),
 
 			 .ddr2_dq(ddr2_dq),
 			 .ddr2_dqs_n(ddr2_dqs_n), .ddr2_dqs_p(ddr2_dqs_p),
@@ -179,7 +180,7 @@ module mega99_top_a7(input         CLK100MHZ,
 			.sdcard_miso(SD_DAT[0]), .sdcard_mosi(SD_CMD),
 			.uart_txd(UART_TXD), .uart_rxd(UART_RXD));
 
-   mainboard #(.clk_multiplier(5), .audio_bits(16))
+   mainboard #(.clk_multiplier(10), .audio_bits(16))
    mb(.clk(clk), .ext_reset(~clk_locked), .sys_reset(reset),
       .reset_9900(reset_9900), .reset_9901(reset_9901),
       .reset_9918(reset_9918), .reset_9919(reset_9919),
