@@ -400,7 +400,7 @@ int fatfs_read(fatfs_filehandle_t *fh, void *p, uint32_t bytes)
       fragment = bytes;
     else
       ++sub;
-    __builtin_memcpy(p, buf+(pos & 0x1ff), fragment);
+    memcpy(p, buf+(pos & 0x1ff), fragment);
     p = ((uint8_t *)p) + fragment;
     total = fragment;
     bytes -= fragment;
@@ -427,7 +427,7 @@ int fatfs_read(fatfs_filehandle_t *fh, void *p, uint32_t bytes)
     r = fatfs_cluster_block_read(cluster, sub, buf, card_id);
     if (r < 0)
       return r;
-    __builtin_memcpy(p, buf, bytes);
+    memcpy(p, buf, bytes);
     total += bytes;
     pos += bytes;
   }

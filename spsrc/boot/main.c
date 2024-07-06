@@ -48,7 +48,7 @@ void main()
       load_rom("994a_grom1.u501", GROM(1), 6144) >= 0 &&
       load_rom("994a_grom2.u502", GROM(2), 6144) >= 0) {
     REGS_MISC.reset = 0xff;
-    __builtin_memset(VDPRAM, 0, 0x1000);
+    memset(VDPRAM, 0, 0x1000);
     REGS_MISC.reset = 0x00; // Release CPU from reset
   } else
       display_printf("ROM Loading failed!\n");

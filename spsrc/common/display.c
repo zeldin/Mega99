@@ -19,11 +19,11 @@ void display_init(void)
 {
   VDPREG[1] = 0;
   FLUSH;
-  __builtin_memset(VDPRAM, 0, 0x1000);
-  __builtin_memset(VDPRAM+0x300, 0x10, 32);
-  __builtin_memcpy(VDPRAM+0x900, font_8x8, sizeof(font_8x8));
+  memset(VDPRAM, 0, 0x1000);
+  memset(VDPRAM+0x300, 0x10, 32);
+  memcpy(VDPRAM+0x900, font_8x8, sizeof(font_8x8));
   VDPRAM[0x300] = 0xd0;
-  __builtin_memcpy(VDPREG+0, vdpregs, sizeof(vdpregs));
+  memcpy(VDPREG+0, vdpregs, sizeof(vdpregs));
   FLUSH;
   VDPREG[1] = 0x40;
   xpt = ypt = 0;
@@ -38,10 +38,10 @@ void display_putc(char c)
   if (xpt >= 32) {
     xpt = 0;
     if (++ypt >= 24) {
-      __builtin_memcpy(VDPRAM+SCREENPOS(0, 0),
-		       VDPRAM+SCREENPOS(1, 0),
-		       23*32);
-      __builtin_memset(VDPRAM+SCREENPOS(23, 0), 0, 32);
+      memcpy(VDPRAM+SCREENPOS(0, 0),
+	     VDPRAM+SCREENPOS(1, 0),
+	     23*32);
+      memset(VDPRAM+SCREENPOS(23, 0), 0, 32);
       ypt = 23;
     }
   }

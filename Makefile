@@ -117,10 +117,10 @@ SP_OBJCOPY_BIN = or1k-elf-objcopy -O binary
 SP_CC = or1k-elf-gcc
 SP_CFLAGS = -std=c23 -ffunction-sections -fdata-sections \
 	-mcmov -msext -msfimm -mshftimm -funsigned-char \
-	-ffreestanding -finline-stringops \
 	-I spsrc/common -DTICKS_PER_SEC=107386350u
 
-SP_BOOT_CFLAGS = $(SP_CFLAGS) -Os -fno-move-loop-invariants
+SP_BOOT_CFLAGS = $(SP_CFLAGS) -Os -fno-move-loop-invariants \
+	-ffreestanding -finline-stringops -DBOOTCODE
 SP_BOOT_LDSCRIPT = spsrc/boot/main.lds
 SP_BOOT_LDFLAGS = -nostartfiles -nodefaultlibs -Wl,--no-warn-rwx-segments \
 	-Wl,--defsym,__stack=0x2000,-T,$(SP_BOOT_LDSCRIPT),--gc-sections,-eboot
@@ -133,8 +133,7 @@ SP_BOOT_SRCS += common/sdcard.c
 SP_BOOT_SRCS += common/fatfs.c
 
 SP_MAIN_CFLAGS = $(SP_CFLAGS) -O2
-SP_MAIN_LDFLAGS = -nostartfiles -nodefaultlibs \
-	-Wl,-Ttext=0x40000000,--gc-sections,-estart
+SP_MAIN_LDFLAGS = -nostartfiles -Wl,-Ttext=0x40000000,--gc-sections,-estart
 
 SP_MAIN_SRCS  = main/entry.S
 SP_MAIN_SRCS += main/main.c

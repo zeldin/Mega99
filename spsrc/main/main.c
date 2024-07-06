@@ -60,7 +60,7 @@ void main()
   }
 
   REGS_MISC.reset = 0xff;
-  __builtin_memset(VDPRAM, 0, 0x1000);
+  memset(VDPRAM, 0, 0x1000);
   REGS_MISC.reset = 0xdf;
 
   uart_puts("Starting TMS9900\n");
