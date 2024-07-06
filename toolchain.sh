@@ -69,6 +69,7 @@ mkdir build-newlib; cd build-newlib
   ../newlib-"${NEWLIB_VERSION}"/configure \
 	    --target=or1k-elf \
 	    --prefix="${PREFIX}" \
+	    CC_FOR_TARGET=or1k-elf-gcc \
 	    CFLAGS_FOR_TARGET="-g -O2 -Wno-implicit-function-declaration -Wno-incompatible-pointer-types -Wno-int-conversion"
   make $MAKEOPTS
   make install
