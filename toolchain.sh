@@ -69,6 +69,12 @@ mkdir build-newlib; cd build-newlib
   ../newlib-"${NEWLIB_VERSION}"/configure \
 	    --target=or1k-elf \
 	    --prefix="${PREFIX}" \
+	    --disable-newlib-wide-orient \
+	    --enable-newlib-nano-malloc \
+	    --disable-newlib-unbuf-stream-opt \
+	    --disable-newlib-iconv \
+	    --disable-newlib-io-float \
+	    --enable-newlib-nano-formatted-io \
 	    CC_FOR_TARGET=or1k-elf-gcc \
 	    CFLAGS_FOR_TARGET="-g -O2 -Wno-implicit-function-declaration -Wno-incompatible-pointer-types -Wno-int-conversion"
   make $MAKEOPTS
