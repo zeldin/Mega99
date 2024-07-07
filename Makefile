@@ -133,10 +133,11 @@ SP_BOOT_SRCS += common/sdcard.c
 SP_BOOT_SRCS += common/fatfs.c
 
 SP_MAIN_CFLAGS = $(SP_CFLAGS) -O2
-SP_MAIN_LDFLAGS = -nostartfiles -Wl,-Ttext=0x40000000,--gc-sections,-estart
+SP_MAIN_LDFLAGS = -Wl,--section-start=.vectors=0x40000000,-Ttext=0x40002000,--gc-sections
 
-SP_MAIN_SRCS  = main/entry.S
-SP_MAIN_SRCS += main/main.c
+SP_MAIN_SRCS  = main/main.c
+SP_MAIN_SRCS += main/newlib_stubs.c
+SP_MAIN_SRCS += main/board.S
 SP_MAIN_SRCS += common/display.c
 SP_MAIN_SRCS += common/uart.c
 SP_MAIN_SRCS += common/sdcard.c

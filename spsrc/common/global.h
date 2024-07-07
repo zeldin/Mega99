@@ -11,3 +11,7 @@
 #include <stddef.h>
 #include <stdarg.h>
 #include <string.h>
+#ifndef BOOTCODE
+#include <stdio.h>
+#include <stdlib.h>
+#endif

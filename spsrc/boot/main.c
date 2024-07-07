@@ -39,7 +39,7 @@ void main()
 
   /* Run main binary if it exists */
   if (load_rom("mega99sp.bin", (void *)0x40000000, 0) > 0)
-    (*(void (*)(void))(void *)0x40000000)();
+    (*(void (*)(void))(void *)0x40000100)();
 
   /* Otherwise, just load the mandatory ROMs and start the CPU */
   if (load_rom("994a_rom_hb.u610", CPUROMH, 4096) >= 0 &&
