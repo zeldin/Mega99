@@ -6,6 +6,17 @@
 #include "display.h"
 #include "fatfs.h"
 
+static const char * const errno_str[] = {
+  "No card",
+  "Card removed",
+  "Invalid card",
+  "No file system",
+  "File not found",
+  "Read-only file system",
+  "I/O error",
+  "Truncated file"
+};
+
 static int load_rom(const char *filename, uint8_t *ptr, uint32_t len)
 {
   printf("%s...", filename);
@@ -18,9 +29,13 @@ static int load_rom(const char *filename, uint8_t *ptr, uint32_t len)
       return -1;
     }
   }
-  if (r < 0)
-    printf("%x\n", (uint32_t)r);
-  else
+  if (r < 0) {
+    unsigned e = ~r;
+    if (e < sizeof(errno_str)/sizeof(errno_str[0]) && errno_str[e])
+      printf("%s\n", errno_str[e]);
+    else
+      printf("%d\n", r);
+  } else
     printf("Loaded\n");
   return r;
 }
