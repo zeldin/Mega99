@@ -135,7 +135,7 @@ SP_BOOT_SRCS += common/fatfs.c
 
 SP_MAIN_CFLAGS = $(SP_CFLAGS) -O2
 SP_MAIN_LDFLAGS = -Wl,--section-start=.vectors=0x40000000,-Ttext=0x40002000 \
-	-Wl,--gc-sections,-Map,$@.map
+	-Wl,-z,max-page-size=0x10,--gc-sections,-Map,$@.map
 
 SP_MAIN_SRCS  = main/main.c
 SP_MAIN_SRCS += main/newlib_stubs.c
