@@ -62,6 +62,7 @@ module groms(input            clk,      // Enabled cycles should give
 	  2'b00: wb_dat_o = grom_page0_byte;
 	  2'b01: wb_dat_o = grom_page1_byte;
 	  2'b10: wb_dat_o = grom_page2_byte;
+	  2'b11: wb_dat_o = grom_page1_byte | grom_page2_byte;
 	  default: wb_dat_o = 8'h00;
 	endcase // case (wb_adr_i[3:4])
 
