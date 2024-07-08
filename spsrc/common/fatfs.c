@@ -447,8 +447,9 @@ int fatfs_setpos(fatfs_filehandle_t *fh, uint32_t newpos)
     return r;
   uint32_t pos = fh->filepos;
   if (newpos >= fh->size ||
-      ((pos >> 9) & ~(fatfs_blocks_per_cluster-1)) ==
-      ((newpos >> 9) & ~(fatfs_blocks_per_cluster-1))) {
+      (pos < fh->size &&
+       ((pos >> 9) & ~(fatfs_blocks_per_cluster-1)) ==
+       ((newpos >> 9) & ~(fatfs_blocks_per_cluster-1)))) {
     fh->filepos = newpos;
     return 0;
   }
