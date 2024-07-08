@@ -5,6 +5,7 @@
 #include "uart.h"
 #include "display.h"
 #include "fatfs.h"
+#include "zipfile.h"
 
 static const char * const errno_str[] = {
   "No card",
@@ -17,7 +18,30 @@ static const char * const errno_str[] = {
   "Truncated file"
 };
 
-static int load_rom(const char *filename, uint8_t *ptr, uint32_t len)
+static int load_zipped_rom(const char *filename, const char *zipfilename,
+			   uint8_t *ptr, uint32_t len)
+{
+  int r = zipfile_open(zipfilename);
+  if (!r) {
+    r = zipfile_open_entry(filename);
+    if (!r) {
+      printf("[%s]...", zipfilename);
+      r = zipfile_read(ptr, len);
+      if (r >= len)
+	return r;
+      if (r >= 0) {
+	printf("Short file\n");
+	return -1;
+      }
+      printf("%d\n", r);
+      return r;
+    }
+  }
+  return 0;
+}
+
+static int load_rom(const char *filename, const char *zipfilename,
+		    uint8_t *ptr, uint32_t len)
 {
   printf("%s...", filename);
   fatfs_filehandle_t fh;
@@ -27,6 +51,13 @@ static int load_rom(const char *filename, uint8_t *ptr, uint32_t len)
     if (r >= 0 && r < len) {
       printf("Short file\n");
       return -1;
+    }
+  } else if (zipfilename) {
+    int t = load_zipped_rom(filename, zipfilename, ptr, len);
+    if (t) {
+      r = t;
+      if (r < 0)
+	return r;
     }
   }
   if (r < 0) {
@@ -51,14 +82,16 @@ void main()
 
   REGS_MISC.leds = 1u;
 
-  if (load_rom("994a_rom_hb.u610", CPUROMH, 4096) < 0 ||
-      load_rom("994a_rom_lb.u611", CPUROML, 4096) < 0 ||
-      load_rom("994a_grom0.u500", GROM(0), 6144) < 0 ||
-      load_rom("994a_grom1.u501", GROM(1), 6144) < 0 ||
-      load_rom("994a_grom2.u502", GROM(2), 6144) < 0 ||
-      load_rom("cd2325a.vsm", SPEECHROM, 16384) < 0 ||
-      load_rom("cd2326a.vsm", SPEECHROM+16384, 16384) < 0 ||
-      load_rom("phm3023g.bin", GROM(3), 6144) < 0) {
+  zipfile_init();
+
+  if (load_rom("994a_rom_hb.u610", "ti99_4a.zip", CPUROMH, 4096) < 0 ||
+      load_rom("994a_rom_lb.u611", "ti99_4a.zip", CPUROML, 4096) < 0 ||
+      load_rom("994a_grom0.u500", "ti99_4a.zip", GROM(0), 6144) < 0 ||
+      load_rom("994a_grom1.u501", "ti99_4a.zip", GROM(1), 6144) < 0 ||
+      load_rom("994a_grom2.u502", "ti99_4a.zip", GROM(2), 6144) < 0 ||
+      load_rom("cd2325a.vsm", "ti99_speech.zip", SPEECHROM, 16384) < 0 ||
+      load_rom("cd2326a.vsm", "ti99_speech.zip", SPEECHROM+16384, 16384) < 0 ||
+      load_rom("phm3023g.bin", "hunt_the_wumpus.rpk", GROM(3), 6144) < 0) {
     printf("ROM Loading failed!\n");
     return;
   }

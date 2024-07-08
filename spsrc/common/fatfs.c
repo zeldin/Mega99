@@ -435,3 +435,34 @@ int fatfs_read(fatfs_filehandle_t *fh, void *p, uint32_t bytes)
   fh->filepos = pos;
   return total;
 }
+
+#ifndef BOOTCODE
+
+int fatfs_setpos(fatfs_filehandle_t *fh, uint32_t newpos)
+{
+  uint8_t buf[512];
+  int r;
+  uint32_t card_id = fh->card_id;
+  if ((r = fatfs_check_card(card_id, OP_READ)) < 0)
+    return r;
+  uint32_t pos = fh->filepos;
+  if (newpos >= fh->size ||
+      ((pos >> 9) & ~(fatfs_blocks_per_cluster-1)) ==
+      ((newpos >> 9) & ~(fatfs_blocks_per_cluster-1))) {
+    fh->filepos = newpos;
+    return 0;
+  }
+  uint32_t cluster = fh->start_cluster;
+  pos = newpos >> 9;
+  while (pos >= fatfs_blocks_per_cluster) {
+    pos -= fatfs_blocks_per_cluster;
+    cluster = fatfs_get_fat_entry(card_id, cluster, buf);
+  }
+  if ((cluster & FAT_EOC))
+    return ((cluster & FAT_ERROR)? (int16_t)(cluster & 0xffffu) : -ETRUNC);
+  fh->current_cluster = cluster;
+  fh->filepos = newpos;
+  return 0;
+}
+
+#endif

@@ -1,3 +1,9 @@
 [submodule "mor1kx"]
 	path = mor1kx
 	url = https://github.com/openrisc/mor1kx.git
+[submodule "spsrc/minizip-ng"]
+	path = spsrc/minizip-ng
+	url = https://github.com/zlib-ng/minizip-ng
+[submodule "spsrc/zlib-ng"]
+	path = spsrc/zlib-ng
+	url = https://github.com/zlib-ng/zlib-ng

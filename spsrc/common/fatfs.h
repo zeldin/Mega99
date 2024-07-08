@@ -17,3 +17,6 @@ typedef struct {
 
 extern int fatfs_open(const char *filename, fatfs_filehandle_t *fh);
 extern int fatfs_read(fatfs_filehandle_t *fh, void *p, uint32_t bytes);
+#ifndef BOOTCODE
+extern int fatfs_setpos(fatfs_filehandle_t *fh, uint32_t newpos);
+#endif
