@@ -6,6 +6,7 @@
 #include "display.h"
 #include "fatfs.h"
 #include "zipfile.h"
+#include "rpk.h"
 
 static const char * const errno_str[] = {
   "No card",
@@ -91,7 +92,7 @@ void main()
       load_rom("994a_grom2.u502", "ti99_4a.zip", GROM(2), 6144) < 0 ||
       load_rom("cd2325a.vsm", "ti99_speech.zip", SPEECHROM, 16384) < 0 ||
       load_rom("cd2326a.vsm", "ti99_speech.zip", SPEECHROM+16384, 16384) < 0 ||
-      load_rom("phm3023g.bin", "hunt_the_wumpus.rpk", GROM(3), 6144) < 0) {
+      load_rpk("extended_basic.rpk") < 0) {
     printf("ROM Loading failed!\n");
     return;
   }

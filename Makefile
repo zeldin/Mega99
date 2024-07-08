@@ -142,10 +142,12 @@ SP_MAIN_SRCS  = main/main.c
 SP_MAIN_SRCS += main/newlib_stubs.c
 SP_MAIN_SRCS += main/board.S
 SP_MAIN_SRCS += main/zipfile.c
+SP_MAIN_SRCS += main/rpk.c
 SP_MAIN_SRCS += common/display.c
 SP_MAIN_SRCS += common/uart.c
 SP_MAIN_SRCS += common/sdcard.c
 SP_MAIN_SRCS += common/fatfs.c
+SP_MAIN_SRCS += common/yxml.c
 
 SP_MZ_CFLAGS = -DMZ_ZIP_NO_MAIN -DMZ_ZIP_NO_CRYPTO -DMZ_ZIP_NO_ENCRYPTION \
 	-DMZ_ZIP_NO_COMPRESSION -DHAVE_ZLIB -I $(SP_ZLIB_BUILD)
