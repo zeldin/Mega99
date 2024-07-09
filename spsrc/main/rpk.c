@@ -159,6 +159,7 @@ static int low_load_rpk(const char *filename)
   unsigned cart_mode = 0;
 
   printf("layout.xml...[%s]...", filename);
+  fflush(stdout);
   int r = zipfile_open(filename);
   if (!r)
     r = zipfile_open_entry("layout.xml");
@@ -176,6 +177,7 @@ static int low_load_rpk(const char *filename)
     if (socket_resource[i] >= 0) {
       const char *fn = resource_file[socket_resource[i]];
       printf("%s...[%s]...", fn, filename);
+      fflush(stdout);
       r = zipfile_open_entry(fn);
       if (!r) {
 	void *p;

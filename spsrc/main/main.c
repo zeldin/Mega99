@@ -17,6 +17,7 @@ static int load_zipped_rom(const char *filename, const char *zipfilename,
     r = zipfile_open_entry(filename);
     if (!r) {
       printf("[%s]...", zipfilename);
+      fflush(stdout);
       r = zipfile_read(ptr, len);
       if (r >= (int)len)
 	return r;
@@ -35,6 +36,7 @@ static int load_rom(const char *filename, const char *zipfilename,
 		    uint8_t *ptr, uint32_t len)
 {
   printf("%s...", filename);
+  fflush(stdout);
   fatfs_filehandle_t fh;
   int r = fatfs_open(filename, &fh);
   if (r >= 0) {
