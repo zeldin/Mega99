@@ -131,7 +131,7 @@ static int fatfs_block_read(uint32_t blkid, uint8_t *ptr, uint32_t card_id)
     if (r < 0)
       return r;
     if (sdcard_read_block(blkid, ptr))
-      return 0;
+      return fatfs_check_card(card_id, OP_READ);
   }
   return -EIO;
 }
