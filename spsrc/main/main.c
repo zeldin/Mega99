@@ -7,17 +7,7 @@
 #include "fatfs.h"
 #include "zipfile.h"
 #include "rpk.h"
-
-static const char * const errno_str[] = {
-  "No card",
-  "Card removed",
-  "Invalid card",
-  "No file system",
-  "File not found",
-  "Read-only file system",
-  "I/O error",
-  "Truncated file"
-};
+#include "strerr.h"
 
 static int load_zipped_rom(const char *filename, const char *zipfilename,
 			   uint8_t *ptr, uint32_t len)
@@ -28,13 +18,13 @@ static int load_zipped_rom(const char *filename, const char *zipfilename,
     if (!r) {
       printf("[%s]...", zipfilename);
       r = zipfile_read(ptr, len);
-      if (r >= len)
+      if (r >= (int)len)
 	return r;
       if (r >= 0) {
 	printf("Short file\n");
 	return -1;
       }
-      printf("%d\n", r);
+      printf("%s\n", zipfile_strerror(r));
       return r;
     }
   }
@@ -62,11 +52,7 @@ static int load_rom(const char *filename, const char *zipfilename,
     }
   }
   if (r < 0) {
-    unsigned e = ~r;
-    if (e < sizeof(errno_str)/sizeof(errno_str[0]) && errno_str[e])
-      printf("%s\n", errno_str[e]);
-    else
-      printf("%d\n", r);
+    printf("%s\n", fatfs_strerror(-r));
   } else
     printf("Loaded\n");
   return r;

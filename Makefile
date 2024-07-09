@@ -143,6 +143,7 @@ SP_MAIN_SRCS += main/newlib_stubs.c
 SP_MAIN_SRCS += main/board.S
 SP_MAIN_SRCS += main/zipfile.c
 SP_MAIN_SRCS += main/rpk.c
+SP_MAIN_SRCS += main/strerr.c
 SP_MAIN_SRCS += common/display.c
 SP_MAIN_SRCS += common/uart.c
 SP_MAIN_SRCS += common/sdcard.c

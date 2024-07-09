@@ -1,5 +1,6 @@
 #include "global.h"
 #include "fatfs.h"
+#include "strerr.h"
 #include "zipfile.h"
 
 #include "mz.h"
@@ -38,6 +39,8 @@ int32_t fatfs_stream_open(void *stream, const char *path, int32_t mode) {
 
   if (!path)
     return MZ_PARAM_ERROR;
+
+  fatfs->error = 0;
 
   if ((mode & MZ_OPEN_MODE_READWRITE) != MZ_OPEN_MODE_READ)
     return MZ_OPEN_ERROR;
@@ -96,7 +99,7 @@ int32_t fatfs_stream_seek(void *stream, int64_t offset, int32_t origin) {
   case MZ_SEEK_SET:
     break;
   default:
-    return MZ_SEEK_ERROR;
+    return MZ_PARAM_ERROR;
   }
 
   if (offset < 0)
@@ -172,4 +175,48 @@ void zipfile_close(void)
 {
   mz_zip_close(zipfile_handle);
   mz_stream_close(stream_handle);
+}
+
+static const char * const zipfile_zlib_errstr[] = {
+  "Version error (zlib)",
+  "Buffer error (zlib)",
+  "Memory allocation error (zlib)",
+  "Data error (zlib)",
+  NULL,
+  "Stream error (zlib)"
+};
+
+static const char * const zipfile_mz_errstr[] = {
+  "Symbolic link error",
+  "Signing error",
+  "Stream write error",
+  "Stream read error",
+  "Stream tell error",
+  "Stream seek error",
+  "Stream close error",
+  "Stream open error",
+  "Hash error",
+  "Missing library support",
+  "Password protected",
+  "Does not exist",
+  "Cryptography error",
+  "CRC error",
+  "Internal error",
+  "File format error",
+  "Invalid parameter",
+  "End of stream",
+  "End of list",
+};
+
+const char *zipfile_strerror(int n)
+{
+  if (n > -100)
+    return generic_strerror(n, "ZErr", STRERR_ARRAY(zipfile_zlib_errstr, MZ_VERSION_ERROR));
+  if (n == MZ_OPEN_ERROR || n == MZ_SEEK_ERROR || n == MZ_READ_ERROR) {
+    int e;
+    if (mz_stream_is_open(stream_handle) == MZ_OK &&
+	(e = mz_stream_error(stream_handle)))
+      return fatfs_strerror(e);
+  }
+  return generic_strerror(n, "ZErr", STRERR_ARRAY(zipfile_mz_errstr, MZ_SYMLINK_ERROR));
 }

@@ -3,6 +3,7 @@
 #include "zipfile.h"
 #include "rpk.h"
 #include "yxml.h"
+#include "strerr.h"
 
 #define EXPECT_ROM_ID       1
 #define EXPECT_ROM_FILE     2
@@ -46,12 +47,12 @@ static int parse_layout(int *socket_resource, unsigned *cart_mode)
     if (!left && !(left = zipfile_read(p = buf, sizeof(buf))))
       r = yxml_eof(&yxml);
     else if (left < 0) {
-      printf("%d\n", left);
+      printf("%s\n", zipfile_strerror(left));
       return -1;
     } else
       r = yxml_parse(&yxml, *p++);
     if (r < 0) {
-      printf("%d\n", r);
+      printf("%s\n", yxml_strerror(r));
       return -1;
     }
     switch(r) {
@@ -162,7 +163,7 @@ static int low_load_rpk(const char *filename)
   if (!r)
     r = zipfile_open_entry("layout.xml");
   if (r) {
-    printf("%d\n", r);
+    printf("%s\n", zipfile_strerror(r));
     return -1;
   }
   if (parse_layout(socket_resource, &cart_mode) < 0)
@@ -196,7 +197,7 @@ static int low_load_rpk(const char *filename)
 	r = zipfile_read(p, size);
       }
       if (r < 0) {
-	printf("%d\n", r);
+	printf("%s\n", zipfile_strerror(r));
 	return -1;
       }
       printf("Loaded\n");
