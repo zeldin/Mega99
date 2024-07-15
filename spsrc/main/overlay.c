@@ -266,8 +266,11 @@ void overlay_console_putc(int fd, char ch)
   }
   if (ch == '\n')
     overlay_window_newline(&console_window);
-  else
+  else {
+    console_window.text_color =
+      (fd == 2? WINDOW_COLOR(6, 14) : WINDOW_COLOR(1, 14));
     overlay_window_putchar(&console_window, ch);
+  }
   overlay_window_set_shown(&console_window, true);
 }
 

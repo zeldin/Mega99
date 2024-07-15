@@ -47,12 +47,12 @@ static int parse_layout(int *socket_resource, unsigned *cart_mode)
     if (!left && !(left = zipfile_read(p = buf, sizeof(buf))))
       r = yxml_eof(&yxml);
     else if (left < 0) {
-      printf("%s\n", zipfile_strerror(left));
+      fprintf(stderr, "%s\n", zipfile_strerror(left));
       return -1;
     } else
       r = yxml_parse(&yxml, *p++);
     if (r < 0) {
-      printf("%s\n", yxml_strerror(r));
+      fprintf(stderr, "%s\n", yxml_strerror(r));
       return -1;
     }
     switch(r) {
@@ -103,7 +103,7 @@ static int parse_layout(int *socket_resource, unsigned *cart_mode)
 	    else if (!strcmp(pcb_type, "minimem"))
 	      *cart_mode = 2u;
 	    else {
-	      printf("%s pcb unsupported\n", pcb_type);
+	      fprintf(stderr, "%s pcb unsupported\n", pcb_type);
 	      return -1;
 	    }
 	  } else if (!strcmp(yxml.elem, "socket") &&
@@ -122,9 +122,9 @@ static int parse_layout(int *socket_resource, unsigned *cart_mode)
 		break;
 	      }
 	    if (socket_no < 0)
-	      printf("unknown socket %s\n", socket_id);
+	      fprintf(stderr, "unknown socket %s\n", socket_id);
 	    else if (resource_no < 0)
-	      printf("undefined rom %s\n", uses);
+	      fprintf(stderr, "undefined rom %s\n", uses);
 	    else {
 	      socket_resource[socket_no] = resource_no;
 	      break;
@@ -164,7 +164,7 @@ static int low_load_rpk(const char *filename)
   if (!r)
     r = zipfile_open_entry("layout.xml");
   if (r) {
-    printf("%s\n", zipfile_strerror(r));
+    fprintf(stderr, "%s\n", zipfile_strerror(r));
     return -1;
   }
   if (parse_layout(socket_resource, &cart_mode) < 0)
@@ -199,7 +199,7 @@ static int low_load_rpk(const char *filename)
 	r = zipfile_read(p, size);
       }
       if (r < 0) {
-	printf("%s\n", zipfile_strerror(r));
+	fprintf(stderr, "%s\n", zipfile_strerror(r));
 	return -1;
       }
       printf("Loaded\n");

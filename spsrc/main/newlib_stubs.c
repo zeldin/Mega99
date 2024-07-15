@@ -26,8 +26,8 @@ void exception_handler()
 {
   unsigned i;
   REGS_MISC.leds = 2u;
-  printf("Unhandled exception at %p, system halted\n",
-	 (void *)or1k_mfspr(OR1K_SPR_SYS_EPCR_ADDR(0)));
+  fprintf(stderr, "Unhandled exception at %p, system halted\n",
+	  (void *)or1k_mfspr(OR1K_SPR_SYS_EPCR_ADDR(0)));
   for(;;)
     ;
 }

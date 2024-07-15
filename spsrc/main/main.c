@@ -23,10 +23,10 @@ static int load_zipped_rom(const char *filename, const char *zipfilename,
       if (r >= (int)len)
 	return r;
       if (r >= 0) {
-	printf("Short file\n");
+	fprintf(stderr, "Short file\n");
 	return -1;
       }
-      printf("%s\n", zipfile_strerror(r));
+      fprintf(stderr, "%s\n", zipfile_strerror(r));
       return r;
     }
   }
@@ -43,7 +43,7 @@ static int load_rom(const char *filename, const char *zipfilename,
   if (r >= 0) {
     r = fatfs_read(&fh, ptr, len);
     if (r >= 0 && r < len) {
-      printf("Short file\n");
+      fprintf(stderr, "Short file\n");
       return -1;
     }
   } else if (zipfilename) {
@@ -55,7 +55,7 @@ static int load_rom(const char *filename, const char *zipfilename,
     }
   }
   if (r < 0) {
-    printf("%s\n", fatfs_strerror(-r));
+    fprintf(stderr, "%s\n", fatfs_strerror(-r));
   } else
     printf("Loaded\n");
   return r;
@@ -83,7 +83,7 @@ void main()
       load_rom("cd2325a.vsm", "ti99_speech.zip", SPEECHROM, 16384) < 0 ||
       load_rom("cd2326a.vsm", "ti99_speech.zip", SPEECHROM+16384, 16384) < 0 ||
       load_rpk("extended_basic.rpk") < 0) {
-    printf("ROM Loading failed!\n");
+    fprintf(stderr, "ROM Loading failed!\n");
     return;
   }
 
