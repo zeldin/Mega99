@@ -93,4 +93,8 @@ void main()
 
   printf("Starting TMS9900\n");
   REGS_MISC.reset = 0x00;
+
+  for(;;) {
+    overlay_task();
+  }
 }

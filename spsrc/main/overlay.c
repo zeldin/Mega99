@@ -1,6 +1,10 @@
 #include "global.h"
 #include "overlay.h"
 #include "regs.h"
+#include "timer.h"
+
+static uint32_t overlay_console_error_auto_hide_time = S_TO_TICKS(10);
+static uint32_t overlay_console_normal_auto_hide_time = S_TO_TICKS(3);
 
 static const uint8_t font_8x16[] = {
 #include "font_8x16.h"
@@ -18,6 +22,8 @@ struct overlay_window console_window = {
   .border_color = WINDOW_COLOR(15, 14),
   .text_color = WINDOW_COLOR(1, 14)
 };
+
+static uint32_t console_auto_hide = 0;
 
 bool overlay_window_is_shown(struct overlay_window *ow)
 {
@@ -253,6 +259,9 @@ void overlay_window_newline(struct overlay_window *ow)
   ow->cursor_y ++;
 }
 
+static uint32_t overlay_console_error_auto_hide_time;
+static uint32_t overlay_console_normal_auto_hide_time;
+
 void overlay_console_putc(int fd, char ch)
 {
   if (!console_window.base)
@@ -271,6 +280,15 @@ void overlay_console_putc(int fd, char ch)
       (fd == 2? WINDOW_COLOR(6, 14) : WINDOW_COLOR(1, 14));
     overlay_window_putchar(&console_window, ch);
   }
+  uint32_t hide_time = (fd == 2? overlay_console_error_auto_hide_time :
+			overlay_console_normal_auto_hide_time);
+  if (hide_time) {
+    hide_time += timer_read();
+    if (!hide_time)
+      ++hide_time;
+  }
+  if (!overlay_window_is_shown(&console_window) || console_auto_hide)
+    console_auto_hide = hide_time;
   overlay_window_set_shown(&console_window, true);
 }
 
@@ -291,6 +309,14 @@ static uint16_t overlay_window_init(struct overlay_window *ow, uint16_t base)
   REGS_OVERLAY.window[ow->window_id].lineoffs = ow->lineoffs;
   overlay_window_resize(ow, ow->min_w, ow->min_h);
   return base;
+}
+
+void overlay_task(void)
+{
+  if (console_auto_hide && ((int32_t)(console_auto_hide - timer_read())) < 0) {
+    console_auto_hide = 0;
+    overlay_window_set_shown(&console_window, false);
+  }
 }
 
 void overlay_init(void)
