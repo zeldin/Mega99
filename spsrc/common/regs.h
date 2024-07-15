@@ -43,3 +43,10 @@ struct mmio_regs_overlay {
 #define REGS_OVERLAY (*(volatile struct mmio_regs_overlay *)(void *)0xff03ff00)
 
 #define OVERLAY ((uint8_t *)(void *)0xff030000)
+
+struct mmio_regs_keyboard {
+  uint16_t keycode;
+  uint16_t pad;
+};
+
+#define REGS_KEYBOARD (*(volatile struct mmio_regs_keyboard *)(void *)0xff04ff00)

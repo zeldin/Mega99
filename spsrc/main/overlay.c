@@ -292,6 +292,16 @@ void overlay_console_putc(int fd, char ch)
   overlay_window_set_shown(&console_window, true);
 }
 
+void overlay_console_toggle(void)
+{
+  if (!overlay_window_is_shown(&console_window) &&
+      console_window.current_w && console_window.current_h)
+    overlay_window_set_shown(&console_window, true);
+  else
+    overlay_window_set_shown(&console_window, false);
+  console_auto_hide = 0;
+}
+
 static uint16_t overlay_window_init(struct overlay_window *ow, uint16_t base)
 {
   ow->base = base;

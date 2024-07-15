@@ -9,6 +9,7 @@
 #include "rpk.h"
 #include "strerr.h"
 #include "overlay.h"
+#include "keyboard.h"
 
 static int load_zipped_rom(const char *filename, const char *zipfilename,
 			   uint8_t *ptr, uint32_t len)
@@ -96,5 +97,6 @@ void main()
 
   for(;;) {
     overlay_task();
+    keyboard_task();
   }
 }

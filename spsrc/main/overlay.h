@@ -28,5 +28,6 @@ extern void overlay_window_resize(struct overlay_window *ow,
 extern void overlay_window_putchar(struct overlay_window *ow, uint8_t ch);
 extern void overlay_window_newline(struct overlay_window *ow);
 extern void overlay_console_putc(int fd, char ch);
+extern void overlay_console_toggle(void);
 extern void overlay_task(void);
 extern void overlay_init(void);

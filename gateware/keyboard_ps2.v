@@ -5,25 +5,42 @@ module keyboard_ps2(input             clk,
 
 		    output reg [0:47] key_state,
 		    output reg	      alpha_state,
-		    output reg	      turbo_state);
+		    output reg	      turbo_state,
+
+		    output	      keypress,
+		    output [0:6]      keycode,
+		    output reg [0:3]  shift_state);
 
    reg [0:8] pending;
    reg	     upflag;
    reg [0:1] shift;
-   
+
+   assign keypress = &pending[0:1];
+   assign keycode = pending[2:8];
+
    always @(posedge clk)
      if (reset) begin
 	key_state <= 48'd0;
 	alpha_state <= 1'b0;
 	turbo_state <= 1'b0;
+	shift_state <= 4'b0000;
 	pending[0] <= 1'b0;
 	upflag <= 1'b0;
 	shift <= 2'b00;
      end else begin
 	if (pending[0]) begin
 	   case (pending[2:8])
+	     7'h11: shift_state[1] <= pending[1];
+	     7'h12: shift_state[3] <= pending[1];
+	     7'h14: shift_state[0] <= pending[1];
+	     7'h58: if (pending[1]) alpha_state <= ~alpha_state;
+	     7'h59: shift_state[2] <= pending[1];
+	     7'h77: if (pending[1]) turbo_state <= ~turbo_state;
+	     default: ;
+	   endcase // case (pending[2:8])
+	   case (pending[2:8])
 	     7'h11: key_state[4] <= pending[1];
-	    /* 7'h12 */ 7'h61: begin
+	     7'h12: begin
 		shift[0] <= pending[1];
 		if (pending[1]) key_state[5] <= 1'b1;
 		else if (!shift[1]) key_state[5] <= 1'b0;
@@ -71,14 +88,12 @@ module keyboard_ps2(input             clk,
 	     7'h4d: key_state[42] <= pending[1];
 	     7'h4e: key_state[0] <= pending[1];
 	     7'h54: key_state[40] <= pending[1];
-	     7'h58: if (pending[1]) alpha_state <= ~alpha_state;
 	     7'h59: begin
 		shift[1] <= pending[1];
 		if (pending[1]) key_state[5] <= 1'b1;
 		else if (!shift[0]) key_state[5] <= 1'b0;
 	     end
 	     7'h5a: key_state[2] <= pending[1];
-	     7'h77: if (pending[1]) turbo_state <= ~turbo_state;
 	     default: ;
 	   endcase // case (pending[2:8])
 	   pending[0] <= 1'b0;

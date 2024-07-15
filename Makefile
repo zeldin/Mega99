@@ -43,6 +43,7 @@ COMMON_SOURCES += $(GATEWARE)/spmmio_misc.v
 COMMON_SOURCES += $(GATEWARE)/spmmio_sdcard.v
 COMMON_SOURCES += $(GATEWARE)/spmmio_uart.v
 COMMON_SOURCES += $(GATEWARE)/spmmio_overlay.v
+COMMON_SOURCES += $(GATEWARE)/spmmio_keyboard.v
 
 MOR1KX_SOURCES  = $(MOR1KXPATH)/mor1kx-defines.v
 MOR1KX_SOURCES += $(MOR1KXPATH)/mor1kx-sprs.v
@@ -146,6 +147,7 @@ SP_MAIN_SRCS += main/zipfile.c
 SP_MAIN_SRCS += main/rpk.c
 SP_MAIN_SRCS += main/strerr.c
 SP_MAIN_SRCS += main/overlay.c
+SP_MAIN_SRCS += main/keyboard.c
 SP_MAIN_SRCS += common/display.c
 SP_MAIN_SRCS += common/uart.c
 SP_MAIN_SRCS += common/sdcard.c

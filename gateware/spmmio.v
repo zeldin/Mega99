@@ -18,6 +18,10 @@ module spmmio(input             clk,
 	      input		overlay_hsync,
 	      output [0:3]	overlay_color,
 
+	      input		keypress,
+	      input [0:6]	keycode,
+	      input [0:3]	shift_state,
+
 	      output		sdcard_cs,
 	      input		sdcard_cd,
 	      input		sdcard_wp,
@@ -32,11 +36,13 @@ module spmmio(input             clk,
    reg	       stb_sdcard;
    reg	       stb_uart;
    reg	       stb_overlay;
+   reg	       stb_kbd;
    wire        ack_overlay;
    wire [0:31] dat_misc;
    wire [0:31] dat_sdcard;
    wire [0:31] dat_uart;
    wire [0:31] dat_overlay;
+   wire [0:31] dat_kbd;
 
    always @(*) begin
       ack_o <= stb_i;
@@ -46,6 +52,7 @@ module spmmio(input             clk,
       stb_sdcard <= 1'b0;
       stb_uart <= 1'b0;
       stb_overlay <= 1'b0;
+      stb_kbd <= 1'b0;
       case (adr_i[0 +: 8])
 	8'h00: begin
 	   stb_misc <= stb_i;
@@ -63,6 +70,10 @@ module spmmio(input             clk,
 	   stb_overlay <= stb_i;
 	   ack_o <= ack_overlay;
 	   dat_o <= dat_overlay;
+	end
+	8'h04: begin
+	   stb_kbd <= stb_i;
+	   dat_o <= dat_kbd;
 	end
 	default: ;
       endcase // case (adr_i[0 +: 8])
@@ -97,5 +108,12 @@ module spmmio(input             clk,
 			  .pixel_clock(overlay_clk_en),
 			  .vsync(overlay_vsync), .hsync(overlay_hsync),
 			  .color(overlay_color));
+
+   spmmio_keyboard keyboard(.clk(clk), .reset(reset),
+			    .adr(adr_i[21 -: 3]), .cs(cyc_i && stb_kbd),
+			    .sel(sel_i), .we(we_i), .d(dat_i), .q(dat_kbd),
+
+			    .keypress(keypress), .keycode(keycode),
+			    .shift_state(shift_state));
 
 endmodule // spmmio
