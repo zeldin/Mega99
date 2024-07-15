@@ -15,6 +15,7 @@ proc checkRequiredFiles { origin_dir} {
  "[file normalize "$origin_dir/gateware/spmmio_misc.v"]"\
  "[file normalize "$origin_dir/gateware/spmmio_sdcard.v"]"\
  "[file normalize "$origin_dir/gateware/spmmio_uart.v"]"\
+ "[file normalize "$origin_dir/gateware/spmmio_overlay.v"]"\
  "[file normalize "$origin_dir/or1k_boot_code0.hex"]"\
  "[file normalize "$origin_dir/or1k_boot_code1.hex"]"\
  "[file normalize "$origin_dir/or1k_boot_code2.hex"]"\
@@ -222,6 +223,7 @@ set files [list \
  [file normalize "${origin_dir}/gateware/spmmio_misc.v"] \
  [file normalize "${origin_dir}/gateware/spmmio_sdcard.v"] \
  [file normalize "${origin_dir}/gateware/spmmio_uart.v"] \
+ [file normalize "${origin_dir}/gateware/spmmio_overlay.v"] \
  [file normalize "${origin_dir}/or1k_boot_code0.hex"] \
  [file normalize "${origin_dir}/or1k_boot_code1.hex"] \
  [file normalize "${origin_dir}/or1k_boot_code2.hex"] \

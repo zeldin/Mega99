@@ -25,3 +25,21 @@ struct mmio_regs_uart {
 };
 
 #define REGS_UART (*(volatile struct mmio_regs_uart *)(void *)0xff020000)
+
+struct mmio_regs_overlay {
+  struct {
+    uint8_t y0;
+    uint8_t x0;
+    uint8_t y1;
+    uint8_t x1;
+    uint16_t base;
+    uint16_t lineoffs;
+  } window[4];
+  uint8_t xadj;
+  uint8_t yadj;
+  uint16_t control;
+};
+
+#define REGS_OVERLAY (*(volatile struct mmio_regs_overlay *)(void *)0xff03ff00)
+
+#define OVERLAY ((uint8_t *)(void *)0xff030000)

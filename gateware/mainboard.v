@@ -1,8 +1,8 @@
 module mainboard #(
 		   // clk rate is this number times 10.738635 MHz
 		   parameter integer clk_multiplier = 1,
-		   // set to 1 to geneate hdmi_clk_en
-		   parameter integer generate_hdmi_clk_en = 0,
+		   // set to 1 to geneate overlay_clk_en
+		   parameter integer generate_overlay_clk_en = 0,
 		   // should be > 8 for full dynamic range
 		   parameter	     audio_bits = 16
 		)
@@ -17,7 +17,7 @@ module mainboard #(
 		 input			   cpu_turbo,
 		 output			   vdp_clk_en,
 		 output			   vga_clk_en,
-		 output			   hdmi_clk_en,
+		 output			   overlay_clk_en,
 
 		 output			   vdp_hsync,
 		 output			   vdp_vsync,
@@ -37,7 +37,7 @@ module mainboard #(
 		 output			   cs2_cntrl,
 		 output			   audio_gate,
 		 output			   mag_out,
-		 
+
 		 output [0:15]		   debug_pc,
 		 output [0:15]		   debug_st,
 		 output [0:15]		   debug_wp,
@@ -226,11 +226,11 @@ module mainboard #(
    end
 
    clkgen #(.clk_multiplier(clk_multiplier),
-	    .generate_hdmi_clk_en(generate_hdmi_clk_en))
+	    .generate_overlay_clk_en(generate_overlay_clk_en))
    cg(.ext_reset_in(ext_reset), .clk(clk), .cpu_turbo(cpu_turbo),
       .reset_out(reset),
       .vdp_clk_en(vdp_clk_en), .vdp_clk_en_next(vdp_clk_en_next),
-      .vga_clk_en(vga_clk_en), .hdmi_clk_en(hdmi_clk_en),
+      .vga_clk_en(vga_clk_en), .overlay_clk_en(overlay_clk_en),
       .cpu_clk_en(cpu_clk_en), .clk_3mhz_en(clk_3mhz_en),
       .grom_clk_en(grom_clk_en), .vsp_clk_en(vsp_clk_en));
 

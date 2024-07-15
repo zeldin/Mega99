@@ -69,7 +69,7 @@ module mega99_top_a7(input         CLK100MHZ,
    
    wire	       vdp_clk_en;
    wire	       vga_clk_en;
-   wire	       hdmi_clk_en;
+   wire	       overlay_clk_en;
 
    wire	       vdp_hsync;
    wire	       vdp_vsync;
@@ -78,6 +78,7 @@ module mega99_top_a7(input         CLK100MHZ,
 
    wire	       vga_hsync;
    wire [0:3]  vga_color;
+   wire [0:3]  overlay_color;
 
    wire [0:15] debug_pc;
    wire [0:15] debug_st;
@@ -175,18 +176,21 @@ module mega99_top_a7(input         CLK100MHZ,
 			.led_green(LED16_G), .led_red(LED17_R),
 			.sw_reset({reset_9900, reset_9901,
 				   reset_9918, reset_9919, reset_5200}),
+			.overlay_clk_en(overlay_clk_en), .overlay_vsync(vdp_vsync),
+			.overlay_hsync(vga_hsync), .overlay_color(overlay_color),
 			.sdcard_cs(sdcard_cs), .sdcard_cd(~SD_CD),
 			.sdcard_wp(1'b0), .sdcard_sck(SD_SCK),
 			.sdcard_miso(SD_DAT[0]), .sdcard_mosi(SD_CMD),
 			.uart_txd(UART_TXD), .uart_rxd(UART_RXD));
 
-   mainboard #(.clk_multiplier(10), .audio_bits(16))
+   mainboard #(.clk_multiplier(10), .generate_overlay_clk_en(1),
+	       .audio_bits(16))
    mb(.clk(clk), .ext_reset(~clk_locked), .sys_reset(reset),
       .reset_9900(reset_9900), .reset_9901(reset_9901),
       .reset_9918(reset_9918), .reset_9919(reset_9919),
       .reset_5200(reset_5200), .cpu_turbo(cpu_turbo),
       .vdp_clk_en(vdp_clk_en), .vga_clk_en(vga_clk_en),
-      .hdmi_clk_en(),
+      .overlay_clk_en(overlay_clk_en),
       .vdp_hsync(vdp_hsync), .vdp_vsync(vdp_vsync),
       .vdp_cburst(vdp_cburst), .vdp_color(vdp_color), .vdp_extvideo(),
       .audio_in(16'd0), .audio_out(audio_out),
@@ -211,7 +215,7 @@ module mega99_top_a7(input         CLK100MHZ,
 		 .color_out(vga_color));
 
    tms9918_color_to_rgb #(.red_bits(4), .green_bits(4), .blue_bits(4))
-     vga_color_to_rgb(.color(vga_color),
+     vga_color_to_rgb(.color(overlay_color == 4'd0 ? vga_color : overlay_color),
 		      .red(VGA_R), .green(VGA_G), .blue(VGA_B));
 
 endmodule // mega99_top_a7

@@ -6,7 +6,7 @@ module clkgen(input      ext_reset_in,
 	      output	 vdp_clk_en,      // VDP pixel clock, 5.3693175 MHz
 	      output	 vdp_clk_en_next,
 	      output	 vga_clk_en,      // VGA pixel clock, 10.738635 MHz
-	      output	 hdmi_clk_en,     // HDMI pixel clock, 21.47727 MHz
+	      output	 overlay_clk_en,  // Overlay pixel clock, 21.47727 MHz
 	      output reg cpu_clk_en,
 	      output	 clk_3mhz_en,     // Peripheral clock, 3.579545 MHz
 	      output reg grom_clk_en,     // GROM clock, 447.443125 kHz
@@ -15,8 +15,8 @@ module clkgen(input      ext_reset_in,
 
    // clk rate is this number times 10.738635 MHz
    parameter integer clk_multiplier = 1;
-   // set to 1 to geneate hdmi_clk_en
-   parameter integer generate_hdmi_clk_en = 0;
+   // set to 1 to geneate overlay_clk_en
+   parameter integer generate_overlay_clk_en = 0;
 
    localparam vdp_n = clk_multiplier * 2;
    localparam vga_n = clk_multiplier;
@@ -37,22 +37,22 @@ module clkgen(input      ext_reset_in,
    assign clk_3mhz_en = cpu_divisor[1];
 
    generate
-      if (generate_hdmi_clk_en)
+      if (generate_overlay_clk_en)
 	if (clk_multiplier % 2) begin
-	   initial $fatal("clk_multiplier must be even for HDMI");
-	   assign hdmi_clk_en = 1'b0;
+	   initial $fatal("clk_multiplier must be even for overlay");
+	   assign overlay_clk_en = 1'b0;
 	end else begin
-	   localparam hdmi_n = clk_multiplier / 2;
-	   reg [1:hdmi_n] hdmi_divisor;
-	   assign hdmi_clk_en = hdmi_divisor[1];
+	   localparam overlay_n = clk_multiplier / 2;
+	   reg [1:overlay_n] overlay_divisor;
+	   assign overlay_clk_en = overlay_divisor[1];
 	   always @(posedge clk)
 	     if (!init_done)
-	       hdmi_divisor <= { 1'b1, {hdmi_n-1{1'b0}} };
+	       overlay_divisor <= { 1'b1, {overlay_n-1{1'b0}} };
 	     else
-	       hdmi_divisor <= { hdmi_divisor[2:hdmi_n], hdmi_divisor[1] };
+	       overlay_divisor <= { overlay_divisor[2:overlay_n], overlay_divisor[1] };
 	end
       else
-	assign hdmi_clk_en = 1'b0;
+	assign overlay_clk_en = 1'b0;
    endgenerate
    
    initial reset_cnt = 5'd0;

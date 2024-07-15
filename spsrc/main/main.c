@@ -8,6 +8,7 @@
 #include "zipfile.h"
 #include "rpk.h"
 #include "strerr.h"
+#include "overlay.h"
 
 static int load_zipped_rom(const char *filename, const char *zipfilename,
 			   uint8_t *ptr, uint32_t len)
@@ -68,6 +69,7 @@ void main()
 
   timer_init();
   display_init();
+  overlay_init();
 
   REGS_MISC.leds = 1u;
 

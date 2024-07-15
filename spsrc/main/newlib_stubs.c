@@ -1,6 +1,6 @@
 #include "global.h"
 #include "uart.h"
-#include "display.h"
+#include "overlay.h"
 #include "regs.h"
 
 #include <errno.h>
@@ -69,7 +69,7 @@ _write_r(struct _reent * reent, int fd, const void *buf, size_t nbytes)
       uart_write('\r');
     }
     uart_write(*(b + i));
-    display_putc(*(b + i));
+    overlay_console_putc(fd, *(b + i));
   }
   return (nbytes);
 }
