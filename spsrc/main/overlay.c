@@ -10,8 +10,6 @@ static const uint8_t font_8x16[] = {
 #include "font_8x16.h"
 };
 
-#define WINDOW_COLOR(fg, bg) ((UINT16_C(fg) << 12) | (UINT16_C(bg) << 8))
-
 struct overlay_window console_window = {
   .window_id = 0,
   .min_w = 16,
@@ -21,6 +19,17 @@ struct overlay_window console_window = {
   .background_color = WINDOW_COLOR(1, 14),
   .border_color = WINDOW_COLOR(15, 14),
   .text_color = WINDOW_COLOR(1, 14)
+};
+
+struct overlay_window menu_window = {
+  .window_id = 2,
+  .min_w = 20,
+  .min_h = 8,
+  .max_w = 40,
+  .max_h = 16,
+  .background_color = WINDOW_COLOR(15, 4),
+  .border_color = WINDOW_COLOR(10, 4),
+  .text_color = WINDOW_COLOR(15, 4)
 };
 
 static uint32_t console_auto_hide = 0;
@@ -69,6 +78,20 @@ void overlay_window_clear_line(struct overlay_window *ow, uint16_t line,
     else
       ch |= ow->border_color;
     *(uint16_t*)&OVERLAY[offs] = ch;
+  }
+}
+
+void overlay_window_invert_line(struct overlay_window *ow, uint16_t line)
+{
+  unsigned w;
+  if (line >= ow->current_h || (w = ow->current_w) < 3)
+    return;
+  uint16_t offs = ow->base + line*ow->lineoffs + 2;
+  --w;
+  while(--w) {
+    uint8_t color = OVERLAY[offs];
+    OVERLAY[offs] = (color >> 4) | (color << 4);
+    offs += 2;
   }
 }
 
@@ -339,4 +362,5 @@ void overlay_init(void)
 
   uint16_t base = 0x1000;
   base = overlay_window_init(&console_window, base);
+  base = overlay_window_init(&menu_window, base);
 }

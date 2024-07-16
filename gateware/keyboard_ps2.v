@@ -9,7 +9,8 @@ module keyboard_ps2(input             clk,
 
 		    output	      keypress,
 		    output [0:6]      keycode,
-		    output reg [0:3]  shift_state);
+		    output reg [0:3]  shift_state,
+		    input	      keyboard_block);
 
    reg [0:8] pending;
    reg	     upflag;
@@ -38,6 +39,8 @@ module keyboard_ps2(input             clk,
 	     7'h77: if (pending[1]) turbo_state <= ~turbo_state;
 	     default: ;
 	   endcase // case (pending[2:8])
+	end // if (pending[0])
+	if (pending[0] && !(pending[1] && keyboard_block)) begin
 	   case (pending[2:8])
 	     7'h11: key_state[4] <= pending[1];
 	     7'h12: begin
@@ -96,8 +99,8 @@ module keyboard_ps2(input             clk,
 	     7'h5a: key_state[2] <= pending[1];
 	     default: ;
 	   endcase // case (pending[2:8])
-	   pending[0] <= 1'b0;
-	end
+	end // if (pending[0] && !(pending[1] && keyboard_block))
+	pending[0] <= 1'b0;
 	if (trigger) begin
 	   if (!scancode[0]) begin
 	      pending <= { 1'b1, ~upflag, scancode[1:7] };

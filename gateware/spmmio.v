@@ -21,6 +21,7 @@ module spmmio(input             clk,
 	      input		keypress,
 	      input [0:6]	keycode,
 	      input [0:3]	shift_state,
+	      output		keyboard_block,
 
 	      output		sdcard_cs,
 	      input		sdcard_cd,
@@ -114,6 +115,7 @@ module spmmio(input             clk,
 			    .sel(sel_i), .we(we_i), .d(dat_i), .q(dat_kbd),
 
 			    .keypress(keypress), .keycode(keycode),
-			    .shift_state(shift_state));
+			    .shift_state(shift_state),
+			    .keyboard_block(keyboard_block));
 
 endmodule // spmmio

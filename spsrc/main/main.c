@@ -71,6 +71,7 @@ void main()
   timer_init();
   display_init();
   overlay_init();
+  keyboard_block();
 
   REGS_MISC.leds = 1u;
 
@@ -93,6 +94,7 @@ void main()
   REGS_MISC.reset = 0xdf;
 
   printf("Starting TMS9900\n");
+  keyboard_unblock();
   REGS_MISC.reset = 0x00;
 
   for(;;) {

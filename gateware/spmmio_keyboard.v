@@ -10,7 +10,8 @@ module spmmio_keyboard(input             clk,
 
 		       input		 keypress,
 		       input [0:6]	 keycode,
-		       input [0:3]	 shift_state);
+		       input [0:3]	 shift_state,
+		       output reg	 keyboard_block);
 
    parameter fifo_depth = 8;
 
@@ -65,6 +66,12 @@ module spmmio_keyboard(input             clk,
       end // block: ENTRY
    endgenerate
 
+   always @(posedge clk)
+     if (reset)
+       keyboard_block <= 1'b0;
+     else if (cs && we && sel[0] && adr == 3'h1)
+       keyboard_block <= d[7];
+
    always @(*) begin
       q <= 32'h00000000;
       case (adr)
@@ -72,6 +79,9 @@ module spmmio_keyboard(input             clk,
 	   q[0] <= fifo_valid;
 	   q[4:7] <= fifo_shift_state;
 	   q[9:15] <= fifo_keycode;
+	end
+	3'h1: begin
+	   q[7] <= keyboard_block;
 	end
 	default: ;
       endcase // case (adr)

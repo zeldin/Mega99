@@ -148,6 +148,7 @@ SP_MAIN_SRCS += main/rpk.c
 SP_MAIN_SRCS += main/strerr.c
 SP_MAIN_SRCS += main/overlay.c
 SP_MAIN_SRCS += main/keyboard.c
+SP_MAIN_SRCS += main/menu.c
 SP_MAIN_SRCS += common/display.c
 SP_MAIN_SRCS += common/uart.c
 SP_MAIN_SRCS += common/sdcard.c

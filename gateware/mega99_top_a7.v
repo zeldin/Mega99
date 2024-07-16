@@ -93,6 +93,7 @@ module mega99_top_a7(input         CLK100MHZ,
    wire	       keypress;
    wire [0:6]  keycode;
    wire [0:3]  shift_state;
+   wire	       keyboard_block;
 
    wire	       cs1_cntrl;
 
@@ -160,7 +161,8 @@ module mega99_top_a7(input         CLK100MHZ,
 			 .key_state(key_state), .alpha_state(alpha_state),
 			 .turbo_state(cpu_turbo),
 			 .keypress(keypress), .keycode(keycode),
-			 .shift_state(shift_state));
+			 .shift_state(shift_state),
+			 .keyboard_block(keyboard_block));
 
    sigmadelta #(.audio_bits(16))
    sd_dac(.clk(clk), .d(audio_out), .q(audio_sd));
@@ -186,6 +188,7 @@ module mega99_top_a7(input         CLK100MHZ,
 			.keypress(keypress), .keycode(keycode),
 			.shift_state({shift_state[0:1], alpha_state,
 				      (|shift_state[2:3])}),
+			.keyboard_block(keyboard_block),
 			.sdcard_cs(sdcard_cs), .sdcard_cd(~SD_CD),
 			.sdcard_wp(1'b0), .sdcard_sck(SD_SCK),
 			.sdcard_miso(SD_DAT[0]), .sdcard_mosi(SD_CMD),

@@ -16,11 +16,15 @@ struct overlay_window {
 };
 
 extern struct overlay_window console_window;
+extern struct overlay_window menu_window;
+
+#define WINDOW_COLOR(fg, bg) ((UINT16_C(fg) << 12) | (UINT16_C(bg) << 8))
 
 extern bool overlay_window_is_shown(struct overlay_window *ow);
 extern void overlay_window_set_shown(struct overlay_window *ow, bool shown);
 extern void overlay_window_clear_line(struct overlay_window *ow, uint16_t line,
 				      const char *pattern);
+extern void overlay_window_invert_line(struct overlay_window *ow, uint16_t line);
 extern void overlay_window_clear(struct overlay_window *ow);
 extern void overlay_window_scroll(struct overlay_window *ow);
 extern void overlay_window_resize(struct overlay_window *ow,

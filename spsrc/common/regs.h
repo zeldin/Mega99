@@ -47,6 +47,7 @@ struct mmio_regs_overlay {
 struct mmio_regs_keyboard {
   uint16_t keycode;
   uint16_t pad;
+  uint8_t block;
 };
 
 #define REGS_KEYBOARD (*(volatile struct mmio_regs_keyboard *)(void *)0xff04ff00)
