@@ -71,9 +71,9 @@ void main()
   reset_set_other(true);
   reset_set_vdp(true);
   reset_set_vdp(false);
+  keyboard_block();
   display_init();
   overlay_init();
-  keyboard_block();
 
   REGS_MISC.leds = 1u;
 
@@ -88,6 +88,7 @@ void main()
       load_rom("cd2326a.vsm", "ti99_speech.zip", SPEECHROM+16384, 16384) < 0 ||
       load_rpk("extended_basic.rpk") < 0) {
     fprintf(stderr, "ROM Loading failed!\n");
+    REGS_MISC.leds = 2u;
     return;
   }
 
@@ -97,6 +98,7 @@ void main()
 
   printf("Starting TMS9900\n");
   keyboard_unblock();
+  keyboard_flush();
   reset_set_other(false);
 
   for(;;) {

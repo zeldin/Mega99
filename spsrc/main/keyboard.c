@@ -131,3 +131,11 @@ void keyboard_task(void)
   else
     menu_key(key);
 }
+
+void keyboard_flush(void)
+{
+  uint16_t keycode;
+  do
+    keycode = REGS_KEYBOARD.keycode;
+  while ((keycode & 0x8000u));
+}
