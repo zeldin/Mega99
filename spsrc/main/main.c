@@ -10,6 +10,7 @@
 #include "strerr.h"
 #include "overlay.h"
 #include "keyboard.h"
+#include "reset.h"
 
 static int load_zipped_rom(const char *filename, const char *zipfilename,
 			   uint8_t *ptr, uint32_t len)
@@ -64,11 +65,12 @@ static int load_rom(const char *filename, const char *zipfilename,
 
 void main()
 {
-  REGS_MISC.reset = 0xff;
   printf("Main SP binary entered\n");
-  REGS_MISC.reset = 0xdf; // Release VDP from reset
 
   timer_init();
+  reset_set_other(true);
+  reset_set_vdp(true);
+  reset_set_vdp(false);
   display_init();
   overlay_init();
   keyboard_block();
@@ -89,13 +91,13 @@ void main()
     return;
   }
 
-  REGS_MISC.reset = 0xff;
+  reset_set_vdp(true);
   memset(VDPRAM, 0, 0x1000);
-  REGS_MISC.reset = 0xdf;
+  reset_set_vdp(false);
 
   printf("Starting TMS9900\n");
   keyboard_unblock();
-  REGS_MISC.reset = 0x00;
+  reset_set_other(false);
 
   for(;;) {
     overlay_task();

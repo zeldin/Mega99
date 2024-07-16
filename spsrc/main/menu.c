@@ -2,8 +2,7 @@
 #include "overlay.h"
 #include "menu.h"
 #include "keyboard.h"
-#include "regs.h"
-#include "timer.h"
+#include "reset.h"
 
 struct menu_page {
   const char * const * entries;
@@ -36,14 +35,8 @@ static void main_menu_select(unsigned entry)
 {
   switch(entry) {
   case 5:
-    REGS_MISC.reset = 0xdf;
-    {
-      uint32_t t, t0 = timer_read();
-      do {
-	t = timer_read() - t0;
-      } while (t < US_TO_TICKS(100));
-    }
-    REGS_MISC.reset = 0x00;
+    reset_set_other(true);
+    reset_set_other(false);
     /* FALLTHRU */
   case 6:
     menu_close();
