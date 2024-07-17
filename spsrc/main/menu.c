@@ -9,6 +9,7 @@
 
 #define MAX_FILESELECTOR_FILES 1000
 #define MAX_FILESELECTOR_NAMELEN 40
+#define MAX_FILESELECTOR_ENTRIES 16 /* Matches height of menu */
 
 #define FILETYPE_FILE  0x10
 #define FILETYPE_DIR   0x11
@@ -20,10 +21,19 @@ static const uint16_t menu_altcolor[] = {
   WINDOW_COLOR(13, 4),
 };
 
+struct menu_scroll_control {
+  void (*refill_func)(void);
+  unsigned visible_adjust;
+  unsigned top_entry;
+  unsigned total_entries;
+  unsigned remaining_entries;
+};
+
 struct menu_page {
   const char * const * entries;
   void (*select_func)(unsigned entry);
   const struct menu_page *parent;
+  struct menu_scroll_control *scroll_control;
 };
 
 static const char * const main_menu_entries[] = {
@@ -36,11 +46,12 @@ static const char * const main_menu_entries[] = {
   NULL
 };
 
-static const char * fileselector_menu_entries[MAX_FILESELECTOR_FILES+3];
+static const char * fileselector_menu_entries[MAX_FILESELECTOR_ENTRIES];
 static char fileselector_menu_names[MAX_FILESELECTOR_FILES][MAX_FILESELECTOR_NAMELEN+1];
 
 static void main_menu_select(unsigned entry);
 static void fileselector_menu_select(unsigned entry);
+static void fileselector_menu_refill(void);
 static void menu_open_fileselector(const char *title,
 				   void (*open_func)(fatfs_filehandle_t *fh,
 						     const char *filename));
@@ -51,10 +62,15 @@ static const struct menu_page main_menu = {
   NULL
 };
 
+static struct menu_scroll_control fileselector_scroll_control = {
+  fileselector_menu_refill, 2
+};
+
 static struct menu_page fileselector_menu = {
   fileselector_menu_entries,
   fileselector_menu_select,
-  NULL
+  NULL,
+  &fileselector_scroll_control
 };
 
 static const struct menu_page *current_menu = NULL;
@@ -84,26 +100,11 @@ static void main_menu_select(unsigned entry)
   }
 }
 
-static void menu_move(struct overlay_window *ow, const char * const * items,
-		      int dir)
-{
-  int y = ow->cursor_y;
-  for (;;) {
-    y += dir;
-    if (y < 1 || !items[y-1] || y+1 >= ow->current_h)
-      return;
-    if (items[y-1][0] && items[y-1][1] &&
-	items[y-1][0] != '&' && items[y-1][0] != FILETYPE_LABEL)
-      break;
-  }
-  if (ow->cursor_y)
-    overlay_window_invert_line(ow, ow->cursor_y);
-  overlay_window_invert_line(ow, ow->cursor_y = y);
-}
-
-static void menu_draw(struct overlay_window *ow, const char * const * items)
+static void menu_draw(struct overlay_window *ow, const char * const * items,
+		      struct menu_scroll_control *sc)
 {
   unsigned w = ow->min_w, h = 2;
+  unsigned scmarker;
   const char *p;
   for (const char * const * i = items; p = *i; i++) {
     h ++;
@@ -115,6 +116,18 @@ static void menu_draw(struct overlay_window *ow, const char * const * items)
       w = l;
   }
   overlay_window_resize(ow, w, h);
+  if (sc) {
+    unsigned bot = ow->current_h - 2 + sc->top_entry;
+    if (sc->total_entries > bot)
+      sc->remaining_entries = sc->total_entries - bot;
+    else
+      sc->remaining_entries = 0;
+    if (sc->top_entry + sc->remaining_entries == 0)
+      sc = NULL;
+    else
+      scmarker = (ow->current_h - 5 - sc->visible_adjust) *
+	sc->top_entry / (sc->top_entry + sc->remaining_entries);
+  }
   ow->cursor_y = 1;
   for (const char * const * i = items; p = *i; i++) {
     ow->cursor_x = 1;
@@ -145,6 +158,19 @@ static void menu_draw(struct overlay_window *ow, const char * const * items)
 	p ++;
 	break;
       }
+    if (sc && !pattern && ow->cursor_y > sc->visible_adjust) {
+      if (ow->cursor_y == ow->current_h - 2)
+	pattern = "\x81\x20\x09";
+      else if (ow->cursor_y == sc->visible_adjust + 1)
+	pattern = "\x81\x20\x08";
+      else if (!scmarker) {
+	pattern = "\x81\x20\x0e";
+	scmarker = ow->current_h;
+      } else {
+	pattern = "\x81\x20\x9d";
+	--scmarker;
+      }
+    }
     overlay_window_clear_line(ow, ow->cursor_y, pattern);
     while (*p && ow->cursor_x+1 < ow->current_w) {
       if (ow->cursor_x+2 == ow->current_w && p[1]) {
@@ -160,13 +186,56 @@ static void menu_draw(struct overlay_window *ow, const char * const * items)
   while (ow->cursor_y+1 < ow->current_h)
     overlay_window_clear_line(ow, ow->cursor_y++, NULL);
   ow->cursor_y = 0;
-  menu_move(ow, items, 1);
+}
+
+static void menu_move(struct overlay_window *ow, const char * const * items,
+		      int dir, struct menu_scroll_control *sc)
+{
+  int y = ow->cursor_y;
+  for (;;) {
+    y += dir;
+    if (y < 1 && sc && sc->top_entry > 0) {
+      sc->top_entry--;
+      sc->refill_func();
+      menu_draw(ow, items, sc);
+      dir = 1;
+      y = 0;
+      sc = NULL;
+      continue;
+    }
+    if (y+1 >= ow->current_h && sc && sc->remaining_entries > 0) {
+      sc->top_entry++;
+      sc->refill_func();
+      menu_draw(ow, items, sc);
+      sc = NULL;
+      y = ow->current_h-1;
+      dir = -1;
+      continue;
+    }
+    if (y < 1 || !items[y-1] || y+1 >= ow->current_h)
+      return;
+    if (items[y-1][0] && items[y-1][1] &&
+	items[y-1][0] != '&' && items[y-1][0] != FILETYPE_LABEL)
+      break;
+  }
+  if (ow->cursor_y)
+    overlay_window_invert_line(ow, ow->cursor_y);
+  overlay_window_invert_line(ow, ow->cursor_y = y);
 }
 
 static void menu_set(const struct menu_page *page)
 {
   current_menu = page;
-  menu_draw(&menu_window, page->entries);
+  menu_draw(&menu_window, page->entries, page->scroll_control);
+  menu_move(&menu_window, page->entries, 1, page->scroll_control);
+}
+
+static void fileselector_menu_refill(void)
+{
+  unsigned entry = 2, pos = fileselector_scroll_control.top_entry;
+  while (entry < MAX_FILESELECTOR_ENTRIES-1 && pos < fileselector_cnt)
+    fileselector_menu_entries[entry++] = fileselector_menu_names[pos++];
+  fileselector_menu_entries[entry] = NULL;
 }
 
 static int fileselector_menu_fill(bool root)
@@ -188,19 +257,24 @@ static int fileselector_menu_fill(bool root)
 	continue;
     } else
       *p = FILETYPE_FILE;
-    fileselector_menu_entries[2 + fileselector_cnt] = p;
     if (++fileselector_cnt >= MAX_FILESELECTOR_FILES)
       break;
   }
-  fileselector_menu_entries[2 + fileselector_cnt] = NULL;
+  fileselector_scroll_control.top_entry = 0;
+  fileselector_scroll_control.total_entries = fileselector_cnt + 2;
+  fileselector_menu_refill();
   return r;
 }
 
 static void fileselector_menu_select(unsigned entry)
 {
   char typ = 0;
-  if (entry >= 3 && (entry-=3) < fileselector_cnt)
-    typ = fileselector_menu_names[entry][0];
+  if (entry >= 3) {
+    entry -= 3;
+    entry += fileselector_scroll_control.top_entry;
+    if (entry < fileselector_cnt)
+      typ = fileselector_menu_names[entry][0];
+  }
   switch (typ) {
   case FILETYPE_DIR:
     fileselector_dir = fileselector_file[entry];
@@ -269,10 +343,12 @@ void menu_key(char key)
   else if (current_menu) {
     switch (key) {
     case '\x04':
-      menu_move(&menu_window, current_menu->entries, -1);
+      menu_move(&menu_window, current_menu->entries,
+		-1, current_menu->scroll_control);
       break;
     case '\x05':
-      menu_move(&menu_window, current_menu->entries, 1);
+      menu_move(&menu_window, current_menu->entries,
+		1, current_menu->scroll_control);
       break;
     case '\n':
       if (current_menu->select_func)
