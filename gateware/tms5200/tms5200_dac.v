@@ -1,12 +1,13 @@
-module tms5200_dac(input                     clk,
-		   input		     clk_en,
-		   input		     t11,
-		   input		     io,
-		   output [0:(audio_bits-1)] audioout);
+module tms5200_dac
+  #(parameter audio_bits = 8)
+   (input                     clk,
+    input		      clk_en,
+    input		      t11,
+    input		      io,
+    output [0:(audio_bits-1)] audioout);
 
    /* Note: audioout is signed, unlike the internal D/A input in the 5200 */
    
-   parameter audio_bits = 8;
 
    reg [13:4]  yl;
    reg	       shifting;

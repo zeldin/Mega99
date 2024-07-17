@@ -21,6 +21,14 @@ module tms5200_vsp(input            reset,
 
 		   output	    promout);
 
+   reg lchen_todd;
+   reg ddis;
+   reg i01, i02, i03, i11;
+   wire	i04;
+   reg rb_la_start;
+   reg [9:0]  poshift;
+   wire	bl, be, bf;
+
    assign m0 = (lchen_todd & ~ddis) | i01 | i02 | i03 | i04;
    assign m1 = i11 | rb_la_start;
    assign promout = poshift[0];
@@ -41,6 +49,9 @@ module tms5200_vsp(input            reset,
    assign todd = tcnt[0];
    
    wire	talkst;
+   reg talkd;
+   reg tcon;
+   reg spen;
    assign talkst = talkd | tcon | spen; // Note: Patent does not have tcon here
 
 
@@ -139,7 +150,8 @@ module tms5200_vsp(input            reset,
    
    // Digital output
 
-   reg [13:4]  io_sr;
+   reg [13:4] io_sr;
+   reg [13:0] yl;
 
    always @(posedge clk)
      if (clk_en) begin
@@ -165,6 +177,7 @@ module tms5200_vsp(input            reset,
    wire	     nop;
    wire	     nopfin;
    reg	     last_nop;
+   wire	     ldce, ldce_clear;
    assign rdby = (cmd == 3'b001 && !talkst && !ldce);
    assign spkext = (cmd == 3'b110 && !talkst && !ldce);
    assign rb = (cmd == 3'b011 && !talkst && !ldce);
@@ -191,7 +204,6 @@ module tms5200_vsp(input            reset,
 
    // SPKEXT logic
 
-   reg ddis;
    reg spefin;
    reg last_spkext, last_talkst;
    wire	spkee;
@@ -215,7 +227,7 @@ module tms5200_vsp(input            reset,
    // State machine
 
    reg delay_timer, delay_latch, last_delay_latch, delay_pending;
-   reg i01, i01_pre, i11, i03;
+   reg i01_pre;
    wire i03_pre;
    wire	la_latch_clear;
    reg	la_latch;
@@ -289,10 +301,8 @@ module tms5200_vsp(input            reset,
    
    // RB/LA logic
 
-   reg rb_la_start;
    reg rb_la_start_pre;
    reg last_rb_la_start;
-   wire	i04;
    wire	lafin;
 
    assign i04 = rb & rb_la_start;
@@ -331,7 +341,6 @@ module tms5200_vsp(input            reset,
    // I/O logic
 
    reg c0, c1, c2;
-   wire	ldce, ldce_clear;
    reg	ldce_pre, last_ldce_pre, ldce_gate;
    reg	wbyt;
 
@@ -369,7 +378,7 @@ module tms5200_vsp(input            reset,
    // Data/addr reg
 
    reg         rdby_ff, rdbyfin_ff;
-   reg	       last_c1, i02;
+   reg	       last_c1;
    reg	       last_rs;
    reg [0:7]   data_reg;
    assign dq = ({8{c1}} & data_reg) | ({8{c2}} & { talkst, bl, be, 5'b00000 });
@@ -418,7 +427,6 @@ module tms5200_vsp(input            reset,
 
    reg last_bl;
    reg bl_negedge;
-   reg spen;
    always @(posedge clk)
      if (reset) begin
 	spen <= 1'b0;
@@ -436,11 +444,8 @@ module tms5200_vsp(input            reset,
 
    reg resetl;
    reg tc;
-   reg tcon;
-   reg talkd;
    reg en;
    reg [11:0] pshift;
-   reg [9:0]  poshift;
    reg	decodef;
    reg	rpt;
    reg	p_eq_0 = 1'b1, e_eq_0 = 1'b1;
@@ -453,6 +458,8 @@ module tms5200_vsp(input            reset,
    wire	in0, in1, in2, in3, in4, in5;
    wire [5:0] cr;
    wire [9:0] prom_data;
+   wire	parin;
+   reg	latche;
    assign decode0 = pc0 & t16 & ~in0 & ~in1 & ~in2 & ~in3;
    assign talk = ~(puc | rst | tc | decodef);
    assign in0 = parin;
@@ -535,8 +542,9 @@ module tms5200_vsp(input            reset,
    reg [9:0] pitch_reg = 0;
    reg new_pitch;
    reg interpolate_pitch;
-   wire	bb, cc;
+   wire	aa, bb, cc;
    wire	crykl;
+   wire [9:0] transfer_next;
 
    assign interp_delay1_in = interp_feedback_sr[1];
    assign interp_delay1_out = (div1 & interp_delay1_in) |
@@ -603,8 +611,6 @@ module tms5200_vsp(input            reset,
    reg [8:0] ke10_transfer_reg = 0;
    reg [19:0] e10_loop = 0;
    wire [9:0] kstack_out;
-   wire [9:0] transfer_next;
-   wire	      aa;
    assign transfer_next = ( bb ? { cc, ke10_transfer_reg } :
 			    ( tk ? kstack_out : e10_loop[9:0] ) );
    assign aa = transfer_next[0];
@@ -693,7 +699,6 @@ module tms5200_vsp(input            reset,
 
    reg [13:0] mr_delay;
    reg [13:0] accumulator;
-   reg [13:0] yl;
    wire [13:0] accumulator_in;
    wire [13:0] p;
    wire [13:0] bstack_out;
@@ -728,8 +733,9 @@ module tms5200_vsp(input            reset,
 
    // Load speech logic
 
-   reg lchen, lchen_pre, latche, latche_pre;
-   wire	parin;
+   reg lchen, lchen_pre, latche_pre;
+   reg sse;
+   wire	fifdso;
    assign parin = latche & (ddis ? fifdso & ~sse : add8_in);
    always @(posedge clk)
       if (clk_en) begin
@@ -749,8 +755,6 @@ module tms5200_vsp(input            reset,
    reg       clr;
    reg [0:3] bytr_cnt;
    wire	     bytr;
-   reg	     sse;
-   wire	     fifdso, bl, be, bf;
 
    assign bytr = sse & bytr_cnt[2] & !bytr_cnt[3];
    always @(posedge clk)
@@ -769,7 +773,6 @@ module tms5200_vsp(input            reset,
    // I0 logic
    
    reg sse_pre;
-   reg lchen_todd;
    always @(posedge clk)
       if (clk_en) begin
 	 sse <= sse_pre & ddis;

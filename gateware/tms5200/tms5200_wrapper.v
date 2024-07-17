@@ -1,28 +1,28 @@
-module tms5200_wrapper(input        reset,
-		       input	    clk, // Enabled cycles should give
-		       input	    clk_en, // ROMCLK clock, 160 kHz
+module tms5200_wrapper
+  #(parameter audio_bits = 8,
+    parameter vsm_size = 16384)
+   (input		      reset,
+    input		      clk, // Enabled cycles should give
+    input		      clk_en, // ROMCLK clock, 160 kHz
 
-		       input [0:7]  dd,
-		       output [0:7] dq,
-		       input	    rs,
-		       input	    ws,
-		       output	    rdy,
-		       output       int,
+    input [0:7]		      dd,
+    output [0:7]	      dq,
+    input		      rs,
+    input		      ws,
+    output		      rdy,
+    output		      int,
 		   
-		       output [0:(audio_bits-1)] audioout,
+    output [0:(audio_bits-1)] audioout,
 
-		       // ROM access wishbone slave
-		       input [0:17] wb_adr_i,
-		       input [0:7]  wb_dat_i,
-		       output [0:7] wb_dat_o,
-		       input	    wb_we_i,
-		       input [0:0]  wb_sel_i,
-		       input	    wb_stb_i,
-		       output       wb_ack_o,
-		       input	    wb_cyc_i);
-
-   parameter audio_bits = 8;
-   parameter vsm_size = 16384;
+    // ROM access wishbone slave
+    input [0:17]	      wb_adr_i,
+    input [0:7]		      wb_dat_i,
+    output [0:7]	      wb_dat_o,
+    input		      wb_we_i,
+    input [0:0]		      wb_sel_i,
+    input		      wb_stb_i,
+    output		      wb_ack_o,
+    input		      wb_cyc_i);
 
    wire	      t11, io;
    wire [0:3] add_out;
