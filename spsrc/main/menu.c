@@ -3,13 +3,28 @@
 #include "menu.h"
 #include "keyboard.h"
 #include "reset.h"
+#include "fatfs.h"
+#include "rpk.h"
+#include "strerr.h"
+
+#define MAX_FILESELECTOR_FILES 1000
+#define MAX_FILESELECTOR_NAMELEN 40
+
+#define FILETYPE_FILE  0x10
+#define FILETYPE_DIR   0x11
+#define FILETYPE_LABEL 0x12
+
+static const uint16_t menu_altcolor[] = {
+  WINDOW_COLOR(15, 4),
+  WINDOW_COLOR(5, 4),
+  WINDOW_COLOR(13, 4),
+};
 
 struct menu_page {
   const char * const * entries;
   void (*select_func)(unsigned entry);
-  struct menu_page *parent;
+  const struct menu_page *parent;
 };
-
 
 static const char * const main_menu_entries[] = {
   "&Main menu",
@@ -21,7 +36,14 @@ static const char * const main_menu_entries[] = {
   NULL
 };
 
+static const char * fileselector_menu_entries[MAX_FILESELECTOR_FILES+3];
+static char fileselector_menu_names[MAX_FILESELECTOR_FILES][MAX_FILESELECTOR_NAMELEN+1];
+
 static void main_menu_select(unsigned entry);
+static void fileselector_menu_select(unsigned entry);
+static void menu_open_fileselector(const char *title,
+				   void (*open_func)(fatfs_filehandle_t *fh,
+						     const char *filename));
 
 static const struct menu_page main_menu = {
   main_menu_entries,
@@ -29,11 +51,29 @@ static const struct menu_page main_menu = {
   NULL
 };
 
+static struct menu_page fileselector_menu = {
+  fileselector_menu_entries,
+  fileselector_menu_select,
+  NULL
+};
+
 static const struct menu_page *current_menu = NULL;
+static fatfs_filehandle_t fileselector_dir, fileselector_file[MAX_FILESELECTOR_FILES];
+
+static void (*fileselector_open_func)(fatfs_filehandle_t *fh, const char *filename);
+static unsigned fileselector_cnt;
+
+static void menu_open_func_rpk(fatfs_filehandle_t *fh, const char *filename)
+{
+  load_rpk_fh(filename, fh);
+}
 
 static void main_menu_select(unsigned entry)
 {
   switch(entry) {
+  case 3:
+    menu_open_fileselector("&Select RPK file to load", menu_open_func_rpk);
+    break;
   case 5:
     reset_set_other(true);
     reset_set_other(false);
@@ -50,9 +90,10 @@ static void menu_move(struct overlay_window *ow, const char * const * items,
   int y = ow->cursor_y;
   for (;;) {
     y += dir;
-    if (y < 1 || !items[y-1])
+    if (y < 1 || !items[y-1] || y+1 >= ow->current_h)
       return;
-    if (items[y-1][0] && items[y-1][1] && items[y-1][0] != '&')
+    if (items[y-1][0] && items[y-1][1] &&
+	items[y-1][0] != '&' && items[y-1][0] != FILETYPE_LABEL)
       break;
   }
   if (ow->cursor_y)
@@ -66,9 +107,10 @@ static void menu_draw(struct overlay_window *ow, const char * const * items)
   const char *p;
   for (const char * const * i = items; p = *i; i++) {
     h ++;
-    if (*p == '&')
+    if (*p == '&' ||
+	(*p >= 0x10 && *p < 0x10+sizeof(menu_altcolor)/sizeof(menu_altcolor[0])))
       ++p;
-    unsigned l = strlen(p);
+    unsigned l = strlen(p) + 2;
     if (l > w)
       w = l;
   }
@@ -86,6 +128,9 @@ static void menu_draw(struct overlay_window *ow, const char * const * items)
 	ow->cursor_x += (ow->current_w-2-l) >> 1;
     } else
       ow->text_color = WINDOW_COLOR(15, 4);
+    if (*p >= 0x10 && *p < 0x10+sizeof(menu_altcolor)/sizeof(menu_altcolor[0]))
+      ow->text_color = menu_altcolor[*p++ - 0x10];
+    ow->background_color = ow->text_color;
     const char *pattern = NULL;
     if (p[0] && !p[1])
       switch(p[0]) {
@@ -106,7 +151,8 @@ static void menu_draw(struct overlay_window *ow, const char * const * items)
 	overlay_window_putchar(ow, 0xf);
 	break;
       }
-      overlay_window_putchar(ow, *p++);
+      char c = *p++;
+      overlay_window_putchar(ow, (c == 0x1a? 0 : c));
     }
     ow->cursor_y++;
   }
@@ -121,6 +167,77 @@ static void menu_set(const struct menu_page *page)
 {
   current_menu = page;
   menu_draw(&menu_window, page->entries);
+}
+
+static int fileselector_menu_fill(bool root)
+{
+  int r;
+  char *p;
+  fileselector_cnt = 0;
+  if (root &&
+      (r = fatfs_open_rootdir(&fileselector_dir)) < 0)
+    return r;
+  while((r = fatfs_read_directory(&fileselector_dir, &fileselector_file[fileselector_cnt],
+				  (p = fileselector_menu_names[fileselector_cnt])+1,
+				  MAX_FILESELECTOR_NAMELEN)) > 0) {
+    if ((r & 8))
+      *p = FILETYPE_LABEL;
+    else if ((r & 16)) {
+      *p = FILETYPE_DIR;
+      if (p[1] == '.' && p[2] == 0)
+	continue;
+    } else
+      *p = FILETYPE_FILE;
+    fileselector_menu_entries[2 + fileselector_cnt] = p;
+    if (++fileselector_cnt >= MAX_FILESELECTOR_FILES)
+      break;
+  }
+  fileselector_menu_entries[2 + fileselector_cnt] = NULL;
+  return r;
+}
+
+static void fileselector_menu_select(unsigned entry)
+{
+  char typ = 0;
+  if (entry >= 3 && (entry-=3) < fileselector_cnt)
+    typ = fileselector_menu_names[entry][0];
+  switch (typ) {
+  case FILETYPE_DIR:
+    fileselector_dir = fileselector_file[entry];
+    int r = fileselector_menu_fill(!fileselector_dir.start_cluster);
+    if (r < 0) {
+      fprintf(stderr, "%s\n", fatfs_strerror(-r));
+      menu_close();
+    } else {
+      menu_set(&fileselector_menu);
+    }
+    break;
+  case FILETYPE_FILE:
+    if (fileselector_open_func)
+      (*fileselector_open_func)(&fileselector_file[entry],
+				&fileselector_menu_names[entry][1]);
+    /* FALLTHRU */
+  default:
+    menu_close();
+    break;
+  }
+}
+
+static void menu_open_fileselector(const char *title,
+				   void (*open_func)(fatfs_filehandle_t *fh,
+						     const char *filename))
+{
+  fileselector_open_func = open_func;
+  fileselector_menu_entries[0] = title;
+  fileselector_menu_entries[1] = "-";
+
+  int r = fileselector_menu_fill(true);
+  if (r < 0) {
+    fprintf(stderr, "%s\n", fatfs_strerror(-r));
+  } else {
+    fileselector_menu.parent = current_menu;
+    menu_set(&fileselector_menu);
+  }
 }
 
 void menu_open(void)

@@ -1,5 +1,6 @@
 #include "global.h"
 #include "mem.h"
+#include "fatfs.h"
 #include "zipfile.h"
 #include "rpk.h"
 #include "yxml.h"
@@ -153,14 +154,14 @@ static int parse_layout(int *socket_resource, unsigned *cart_mode)
   return 0;
 }
 
-static int low_load_rpk(const char *filename)
+static int low_load_rpk(const char *filename, fatfs_filehandle_t *fh)
 {
   int socket_resource[] = { -1, -1, -1 };
   unsigned cart_mode = 0;
 
   printf("layout.xml...[%s]...", filename);
   fflush(stdout);
-  int r = zipfile_open(filename);
+  int r = (fh? zipfile_open_fh(fh) : zipfile_open(filename));
   if (!r)
     r = zipfile_open_entry("layout.xml");
   if (r) {
@@ -207,9 +208,14 @@ static int low_load_rpk(const char *filename)
   return 0;
 }
 
-int load_rpk(const char *filename)
+int load_rpk_fh(const char *filename, fatfs_filehandle_t *fh)
 {
-  int r = low_load_rpk(filename);
+  int r = low_load_rpk(filename, fh);
   zipfile_close();
   return r;
+}
+
+int load_rpk(const char *filename)
+{
+  return load_rpk_fh(filename, NULL);
 }

@@ -46,7 +46,9 @@ int32_t fatfs_stream_open(void *stream, const char *path, int32_t mode) {
     return MZ_OPEN_ERROR;
 
   int r;
-  if ((r = fatfs_open(path, &fatfs->fh)) < 0) {
+  if ((mode & MZ_OPEN_MODE_EXISTING))
+    fatfs->fh = *(const fatfs_filehandle_t *)path;
+  else if ((r = fatfs_open(path, &fatfs->fh)) < 0) {
     fatfs->error = -r;
     fatfs->is_open = false;
     return MZ_OPEN_ERROR;
@@ -145,15 +147,25 @@ void zipfile_init()
   mz_stream_set_base(stream_handle, fatfs_stream_create());
 }
 
-int zipfile_open(const char *path)
+int zipfile_open_int(const char *path, int32_t mode)
 {
   int r;
   zipfile_close();
-  if ((r = mz_stream_open(stream_handle, path, MZ_OPEN_MODE_READ)))
+  if ((r = mz_stream_open(stream_handle, path, mode|MZ_OPEN_MODE_READ)))
     return r;
   if ((r = mz_zip_open(zipfile_handle, stream_handle, MZ_OPEN_MODE_READ)))
     return r;
   return 0;
+}
+
+int zipfile_open(const char *path)
+{
+  return zipfile_open_int(path, 0);
+}
+
+int zipfile_open_fh(fatfs_filehandle_t *fh)
+{
+  return zipfile_open_int((const char *)fh, MZ_OPEN_MODE_EXISTING);
 }
 
 int zipfile_open_entry(const char *path)

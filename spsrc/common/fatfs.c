@@ -141,6 +141,8 @@ static int fatfs_cluster_block_read(uint32_t cluster, uint32_t sub,
 {
   if ((cluster & FAT_EOC))
     return ((cluster & FAT_ERROR)? (int16_t)(cluster & 0xffffu) : -ETRUNC);
+  if (cluster < 2)
+    return -ETRUNC;
   return fatfs_block_read(fatfs_cluster_block_id(cluster, sub), ptr, card_id);
 }
 
@@ -150,6 +152,8 @@ static uint32_t fatfs_get_fat_entry(uint32_t card_id, uint32_t cluster,
   uint8_t n;
   if ((cluster & FAT_EOC))
     return cluster;
+  if (cluster < 2)
+    return cluster | FAT_EOC;
   if (fatfs_fat32) {
     n = cluster&0x7f;
     cluster >>= 7;
@@ -453,16 +457,197 @@ int fatfs_setpos(fatfs_filehandle_t *fh, uint32_t newpos)
     fh->filepos = newpos;
     return 0;
   }
-  uint32_t cluster = fh->start_cluster;
-  pos = newpos >> 9;
-  while (pos >= fatfs_blocks_per_cluster) {
-    pos -= fatfs_blocks_per_cluster;
-    cluster = fatfs_get_fat_entry(card_id, cluster, buf);
+  if (fh->current_cluster) {
+    uint32_t cluster = fh->start_cluster;
+    pos = newpos >> 9;
+    while (pos >= fatfs_blocks_per_cluster) {
+      pos -= fatfs_blocks_per_cluster;
+      cluster = fatfs_get_fat_entry(card_id, cluster, buf);
+    }
+    if ((cluster & FAT_EOC))
+      return ((cluster & FAT_ERROR)? (int16_t)(cluster & 0xffffu) : -ETRUNC);
+    fh->current_cluster = cluster;
   }
-  if ((cluster & FAT_EOC))
-    return ((cluster & FAT_ERROR)? (int16_t)(cluster & 0xffffu) : -ETRUNC);
-  fh->current_cluster = cluster;
   fh->filepos = newpos;
+  return 0;
+}
+
+int fatfs_open_rootdir(fatfs_filehandle_t *fh)
+{
+  int r;
+  if ((r = fatfs_check_card(0, OP_INIT)) < 0)
+    return r;
+  fh->card_id = current_card_id;
+  fh->start_cluster = fatfs_root_dir_start;
+  if (fatfs_fat32) {
+    fh->size = 0;
+    fh->current_cluster = fh->start_cluster;
+  } else {
+    fh->size = fatfs_root_dir_entries << 5;
+    fh->current_cluster = 0;
+  }
+  fh->filepos = 0;
+  return 0;
+}
+
+static void fatfs_get_shortname(char *namebuf, uint32_t namebuf_len,
+				const uint8_t *entry)
+{
+  unsigned i;
+  for(i=8; i>0 && entry[i-1] == ' '; --i)
+    ;
+  if (i >= namebuf_len)
+    i = namebuf_len - 1;
+  if (i > 0) {
+    memcpy(namebuf, entry, i);
+    namebuf += i;
+    namebuf_len -= i;
+  }
+  if (namebuf_len > 1 && (entry[8] != ' ' || entry[9] != ' ' || entry[10] != ' ')) {
+    *namebuf++ = '.';
+    --namebuf_len;
+    for(i=3; i>0 && entry[i+7] == ' '; --i)
+      ;
+    if (i >= namebuf_len)
+      i = namebuf_len - 1;
+    if (i > 0) {
+      memcpy(namebuf, entry+8, i);
+      namebuf += i;
+    }
+  }
+  *namebuf = 0;
+}
+
+static void fatfs_get_longname(char *namebuf, uint32_t namebuf_len,
+			       const uint8_t *entry, uint16_t offs)
+{
+  if (offs >= namebuf_len)
+    return;
+  namebuf += offs;
+  namebuf_len -= offs;
+  unsigned i = 1;
+  while (i < 32) {
+    if (namebuf_len <= 1)
+      break;
+    if (entry[i+1] != 0 || (entry[i] > 0x00 && entry[i] < 0x20) ||
+	(entry[i] >= 0x7f && entry[i] < 0xa0))
+      *namebuf++ = '\x1a';
+    else if (!entry[i])
+      break;
+    else
+      *namebuf++ = entry[i];
+    --namebuf_len;
+    if ((i += 2) == 0x1a)
+      i += 2;
+    else if (i == 0x0b)
+      i += 3;
+  }
+  if (i < 32)
+    *namebuf = 0;
+}
+
+int fatfs_read_directory(fatfs_filehandle_t *fh, fatfs_filehandle_t *entry,
+			 char *namebuf, uint32_t namebuf_len)
+{
+  uint8_t buf[512];
+  const uint8_t *p = NULL;
+  uint32_t pos = fh->filepos;
+  uint32_t cluster = fh->current_cluster;
+  uint16_t lfn_match = ~0;
+  int entry_type = 0;
+  if (!namebuf)
+    namebuf_len = 0;
+  for (;;) {
+    if ((cluster & FAT_EOC))
+      break;
+    if (!cluster && pos >= fh->size)
+      break;
+    if (!p) {
+      int r;
+      if (cluster) {
+	uint32_t sub = (pos >> 9) & (fatfs_blocks_per_cluster-1);
+	r = fatfs_cluster_block_read(cluster, sub, buf, fh->card_id);
+      } else
+	r = fatfs_block_read(fh->start_cluster+(pos >> 9), buf, fh->card_id);
+      if (r < 0)
+	return r;
+    }
+    p = &buf[pos & 0x1ff];
+    if (!*p)
+      break;
+
+    if ((p[11]&0x3f) == 0x0f) {
+      DEBUG_PRINT("LFN %x ", p[0] | (p[0xb] << 24) | (p[0xd] << 16));
+      unsigned i = 1;
+      while (i < 32) {
+	if (p[i+1])
+	  DEBUG_PUTC('@');
+	else
+	  DEBUG_PUTC(p[i]);
+	if ((i += 2) == 0x1a)
+	  i += 2;
+	else if (i == 0x0b)
+	  i += 3;
+      }
+      DEBUG_PRINT("\n");
+      if (*p >= 0x41 && *p <= 0x55)
+	lfn_match = (p[0xd]<<8)|(*p - 0x40);
+      else if (!*p || (*p & 0xc0) || ((p[0xd] << 8)|*p) != lfn_match)
+	lfn_match = ~0;
+      if (!(lfn_match & 0x80)) {
+	--lfn_match;
+	if (namebuf_len) {
+	  uint16_t offs = 13*(0xff&lfn_match);
+	  if ((*p & 0x40) && namebuf_len > offs+13)
+	    namebuf[offs+13] = 0;
+	  fatfs_get_longname(namebuf, namebuf_len, p, offs);
+	}
+      }
+    } else if (*p == 0xe5) {
+      DEBUG_PRINT("Deleted\n");
+      lfn_match = ~0;
+    } else {
+      DEBUG_PRINT("Entry ");
+      int i;
+      for(i=0; i<11; i++)
+	DEBUG_PUTC(p[i]);
+      if (!(lfn_match & 0xff))
+	DEBUG_PRINT(" CS %x\n", fatfs_filename_checksum(p));
+      else
+	DEBUG_PUTC('\n');
+      uint32_t file_start_cluster = fatfs_get16(p+26);
+      if (fatfs_fat32)
+	file_start_cluster |= fatfs_get16(p+20) << 16;
+      DEBUG_PRINT("  cluster 0x%x, length 0x%x\n",
+		  (unsigned)file_start_cluster,
+		  (unsigned)fatfs_get32(p+28));
+
+      if (entry) {
+	entry->card_id = fh->card_id;
+	entry->start_cluster = file_start_cluster;
+	entry->current_cluster = file_start_cluster;
+	entry->size = fatfs_get32(p+28);
+	entry->filepos = 0;
+      }
+
+      if (namebuf_len && lfn_match != (fatfs_filename_checksum(p) << 8))
+	fatfs_get_shortname(namebuf, namebuf_len, p);
+
+      entry_type = (p[11]&0x3f)|0x40;
+    }
+
+    fh->filepos = (pos += 32);
+    if (!(pos & 0x1ff)) {
+      p = NULL;
+      if (cluster && !((pos >> 9) & (fatfs_blocks_per_cluster-1)))
+	fh->current_cluster = cluster =
+	  fatfs_get_fat_entry(fh->card_id, cluster, buf);
+    }
+    if (entry_type)
+      return entry_type;
+  }
+  if ((cluster & FAT_ERROR))
+    return (int16_t)(cluster & 0xffffu);
   return 0;
 }
 
