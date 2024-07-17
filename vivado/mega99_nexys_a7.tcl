@@ -2,9 +2,9 @@
 proc checkRequiredFiles { origin_dir} {
   set status true
   set files [list \
- "[file normalize "$origin_dir/gateware/mega99_top_a7.v"]"\
- "[file normalize "$origin_dir/gateware/clkwiz_a7.v"]"\
- "[file normalize "$origin_dir/gateware/mig_wrapper_nexys.v"]"\
+ "[file normalize "$origin_dir/gateware/mega99_nexys_a7_top.v"]"\
+ "[file normalize "$origin_dir/gateware/nexys_a7_clkwiz.v"]"\
+ "[file normalize "$origin_dir/gateware/nexys_a7_mig_wrapper.v"]"\
  "[file normalize "$origin_dir/gateware/cdc_flag.v"]"\
  "[file normalize "$origin_dir/gateware/ps2com.v"]"\
  "[file normalize "$origin_dir/gateware/keyboard_ps2.v"]"\
@@ -82,7 +82,7 @@ proc checkRequiredFiles { origin_dir} {
  "[file normalize "$origin_dir/mor1kx/rtl/verilog/mor1kx.v"]"\
  "[file normalize "$origin_dir/mor1kx/rtl/verilog/mor1kx_wb_mux_cappuccino.v"]"\
  "[file normalize "$origin_dir/vivado/mega99_nexys_a7.xdc"]"\
- "[file normalize "$origin_dir/vivado/mig_a.prj"]"\
+ "[file normalize "$origin_dir/vivado/nexys_a7_mig.prj"]"\
   ]
   foreach ifile $files {
     if { ![file isfile $ifile] } {
@@ -211,9 +211,9 @@ if {[string equal [get_filesets -quiet sources_1] ""]} {
 # Set 'sources_1' fileset object
 set obj [get_filesets sources_1]
 set files [list \
- [file normalize "${origin_dir}/gateware/mega99_top_a7.v"] \
- [file normalize "${origin_dir}/gateware/clkwiz_a7.v"] \
- [file normalize "${origin_dir}/gateware/mig_wrapper_nexys.v"] \
+ [file normalize "${origin_dir}/gateware/mega99_nexys_a7_top.v"] \
+ [file normalize "${origin_dir}/gateware/nexys_a7_clkwiz.v"] \
+ [file normalize "${origin_dir}/gateware/nexys_a7_mig_wrapper.v"] \
  [file normalize "${origin_dir}/gateware/cdc_flag.v"] \
  [file normalize "${origin_dir}/gateware/ps2com.v"] \
  [file normalize "${origin_dir}/gateware/keyboard_ps2.v"] \
@@ -303,7 +303,7 @@ set_property file_type {Memory File} [get_files -of $obj *.hex]
 # Set 'sources_1' fileset properties
 set obj [get_filesets sources_1]
 set_property -name "dataflow_viewer_settings" -value "min_width=16" -objects $obj
-set_property -name "top" -value "mega99_top_a7" -objects $obj
+set_property -name "top" -value "mega99_nexys_a7_top" -objects $obj
 
 
 # Create 'constrs_1' fileset (if not found)
@@ -338,7 +338,7 @@ set obj [get_filesets sim_1]
 
 # Set 'sim_1' fileset properties
 set obj [get_filesets sim_1]
-set_property -name "top" -value "mega99_top_a7" -objects $obj
+set_property -name "top" -value "mega99_nexys_a7_top" -objects $obj
 set_property -name "top_lib" -value "xil_defaultlib" -objects $obj
 
 set idrFlowPropertiesConstraints ""
@@ -347,9 +347,9 @@ catch {
  set_param runs.disableIDRFlowPropertyConstraints 1
 }
 
-set obj [create_ip -vlnv xilinx.com:ip:mig_7series:4.2 -module_name mig]
-set file [file join [get_property ip_dir [get_ips mig]] "mig_a.prj"]
-set fp [open "${origin_dir}/vivado/mig_a.prj" r]
+set obj [create_ip -vlnv xilinx.com:ip:mig_7series:4.2 -module_name nexys_a7_mig]
+set file [file join [get_property ip_dir [get_ips nexys_a7_mig]] "nexys_a7_mig.prj"]
+set fp [open "${origin_dir}/vivado/nexys_a7_mig.prj" r]
 set prj [read $fp]
 close $fp
 set prj [regsub -all {(<TargetFPGA>)[^<]*(?=<)} "$prj" "\\1[regsub csg [regsub -- - "${_xil_part_}" /-] {-&}]"]
@@ -384,8 +384,8 @@ set_property -dict [list \
   CONFIG.RLDII_RESET.INSERT_VIP {0} \
   CONFIG.SYSTEM_RESET.INSERT_VIP {0} \
   CONFIG.SYS_CLK_I.INSERT_VIP {0} \
-  CONFIG.XML_INPUT_FILE {mig_a.prj} \
-] [get_ips mig]
+  CONFIG.XML_INPUT_FILE {nexys_a7_mig.prj} \
+] [get_ips nexys_a7_mig]
 set_property -dict { 
   GENERATE_SYNTH_CHECKPOINT {1}
 } $obj

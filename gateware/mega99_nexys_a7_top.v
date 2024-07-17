@@ -1,48 +1,48 @@
-module mega99_top_a7(input         CLK100MHZ,
+module mega99_nexys_a7_top(input         CLK100MHZ,
 
-		     output [3:0]  VGA_R,
-		     output [3:0]  VGA_G,
-		     output [3:0]  VGA_B,
-		     output	   VGA_HS,
-		     output	   VGA_VS,
+			   output [3:0]	 VGA_R,
+			   output [3:0]	 VGA_G,
+			   output [3:0]	 VGA_B,
+			   output	 VGA_HS,
+			   output	 VGA_VS,
 
-		     output	   LED16_G,
-		     output	   LED17_R,
+			   output	 LED16_G,
+			   output	 LED17_R,
 
-		     output	   SD_RESET,
-		     input	   SD_CD,
-		     output	   SD_SCK,
-		     output	   SD_CMD,
-		     inout [3:0]   SD_DAT,
+			   output	 SD_RESET,
+			   input	 SD_CD,
+			   output	 SD_SCK,
+			   output	 SD_CMD,
+			   inout [3:0]	 SD_DAT,
 
-		     input	   PS2_CLK,
-		     input	   PS2_DATA,
+			   input	 PS2_CLK,
+			   input	 PS2_DATA,
 
-		     inout	   AUD_PWM,
-		     output	   AUD_SD,
+			   inout	 AUD_PWM,
+			   output	 AUD_SD,
 
-		     input	   UART_RXD,
-		     output        UART_TXD,
+			   input	 UART_RXD,
+			   output	 UART_TXD,
 
-		     input [1:4]   JAlo,
-		     input [8:8]   JAhi,
-		     input [1:4]   JBlo,
-		     input [8:8]   JBhi,
+			   input [1:4]	 JAlo,
+			   input [8:8]	 JAhi,
+			   input [1:4]	 JBlo,
+			   input [8:8]	 JBhi,
 		     
-		     inout [15:0]  ddr2_dq,
-		     inout [1:0]   ddr2_dqs_n,
-		     inout [1:0]   ddr2_dqs_p,
-		     output [12:0] ddr2_addr,
-		     output [2:0]  ddr2_ba,
-		     output	   ddr2_ras_n,
-		     output	   ddr2_cas_n,
-		     output	   ddr2_we_n,
-		     output	   ddr2_ck_p,
-		     output	   ddr2_ck_n,
-		     output	   ddr2_cke,
-		     output	   ddr2_cs_n,
-		     output [1:0]  ddr2_dm,
-		     output	   ddr2_odt);
+			   inout [15:0]	 ddr2_dq,
+			   inout [1:0]	 ddr2_dqs_n,
+			   inout [1:0]	 ddr2_dqs_p,
+			   output [12:0] ddr2_addr,
+			   output [2:0]	 ddr2_ba,
+			   output	 ddr2_ras_n,
+			   output	 ddr2_cas_n,
+			   output	 ddr2_we_n,
+			   output	 ddr2_ck_p,
+			   output	 ddr2_ck_n,
+			   output	 ddr2_cke,
+			   output	 ddr2_cs_n,
+			   output [1:0]	 ddr2_dm,
+			   output	 ddr2_odt);
 
    wire        clk;
    wire	       clk_mem;
@@ -127,29 +127,29 @@ module mega99_top_a7(input         CLK100MHZ,
    assign SD_DAT[3] = ~sdcard_cs;
 
 
-   clkwiz_a7 clkgen(.clk_mem(clk_mem), .clk_sys(clk), .clk_ref(clk_ref),
-                    .locked(clk_locked), .clk_in1(CLK100MHZ));
+   nexys_a7_clkwiz clkgen(.clk_mem(clk_mem), .clk_sys(clk), .clk_ref(clk_ref),
+			  .locked(clk_locked), .clk_in1(CLK100MHZ));
 
-   mig_wrapper_nexys mig(.clk_mem(clk_mem), .clk_ref(clk_ref), .rst_n(~reset),
+   nexys_a7_mig_wrapper mig(.clk_mem(clk_mem), .clk_ref(clk_ref), .rst_n(~reset),
 
-			 .ddr2_dq(ddr2_dq),
-			 .ddr2_dqs_n(ddr2_dqs_n), .ddr2_dqs_p(ddr2_dqs_p),
-			 .ddr2_addr(ddr2_addr), .ddr2_ba(ddr2_ba),
-			 .ddr2_ras_n(ddr2_ras_n), .ddr2_cas_n(ddr2_cas_n),
-			 .ddr2_we_n(ddr2_we_n),
-			 .ddr2_ck_p(ddr2_ck_p), .ddr2_ck_n(ddr2_ck_n),
-			 .ddr2_cke(ddr2_cke), .ddr2_cs_n(ddr2_cs_n),
-			 .ddr2_dm(ddr2_dm), .ddr2_odt(ddr2_odt),
+			    .ddr2_dq(ddr2_dq),
+			    .ddr2_dqs_n(ddr2_dqs_n), .ddr2_dqs_p(ddr2_dqs_p),
+			    .ddr2_addr(ddr2_addr), .ddr2_ba(ddr2_ba),
+			    .ddr2_ras_n(ddr2_ras_n), .ddr2_cas_n(ddr2_cas_n),
+			    .ddr2_we_n(ddr2_we_n),
+			    .ddr2_ck_p(ddr2_ck_p), .ddr2_ck_n(ddr2_ck_n),
+			    .ddr2_cke(ddr2_cke), .ddr2_cs_n(ddr2_cs_n),
+			    .ddr2_dm(ddr2_dm), .ddr2_odt(ddr2_odt),
 
-			 .cpu_clk(clk),
-			 .wb_adr_i(xmem_adr_o),
-			 .wb_dat_i(xmem_dat_o),
-			 .wb_dat_o(xmem_dat_i),
-			 .wb_we_i(xmem_we_o),
-			 .wb_sel_i(xmem_sel_o),
-			 .wb_stb_i(xmem_stb_o),
-			 .wb_ack_o(xmem_ack_i),
-			 .wb_cyc_i(xmem_cyc_o));
+			    .cpu_clk(clk),
+			    .wb_adr_i(xmem_adr_o),
+			    .wb_dat_i(xmem_dat_o),
+			    .wb_dat_o(xmem_dat_i),
+			    .wb_we_i(xmem_we_o),
+			    .wb_sel_i(xmem_sel_o),
+			    .wb_stb_i(xmem_stb_o),
+			    .wb_ack_o(xmem_ack_i),
+			    .wb_cyc_i(xmem_cyc_o));
 
    ps2com #(.clock_filter(24))
    kbdcom(.clk(clk), .reset(reset),
@@ -229,4 +229,4 @@ module mega99_top_a7(input         CLK100MHZ,
      vga_color_to_rgb(.color(overlay_color == 4'd0 ? vga_color : overlay_color),
 		      .red(VGA_R), .green(VGA_G), .blue(VGA_B));
 
-endmodule // mega99_top_a7
+endmodule // mega99_nexys_a7_top

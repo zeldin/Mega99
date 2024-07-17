@@ -1,8 +1,8 @@
-module clkwiz_a7(output clk_mem,
-		 output	clk_sys,
-		 output clk_ref,
-		 output	locked,
-		 input	clk_in1);
+module nexys_a7_clkwiz(output clk_mem,
+		       output clk_sys,
+		       output clk_ref,
+		       output locked,
+		       input  clk_in1);
 
    wire b_clk_in1;
    wire	clk_fb;
@@ -107,4 +107,4 @@ module clkwiz_a7(output clk_mem,
    BUFG bufg_clk_sys(.I(u_clk_sys), .O(clk_sys));
    BUFG bufg_clk_ref(.I(u_clk_ref), .O(clk_ref));
 
-endmodule // clkwiz_a7
+endmodule // nexys_a7_clkwiz

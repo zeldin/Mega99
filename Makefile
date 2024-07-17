@@ -80,26 +80,26 @@ BOOTHEX += or1k_boot_code1.hex
 BOOTHEX += or1k_boot_code2.hex
 BOOTHEX += or1k_boot_code3.hex
 
-NEXYS_A7_SOURCES  = $(GATEWARE)/mega99_top_a7.v
-NEXYS_A7_SOURCES += $(GATEWARE)/clkwiz_a7.v
-NEXYS_A7_SOURCES += $(GATEWARE)/mig_wrapper_nexys.v
+NEXYS_A7_SOURCES  = $(GATEWARE)/mega99_nexys_a7_top.v
+NEXYS_A7_SOURCES += $(GATEWARE)/nexys_a7_clkwiz.v
+NEXYS_A7_SOURCES += $(GATEWARE)/nexys_a7_mig_wrapper.v
 NEXYS_A7_SOURCES += $(GATEWARE)/cdc_flag.v
 NEXYS_A7_SOURCES += $(GATEWARE)/ps2com.v
 NEXYS_A7_SOURCES += $(GATEWARE)/keyboard_ps2.v
 NEXYS_A7_SOURCES += $(GATEWARE)/sigmadelta.v
 
 NEXYS_A7_SOURCES += vivado/mega99_nexys_a7.xdc
-NEXYS_A7_SOURCES += vivado/mig_a.prj
+NEXYS_A7_SOURCES += vivado/nexys_a7_mig.prj
 
 
 VIVADO ?= ./vivado_wrapper
 
-nexys_a7-50t: proj/mega99_nexys_a7-50t.runs/impl_1/mega99_top_a7.bit
+nexys_a7-50t: proj/mega99_nexys_a7-50t.runs/impl_1/mega99_nexys_a7_top.bit
 
-nexys_a7-100t: proj/mega99_nexys_a7-100t.runs/impl_1/mega99_top_a7.bit
+nexys_a7-100t: proj/mega99_nexys_a7-100t.runs/impl_1/mega99_nexys_a7_top.bit
 
 
-proj/mega99_nexys_a7%.runs/impl_1/mega99_top_a7.bit : proj/mega99_nexys_a7%.xpr vivado/build.tcl $(COMMON_SOURCES) $(MOR1KX_SOURCES) $(NEXYS_A7_SOURCES) $(BOOTHEX)
+proj/mega99_nexys_a7%.runs/impl_1/mega99_nexys_a7_top.bit : proj/mega99_nexys_a7%.xpr vivado/build.tcl $(COMMON_SOURCES) $(MOR1KX_SOURCES) $(NEXYS_A7_SOURCES) $(BOOTHEX)
 	$(VIVADO) -mode batch -source vivado/build.tcl proj/mega99_nexys_a7$*.xpr
 
 proj/mega99_nexys_a7-50t.xpr : vivado/mega99_nexys_a7.tcl | $(BOOTHEX)
