@@ -428,4 +428,31 @@ catch {
  }
 }
 
+# Suppress mor1kx and mig warnings
+set_msg_config -id {Synth 8-693} -string {mor1kx/rtl} -suppress
+set_msg_config -id {Synth 8-3332} -string {mor1kx} -suppress
+set_msg_config -id {Synth 8-3848} -string {mor1kx/rtl} -suppress
+set_msg_config -id {Synth 8-6014} -string {mor1kx/rtl} -suppress
+set_msg_config -id {DRC DPOP-1} -string {mor1kx_cpu} -suppress
+set_msg_config -id {DRC DPOP-2} -string {mor1kx_cpu} -suppress
+
+set_msg_config -id {Synth 8-567} -string {ip/nexys_a7_mig} -suppress
+set_msg_config -id {Synth 8-689} -string {ip/nexys_a7_mig} -suppress
+set_msg_config -id {Synth 8-3332} -string {mig_7series} -suppress
+set_msg_config -id {Synth 8-3848} -string {ip/nexys_a7_mig} -suppress
+set_msg_config -id {Synth 8-3936} -string {ip/nexys_a7_mig} -suppress
+set_msg_config -id {Synth 8-6014} -string {ip/nexys_a7_mig} -suppress
+set_msg_config -id {Synth 8-7023} -string {ip/nexys_a7_mig} -suppress
+set_msg_config -id {Synth 8-7071} -string {ip/nexys_a7_mig} -suppress
+set_msg_config -id {Synth 8-7129} -string {mig_7series} -suppress
+set_msg_config -id {Synth 8-7186} -string {mig_7series} -suppress
+set_msg_config -id {Synth 8-10515} -string {ip/nexys_a7_mig} -suppress
+set_msg_config -id {Synth 8-3321} -string {ip/nexys_a7_mig} -suppress
+set_msg_config -id {Designutils 20-1567} -string {ip/nexys_a7_mig} -suppress
+set_msg_config -id {DRC REQP-1709} -string {u_nexys_a7_mig_mig/u_ddr2_infrastructure} -suppress
+
+set_msg_config -id {Synth 8-5974} -new_severity "INFO"
+set_msg_config -id {Synth 8-7080} -new_severity "INFO"
+
+
 puts "INFO: Project created:${_xil_proj_name_}"
