@@ -428,6 +428,26 @@ catch {
  }
 }
 
+
+# Suppress inconsequential warnings
+set_msg_config -suppress -id {Synth 8-3917} -string {SD_RESET}
+set_msg_config -suppress -id {Synth 8-3917} -string {AUD_SD}
+set_msg_config -id {Synth 8-7129} -string {{.*Port wb_adr_i\[.\] in module cartridge_rom.*}} -regexp -suppress
+set_msg_config -id {Synth 8-7129} -string {{Port grclk_en in module groms}} -suppress
+set_msg_config -id {Synth 8-7129} -string {{.*Port grom_set\[.\] in module groms.*}} -regexp -suppress
+set_msg_config -id {Synth 8-7129} -string {{.*Port a\[.\] in module scratchpad_ram.*}} -regexp -suppress
+set_msg_config -id {Synth 8-7129} -string {{.*Port a\[.\] in module console_rom.*}} -regexp -suppress
+set_msg_config -id {Synth 8-7129} -string {{.*Port wb_adr_i\[.\] in module console_rom.*}} -regexp -suppress
+set_msg_config -id {Synth 8-7129} -string {{.*Port a\[.*\] in module address_decoder.*}} -regexp -suppress
+set_msg_config -id {Synth 8-7129} -string {{.*Port sel\[.\] in module spmmio_keyboard.*}} -regexp -suppress
+set_msg_config -id {Synth 8-7129} -string {{.*Port d\[.*\] in module spmmio_keyboard.*}} -regexp -suppress
+set_msg_config -id {Synth 8-7129} -string {{.*Port sel\[.\] in module spmmio_uart.*}} -regexp -suppress
+set_msg_config -id {Synth 8-7129} -string {{.*Port d\[.*\] in module spmmio_uart.*}} -regexp -suppress
+set_msg_config -id {Synth 8-7129} -string {{.*Port d\[.*\] in module spmmio_sdcard.*}} -regexp -suppress
+set_msg_config -id {Synth 8-7129} -string {{.*Port sel\[.\] in module spmmio_misc.*}} -regexp -suppress
+set_msg_config -id {Synth 8-7129} -string {{.*Port d\[.*\] in module spmmio_misc.*}} -regexp -suppress
+
+
 # Suppress mor1kx and mig warnings
 set_msg_config -id {Synth 8-693} -string {mor1kx/rtl} -suppress
 set_msg_config -id {Synth 8-3332} -string {mor1kx} -suppress
