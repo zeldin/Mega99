@@ -41,7 +41,7 @@ module tms5200_vsp(input            reset,
    reg [2:0] ic;
    reg div1, div2, div4, div8, ic_eq_7;
    reg pc0, pc_eq_0, pc_eq_1, pc_gt_5, pc_eq_12;
-   reg t1, t2, t8, t10, t14, t15, t16, t17, t19, t20;
+   reg t1, t2, t8, t10, t14, t16, t17, t19, t20;
    reg t1_to_t9, t9_to_t18, t10_to_t18;
    reg tp, te10;
 
@@ -86,7 +86,6 @@ module tms5200_vsp(input            reset,
 	t10 <= (tcnt == 5'd10);
 	t11 <= (tcnt == 5'd11);
 	t14 <= (tcnt == 5'd14);
-	t15 <= (tcnt == 5'd15);
 	t16 <= (tcnt == 5'd16);
 	t17 <= (tcnt == 5'd17);
 	t19 <= (tcnt == 5'd19);

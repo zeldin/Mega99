@@ -16,6 +16,7 @@ module tms5200_multiplier(input	            clk,
 
    // Stage 1-4
 
+   reg [14:0]  mr_out [1:3];
    genvar i;
    generate
       for (i=1; i<=4; i=i+1) begin : STAGE
@@ -23,14 +24,13 @@ module tms5200_multiplier(input	            clk,
 	 wire [14:0] sigma_in;
 	 wire [14:0] addend;
 	 wire	     carry_in;
-	 reg [14:0]  mr_out;
 	 reg [14:0]  sigma_out;
 	 if (i == 1) begin
 	    assign mr_in = { mr[13], mr[13:0] };
 	    assign sigma_in = { stage0_sigma[14], stage0_sigma[14],
 				stage0_sigma[14:2] };
 	 end else begin
-	    assign mr_in = STAGE[i-1].mr_out;
+	    assign mr_in = mr_out[i-1];
 	    assign sigma_in = { STAGE[i-1].sigma_out[14],
 				STAGE[i-1].sigma_out[14],
 				STAGE[i-1].sigma_out[14:2] };
@@ -42,7 +42,8 @@ module tms5200_multiplier(input	            clk,
 	 assign carry_in = m1_stage[i] | m2_stage[i];
 	 always @(posedge clk)
 	   if (clk_en) begin
-	      mr_out <= mr_in;
+	      if (i < 4)
+		mr_out[i] <= mr_in;
 	      sigma_out <= sigma_in + addend + carry_in;
 	   end
       end // block: STAGE

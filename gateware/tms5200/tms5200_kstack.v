@@ -32,23 +32,29 @@ module tms5200_kstack(input	       clk,
 	m1_stage[0] <= current[0] & current[1];  // -1 stage 0
      end
 
+   wire [1:4] c_in;
+   reg [1:3]  c_out;
+
+   always @(posedge clk)
+     if (clk_en)
+       c_out[1:3] <= c_in[1:3];
+
    generate
       for (i=1; i<=4; i=i+1) begin : RECODER
 	 wire a, b, c;
-	 reg  c_out;
 	 if (i == 1)
 	   assign a = current[1];
 	 else
-	   assign a = RECODER[i-1].c_out;
+	   assign a = c_out[i-1];
 	 assign b = current[2*i+0];
 	 assign c = current[2*i+1];
+	 assign c_in[i] = c;
 	 always @(posedge clk)
 	   if (clk_en) begin
 	      p2_stage[i] <= a & b & ~c;   // +2 stage i
 	      m2_stage[i] <= ~a & ~b & c;  // -2 stage i
 	      p1_stage[i] <= (a ^ b) & ~c; // +1 stage i
 	      m1_stage[i] <= (a ^ b) & c;  // -1 stage i
-	      c_out <= c;
 	   end
       end
    endgenerate
