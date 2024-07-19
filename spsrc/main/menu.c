@@ -5,6 +5,7 @@
 #include "reset.h"
 #include "fatfs.h"
 #include "rpk.h"
+#include "tape.h"
 #include "strerr.h"
 
 #define MAX_FILESELECTOR_FILES 1000
@@ -40,6 +41,7 @@ static const char * const main_menu_entries[] = {
   "&Main menu",
   "=",
   "Load RPK",
+  "Open CS1 input file",
   "-",
   "Reset and exit",
   "Exit",
@@ -84,17 +86,26 @@ static void menu_open_func_rpk(fatfs_filehandle_t *fh, const char *filename)
   load_rpk_fh(filename, fh);
 }
 
+static void menu_open_func_tape(fatfs_filehandle_t *fh, const char *filename)
+{
+  tape_start(fh);
+}
+
 static void main_menu_select(unsigned entry)
 {
+  extern void tape_check(void);
   switch(entry) {
   case 3:
     menu_open_fileselector("&Select RPK file to load", menu_open_func_rpk);
     break;
-  case 5:
+  case 4:
+    menu_open_fileselector("&Select WAV or TAP file to open", menu_open_func_tape);
+    break;
+  case 6:
     reset_set_other(true);
     reset_set_other(false);
     /* FALLTHRU */
-  case 6:
+  case 7:
     menu_close();
     break;
   }

@@ -64,12 +64,14 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
    wire [7:0]  kbd_scancode;
    wire	       kbd_trigger;
 
+   wire [0:15] audio_in;
    wire [15:0] audio_out;
    wire	       audio_sd;
    
    wire	       vdp_clk_en;
    wire	       vga_clk_en;
    wire	       overlay_clk_en;
+   wire	       clk_3mhz_en;
 
    wire	       vdp_hsync;
    wire	       vdp_vsync;
@@ -189,6 +191,8 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
 			.shift_state({shift_state[0:1], alpha_state,
 				      (|shift_state[2:3])}),
 			.keyboard_block(keyboard_block),
+			.clk_3mhz_en(clk_3mhz_en), .tape_audio(audio_in),
+			.cs1_cntrl(cs1_cntrl),
 			.sdcard_cs(sdcard_cs), .sdcard_cd(~SD_CD),
 			.sdcard_wp(1'b0), .sdcard_sck(SD_SCK),
 			.sdcard_miso(SD_DAT[0]), .sdcard_mosi(SD_CMD),
@@ -201,10 +205,10 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
       .reset_9918(reset_9918), .reset_9919(reset_9919),
       .reset_5200(reset_5200), .cpu_turbo(cpu_turbo),
       .vdp_clk_en(vdp_clk_en), .vga_clk_en(vga_clk_en),
-      .overlay_clk_en(overlay_clk_en),
+      .overlay_clk_en(overlay_clk_en), .clk_3mhz_en(clk_3mhz_en),
       .vdp_hsync(vdp_hsync), .vdp_vsync(vdp_vsync),
       .vdp_cburst(vdp_cburst), .vdp_color(vdp_color), .vdp_extvideo(),
-      .audio_in(16'd0), .audio_out(audio_out),
+      .audio_in(audio_in), .audio_out(audio_out),
       .key_state(key_state), .alpha_state(alpha_state),
       .joy1({~JAhi[8], ~JAlo[3], ~JAlo[4], ~JAlo[2], ~JAlo[1]}),
       .joy2({~JBhi[8], ~JBlo[3], ~JBlo[4], ~JBlo[2], ~JBlo[1]}),

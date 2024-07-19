@@ -18,6 +18,7 @@ module mainboard #(
 		 output			   vdp_clk_en,
 		 output			   vga_clk_en,
 		 output			   overlay_clk_en,
+		 output			   clk_3mhz_en,
 
 		 output			   vdp_hsync,
 		 output			   vdp_vsync,
@@ -57,7 +58,6 @@ module mainboard #(
    wire	       reset;
    wire	       vdp_clk_en_next;
    wire	       cpu_clk_en;
-   wire	       clk_3mhz_en;
    wire	       grom_clk_en;
    wire	       vsp_clk_en;
 

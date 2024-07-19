@@ -23,6 +23,10 @@ module spmmio(input             clk,
 	      input [0:3]	shift_state,
 	      output		keyboard_block,
 
+	      input		clk_3mhz_en,
+	      output [0:15]	tape_audio,
+	      input		cs1_cntrl,
+
 	      output		sdcard_cs,
 	      input		sdcard_cd,
 	      input		sdcard_wp,
@@ -38,12 +42,14 @@ module spmmio(input             clk,
    reg	       stb_uart;
    reg	       stb_overlay;
    reg	       stb_kbd;
+   reg	       stb_tape;
    wire        ack_overlay;
    wire [0:31] dat_misc;
    wire [0:31] dat_sdcard;
    wire [0:31] dat_uart;
    wire [0:31] dat_overlay;
    wire [0:31] dat_kbd;
+   wire [0:31] dat_tape;
 
    always @(*) begin
       ack_o <= stb_i;
@@ -54,6 +60,7 @@ module spmmio(input             clk,
       stb_uart <= 1'b0;
       stb_overlay <= 1'b0;
       stb_kbd <= 1'b0;
+      stb_tape <= 1'b0;
       case (adr_i[0 +: 8])
 	8'h00: begin
 	   stb_misc <= stb_i;
@@ -75,6 +82,10 @@ module spmmio(input             clk,
 	8'h04: begin
 	   stb_kbd <= stb_i;
 	   dat_o <= dat_kbd;
+	end
+	8'h05: begin
+	   stb_tape <= stb_i;
+	   dat_o <= dat_tape;
 	end
 	default: ;
       endcase // case (adr_i[0 +: 8])
@@ -117,5 +128,11 @@ module spmmio(input             clk,
 			    .keypress(keypress), .keycode(keycode),
 			    .shift_state(shift_state),
 			    .keyboard_block(keyboard_block));
+
+   spmmio_tape tape(.clk(clk), .reset(reset), .clk_3mhz_en(clk_3mhz_en),
+		    .adr(adr_i[21 -: 14]), .cs(cyc_i && stb_tape),
+		    .sel(sel_i), .we(we_i), .d(dat_i), .q(dat_tape),
+
+		    .tape_audio(tape_audio), .cs1_cntrl(cs1_cntrl));
 
 endmodule // spmmio

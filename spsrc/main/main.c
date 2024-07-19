@@ -7,6 +7,7 @@
 #include "fatfs.h"
 #include "zipfile.h"
 #include "rpk.h"
+#include "tape.h"
 #include "strerr.h"
 #include "overlay.h"
 #include "keyboard.h"
@@ -104,5 +105,6 @@ void main()
   for(;;) {
     overlay_task();
     keyboard_task();
+    tape_task();
   }
 }

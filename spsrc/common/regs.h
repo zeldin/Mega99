@@ -50,4 +50,15 @@ struct mmio_regs_keyboard {
   uint8_t block;
 };
 
-#define REGS_KEYBOARD (*(volatile struct mmio_regs_keyboard *)(void *)0xff04ff00)
+#define REGS_KEYBOARD (*(volatile struct mmio_regs_keyboard *)(void *)0xff040000)
+
+struct mmio_regs_tape {
+  uint16_t control;
+  uint16_t sample_rate;
+  uint16_t head, tail;
+  uint16_t memsize;
+};
+
+#define REGS_TAPE (*(volatile struct mmio_regs_tape *)(void *)0xff05ff00)
+
+#define TAPE_SAMPLES ((uint8_t *)(void *)0xff050000)
