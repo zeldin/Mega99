@@ -166,8 +166,8 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
 			 .shift_state(shift_state),
 			 .keyboard_block(keyboard_block));
 
-   sigmadelta #(.audio_bits(16))
-   sd_dac(.clk(clk), .d(audio_out), .q(audio_sd));
+   sigmadelta #(.audio_bits(10))
+   sd_dac(.clk(clk), .d(audio_out[15 -: 10]), .q(audio_sd));
 
    sp service_processor(.clk(clk), .reset(reset),
 			.wb_adr_o(sp_adr_o), .wb_dat_o(sp_dat_o),
