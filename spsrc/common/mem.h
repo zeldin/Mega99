@@ -11,4 +11,17 @@
 #define CARTROM ((uint8_t *)(void *)0x80200000)
 #define SPEECHROM ((uint8_t *)(void *)0x80300000)
 
+struct mem_regs_fdc {
+  uint8_t mounted_wp;
+  uint8_t rd_wr;
+  uint8_t ack;
+  uint8_t pad;
+  uint16_t img_size;
+  uint16_t lba;
+};
+
+#define FDCROM ((uint8_t *)(void *)0x80800000)
+#define FDCBUF ((uint8_t *)(void *)0x80802000)
+#define FDCREGS (*(volatile struct mem_regs_fdc *)(void *)0x80803000)
+
 #define FLUSH do { __asm__("" : : : "memory"); } while(0)

@@ -7,3 +7,6 @@
 [submodule "spsrc/zlib-ng"]
 	path = spsrc/zlib-ng
 	url = https://github.com/zlib-ng/zlib-ng
+[submodule "gateware/fdc1772"]
+	path = gateware/fdc1772
+	url = https://github.com/harbaum/fdc1772-verilator

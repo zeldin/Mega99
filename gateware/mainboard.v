@@ -74,7 +74,9 @@ module mainboard #(
    wire	       ready_grom;
    wire	       ready_sgc;
    wire	       ready_vsp;
-   wire	       cruin;
+   wire	       ready_peb;
+   wire	       cruin_psi;
+   wire	       cruin_peb;
    wire	       cruout;
    wire	       cruclk;
 
@@ -88,6 +90,7 @@ module mainboard #(
    wire [0:7]  d8_grom;
    wire [0:7]  d8_crom;
    wire [0:7]  d8_vsp;
+   wire [0:7]  d8_peb;
    wire [0:7]  cd_vdp;
    wire [0:7]  q8;
    reg	       d_rom_valid;
@@ -98,6 +101,7 @@ module mainboard #(
    reg	       d8_grom_valid;
    reg	       d8_crom_valid;
    reg	       d8_vsp_valid;
+   reg	       d8_peb_valid;
 
    wire	       romen;
    wire	       mbe;
@@ -126,16 +130,19 @@ module mainboard #(
    wire [0:7]  wb_dat_grom;
    wire [0:7]  wb_dat_crom;
    wire [0:7]  wb_dat_sprom;
+   wire [0:7]  wb_dat_peb;
    wire	       wb_ack_vdp;
    wire	       wb_ack_rom;
    wire	       wb_ack_grom;
    wire	       wb_ack_crom;
    wire	       wb_ack_sprom;
+   wire	       wb_ack_peb;
    reg	       wb_stb_vdp;
    reg	       wb_stb_rom;
    reg	       wb_stb_grom;
    reg	       wb_stb_crom;
    reg	       wb_stb_sprom;
+   reg	       wb_stb_peb;
    
    assign sys_reset = reset;
    
@@ -158,8 +165,9 @@ module mainboard #(
    assign d8 = 8'hff &
 	       (d8_grom_valid ? d8_grom : 8'hff) &
 	       (d8_crom_valid ? d8_crom : 8'hff) &
-	       (d8_vsp_valid ? d8_vsp : 8'hff);
-   assign sysrdy = (ready_grom | ~gs) & ready_sgc & ready_vsp;
+	       (d8_vsp_valid ? d8_vsp : 8'hff) &
+	       (d8_peb_valid ? d8_peb : 8'hff);
+   assign sysrdy = (ready_grom | ~gs) & ready_sgc & ready_vsp & ready_peb;
 
    assign audio_mix = {audio_in[0], audio_in} + {audio_vsp[0], audio_vsp};
    assign audio_mix_sat = (audio_gate? audio_vsp :
@@ -176,6 +184,7 @@ module mainboard #(
       d8_grom_valid <= dbin && gs;
       d8_crom_valid <= dbin && romg;
       d8_vsp_valid <= dbin && sbe;
+      d8_peb_valid <= dbin && mbe;
    end
 
    always @(*) begin
@@ -186,43 +195,49 @@ module mainboard #(
       wb_stb_grom <= 1'b0;
       wb_stb_crom <= 1'b0;
       wb_stb_sprom <= 1'b0;
-      case (wb_adr_i[0 +: 4])
-	4'h0:
-	  case (wb_adr_i[4 +: 4])
-	    4'h0: begin
-	       wb_stb_vdp <= wb_stb_i;
-	       wb_dat_o <= wb_dat_vdp;
-	       wb_ack_o <= wb_ack_vdp;
-	    end
-	    4'h1: begin
-	       wb_stb_rom <= wb_stb_i;
-	       wb_dat_o <= wb_dat_rom;
-	       wb_ack_o <= wb_ack_rom;
-	    end
-	    4'h3: begin
-	       wb_stb_crom <= wb_stb_i;
-	       wb_dat_o <= wb_dat_crom;
-	       wb_ack_o <= wb_ack_crom;
-	    end
-	    default: ;
-	  endcase // case (wb_adr_i[4 +: 4])
-	4'h1: begin
-	   wb_stb_grom <= wb_stb_i;
-	   wb_dat_o <= wb_dat_grom;
-	   wb_ack_o <= wb_ack_grom;
-	end
-	4'h2: begin
-	   wb_stb_crom <= wb_stb_i;
-	   wb_dat_o <= wb_dat_crom;
-	   wb_ack_o <= wb_ack_crom;
-	end
-	4'h3: begin
-	   wb_stb_sprom <= wb_stb_i;
-	   wb_dat_o <= wb_dat_sprom;
-	   wb_ack_o <= wb_ack_sprom;
-	end
-	default: ;
-      endcase // case (wb_adr_i[0 +: 8])
+      wb_stb_peb <= 1'b0;
+      if (wb_adr_i[0]) begin
+	 wb_stb_peb <= wb_stb_i;
+	 wb_dat_o <= wb_dat_peb;
+	 wb_ack_o <= wb_ack_peb;
+      end else
+	case (wb_adr_i[1 +: 3])
+	  3'h0:
+	    case (wb_adr_i[4 +: 4])
+	      4'h0: begin
+		 wb_stb_vdp <= wb_stb_i;
+		 wb_dat_o <= wb_dat_vdp;
+		 wb_ack_o <= wb_ack_vdp;
+	      end
+	      4'h1: begin
+		 wb_stb_rom <= wb_stb_i;
+		 wb_dat_o <= wb_dat_rom;
+		 wb_ack_o <= wb_ack_rom;
+	      end
+	      4'h3: begin
+		 wb_stb_crom <= wb_stb_i;
+		 wb_dat_o <= wb_dat_crom;
+		 wb_ack_o <= wb_ack_crom;
+	      end
+	      default: ;
+	    endcase // case (wb_adr_i[4 +: 4])
+	  3'h1: begin
+	     wb_stb_grom <= wb_stb_i;
+	     wb_dat_o <= wb_dat_grom;
+	     wb_ack_o <= wb_ack_grom;
+	  end
+	  3'h2: begin
+	     wb_stb_crom <= wb_stb_i;
+	     wb_dat_o <= wb_dat_crom;
+	     wb_ack_o <= wb_ack_crom;
+	  end
+	  3'h3: begin
+	     wb_stb_sprom <= wb_stb_i;
+	     wb_dat_o <= wb_dat_sprom;
+	     wb_ack_o <= wb_ack_sprom;
+	  end
+	  default: ;
+	endcase // case (wb_adr_i[1 +: 3])
    end
 
    clkgen #(.clk_multiplier(clk_multiplier),
@@ -255,14 +270,15 @@ module mainboard #(
    tms9900_cpu cpu(.reset(reset|reset_9900), .clk(clk), .clk_en(cpu_clk_en),
 		   .memen_out(memen), .we(we), .iaq(iaq), .ready_in(ready),
 		   .waiting(), .a(a), .d_in(d), .q(q), .dbin(dbin),
-		   .cruin(cruin), .cruout(cruout), .cruclk_out(cruclk),
+		   .cruin(ramblk ? cruin_psi : cruin_peb),
+		   .cruout(cruout), .cruclk_out(cruclk),
 		   .intreq(intreq), .ic(4'b0001),
 		   .hold(1'b0), .holda(), .load(1'b0),
 		   .debug_pc(debug_pc), .debug_st(debug_st),
 		   .debug_wp(debug_wp), .debug_ir(debug_ir));
 
    tms9901_psi psi(.reset(reset|reset_9901), .clk(clk), .clk_en(clk_3mhz_en),
-		   .cruout(cruout), .cruin(cruin), .cruclk(cruclk),
+		   .cruout(cruout), .cruin(cruin_psi), .cruclk(cruclk),
 		   .s(a[10:14]), .ce(ramblk),
 		   .int_in(int_in), .p_in(p_in), .p_out(p_out), .p_dir(p_dir),
 		   .intreq(intreq), .ic());
@@ -317,5 +333,15 @@ module mainboard #(
 		      .wb_dat_o(wb_dat_crom), .wb_we_i(wb_we_i),
 		      .wb_sel_i(wb_sel_i), .wb_stb_i(wb_stb_crom),
 		      .wb_ack_o(wb_ack_crom), .wb_cyc_i(wb_cyc_i));
-				      
+
+   peb peb(.clk(clk), .clk_3mhz_en(clk_3mhz_en), .reset(reset),
+	   .a({a, a15 & (cruout | memen)}), .d(q8), .q(d8_peb),
+	   .memen(memen8), .dbin(dbin), .we(we), .cruclk(cruclk),
+	   .cruin(cruin_peb), .ready(ready_peb),
+
+	   .wb_adr_i(wb_adr_i[1:23]), .wb_dat_i(wb_dat_i),
+	   .wb_dat_o(wb_dat_peb), .wb_we_i(wb_we_i),
+	   .wb_sel_i(wb_sel_i), .wb_stb_i(wb_stb_peb),
+	   .wb_ack_o(wb_ack_peb), .wb_cyc_i(wb_cyc_i));
+
 endmodule // mainboard
