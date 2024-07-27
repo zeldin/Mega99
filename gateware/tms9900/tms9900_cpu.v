@@ -702,7 +702,7 @@ module tms9900_cpu(input reset,
 		       st[4] <= 1'b1;
 		     { st[3], q } <= { q, 1'b0 }; // SLA
 		  end
-		  2'b11: q <= { q[15], q[0:14] }; // SRC
+		  2'b11: { q, st[3] } <= { q[15], q[0:15] }; // SRC
 		endcase
 		if (c != 4'b0001) begin
 		  c <= c - 4'b0001;
