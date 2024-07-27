@@ -194,6 +194,12 @@ module tms9900_cpu(input reset,
    assign debug_wp = wp;
    assign debug_ir = ir;
 
+   function automatic [0:15] wpaddr(input [0:3] r);
+      begin
+	 wpaddr = wp + { 11'd0, r, 1'b0 };
+      end
+   endfunction // wpaddr
+
    always @(posedge clk) begin
 
       if (reset)
@@ -361,21 +367,21 @@ module tms9900_cpu(input reset,
 		extra[15] <= 1'b0;
 	     end
 	     S_INTREQ_4: begin
-		addr <= { wp[0:10], 4'd13, 1'b0 };
+		addr <= wpaddr(4'd13);
 		memen <= 1'b1;
 		we <= 1'b1;
 	     end
 	     S_INTREQ_5:
 		q <= pc;
 	     S_INTREQ_6: begin
-		addr <= { wp[0:10], 4'd14, 1'b0 };
+		addr <= wpaddr(4'd14);
 		memen <= 1'b1;
 		we <= 1'b1;
 	     end
 	     S_INTREQ_7:
 		q <= st;
 	     S_INTREQ_8: begin
-		addr <= { wp[0:10], 4'd15, 1'b0 };
+		addr <= wpaddr(4'd15);
 		memen <= 1'b1;
 		we <= 1'b1;
 	     end
@@ -432,7 +438,7 @@ module tms9900_cpu(input reset,
 	     end
 	     S_GET_IOP_2: begin
 		operand <= d;
-		addr <= { wp[0:10], ir[12:15], 1'b0 };
+		addr <= wpaddr(ir[12:15]);
 		if (ir[8:10] == 3'b000 || ir[8:10] == 3'b111)
 		  state <= S_IOP;
 		else
@@ -482,7 +488,7 @@ module tms9900_cpu(input reset,
 		  q <= wp;
 		else
 		  q <= st;
-		addr <= { wp[0:10], ir[12:15], 1'b0 };
+		addr <= wpaddr(ir[12:15]);
 	     end
 	     S_STWP_STST_2: begin
 		memen <= 1'b1;
@@ -495,7 +501,7 @@ module tms9900_cpu(input reset,
 		operand <= { {8{ir[8]}}, ir[8:15] };
 		if (ir[4:5] == 2'b11 && ir[6:7] != 2'b00) begin
 		   // SBO / SBZ / TB
-		   addr <= { wp[0:10], 4'd12, 1'b0 };
+		   addr <= wpaddr(4'd12);
 		   memen <= 1'b1;
 		end
 	     end
@@ -523,7 +529,7 @@ module tms9900_cpu(input reset,
 
 	     // TS operand decode & fetch
 	     S_GET_TS: begin
-		addr <= { wp[0:10], ir[12:15], 1'b0 };
+		addr <= wpaddr(ir[12:15]);
 		memen <= 1'b1;
 		case (ir[10:11])
 		  2'b00: state <= S_TS_COMPLETE;
@@ -548,7 +554,7 @@ module tms9900_cpu(input reset,
 	     end
 	     S_GET_TS_AUTOINC_2: begin
 		q <= (bytemode? extra + 16'd1 : extra + 16'd2);
-		addr <= { wp[0:10], ir[12:15], 1'b0 };
+		addr <= wpaddr(ir[12:15]);
 		memen <= 1'b1;
 		we <= 1'b1;
 		if (bytemode) state <= S_GET_TS_AUTOINC_4;
@@ -581,7 +587,7 @@ module tms9900_cpu(input reset,
 		end else
 		  operand <= d;
 		// Get TD
-		addr <= { wp[0:10], ir[6:9], 1'b0 };
+		addr <= wpaddr(ir[6:9]);
 		memen <= 1'b1;
 		case (ir[4:5])
 		  2'b00: state <= S_DUAL_MULTI_OP_1;
@@ -606,7 +612,7 @@ module tms9900_cpu(input reset,
 	     end
 	     S_GET_TD_AUTOINC_2: begin
 		q <= (bytemode? extra + 16'd1 : extra + 16'd2);
-		addr <= { wp[0:10], ir[6:9], 1'b0 };
+		addr <= wpaddr(ir[6:9]);
 		memen <= 1'b1;
 		we <= 1'b1;
 		if (bytemode) state <= S_GET_TD_AUTOINC_4;
@@ -676,16 +682,16 @@ module tms9900_cpu(input reset,
 
 	     // SLA / SRA / SRC / SRL
 	     S_SHIFT_1: begin
-		addr <= { wp[0:10], 4'd0, 1'b0 };
+		addr <= wpaddr(4'd0);
 		memen <= 1'b1;
 		if (c != 4'b000) begin
-		   addr <= { wp[0:10], ir[12:15], 1'b0 };
+		   addr <= wpaddr(ir[12:15]);
 		   state <= S_SHIFT_6;
 		end
 	     end
 	     S_SHIFT_3: begin
 		c <= d_latch[12:15];
-		addr <= { wp[0:10], ir[12:15], 1'b0 };
+		addr <= wpaddr(ir[12:15]);
 		memen <= 1'b1;
 	     end
 	     S_SHIFT_7: begin
@@ -721,7 +727,7 @@ module tms9900_cpu(input reset,
 	     // B / BL
 	     S_BL_1: begin
 		operand <= addr;
-		addr <= { wp[0:10], 4'd11, 1'b0 };
+		addr <= wpaddr(4'd11);
 		q <= pc;
 		we <= 1'b1;
 		memen <= 1'b1;
@@ -779,7 +785,7 @@ module tms9900_cpu(input reset,
 	     // COC / CZC / XOR
 	     S_BIT_OP_1: begin
 		operand <= d;
-		addr <= { wp[0:10], ir[6:9], 1'b0 };
+		addr <= wpaddr(ir[6:9]);
 		memen <= 1'b1;
 	     end
 	     S_BIT_OP_3: begin
@@ -811,7 +817,7 @@ module tms9900_cpu(input reset,
 	     end
 	     S_XOP_3: wp <= d;
 	     S_XOP_4: begin
-		addr <= { wp[0:10], 4'd11, 1'b0 };
+		addr <= wpaddr(4'd11);
 		we <= 1'b1;
 		memen <= 1'b1;
 	     end
@@ -840,17 +846,17 @@ module tms9900_cpu(input reset,
 
 	     // RTWP
 	     S_RTWP_1: begin
-		addr <= { wp[0:10], 4'd15, 1'b0 };
+		addr <= wpaddr(4'd15);
 		memen <= 1'b1;
 	     end
 	     S_RTWP_2: begin
 		st <= d;
-		addr <= { wp[0:10], 4'd14, 1'b0 };
+		addr <= wpaddr(4'd14);
 		memen <= 1'b1;
 	     end
 	     S_RTWP_3: begin
 		pc <= d;
-		addr <= { wp[0:10], 4'd13, 1'b0 };
+		addr <= wpaddr(4'd13);
 		memen <= 1'b1;
 	     end
 	     S_RTWP_4:
@@ -880,7 +886,7 @@ module tms9900_cpu(input reset,
 		  operand <= { 8'h00, (addr[15]? d[8:15] : d[0:7]) };
 		else
 		  operand <= d;
-		addr <= { wp[0:10], 4'd12, 1'b0 };
+		addr <= wpaddr(4'd12);
 		memen <= 1'b1;
 	     end
 	     S_CRU_MULTIPLE_2: begin
@@ -966,7 +972,7 @@ module tms9900_cpu(input reset,
 	     // MPY
 	     S_MPY_1: begin
 		extra <= d;
-		addr <= { wp[0:10], ir[6:9], 1'b0 };
+		addr <= wpaddr(ir[6:9]);
 		memen <= 1'b1;
 	     end
 	     S_MPY_2: begin	
@@ -998,7 +1004,7 @@ module tms9900_cpu(input reset,
 	     // DIV
 	     S_DIV_1: begin
 		operand <= d;
-		addr <= { wp[0:10], ir[6:9], 1'b0 };
+		addr <= wpaddr(ir[6:9]);
 		memen <= 1'b1;
 	     end
 	     S_DIV_2:
@@ -1032,7 +1038,7 @@ module tms9900_cpu(input reset,
 		c <= c - 4'b0001;
 	     end
 	     S_DIV_9: begin
-		addr <= { wp[0:10], ir[6:9], 1'b0 };
+		addr <= wpaddr(ir[6:9]);
 		memen <= 1'b1;
 		we <= 1'b1;
 	     end
