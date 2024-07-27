@@ -5,6 +5,7 @@
 #include "reset.h"
 #include "fatfs.h"
 #include "rpk.h"
+#include "fdc.h"
 #include "tape.h"
 #include "strerr.h"
 
@@ -41,6 +42,8 @@ static const char * const main_menu_entries[] = {
   "&Main menu",
   "=",
   "Load RPK",
+  "Mount DSK1 disk image",
+  "Mount DSK2 disk image",
   "Open CS1 input file",
   "-",
   "Reset and exit",
@@ -80,10 +83,16 @@ static fatfs_filehandle_t fileselector_dir, fileselector_file[MAX_FILESELECTOR_F
 
 static void (*fileselector_open_func)(fatfs_filehandle_t *fh, const char *filename);
 static unsigned fileselector_cnt;
+static unsigned menu_dsk_number;
 
 static void menu_open_func_rpk(fatfs_filehandle_t *fh, const char *filename)
 {
   load_rpk_fh(filename, fh);
+}
+
+static void menu_open_func_disk(fatfs_filehandle_t *fh, const char *filename)
+{
+  fdc_mount(menu_dsk_number, fh);
 }
 
 static void menu_open_func_tape(fatfs_filehandle_t *fh, const char *filename)
@@ -99,13 +108,18 @@ static void main_menu_select(unsigned entry)
     menu_open_fileselector("&Select RPK file to load", menu_open_func_rpk);
     break;
   case 4:
-    menu_open_fileselector("&Select WAV or TAP file to open", menu_open_func_tape);
+  case 5:
+    menu_dsk_number = entry-4;
+    menu_open_fileselector("&Select DSK file to open", menu_open_func_disk);
     break;
   case 6:
+    menu_open_fileselector("&Select WAV or TAP file to open", menu_open_func_tape);
+    break;
+  case 8:
     reset_set_other(true);
     reset_set_other(false);
     /* FALLTHRU */
-  case 7:
+  case 9:
     menu_close();
     break;
   }

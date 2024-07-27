@@ -8,6 +8,7 @@
 #include "zipfile.h"
 #include "rpk.h"
 #include "tape.h"
+#include "fdc.h"
 #include "strerr.h"
 #include "overlay.h"
 #include "keyboard.h"
@@ -87,7 +88,8 @@ void main()
       load_rom("994a_grom2.u502", "ti99_4a.zip", GROM(2), 6144) < 0 ||
       load_rom("cd2325a.vsm", "ti99_speech.zip", SPEECHROM, 16384) < 0 ||
       load_rom("cd2326a.vsm", "ti99_speech.zip", SPEECHROM+16384, 16384) < 0 ||
-      load_rpk("extended_basic.rpk") < 0) {
+      load_rom("fdc_dsr.u26", "ti99_fdc.zip", FDCROM, 4096) < 0 ||
+      load_rom("fdc_dsr.u27", "ti99_fdc.zip", FDCROM+4096, 4096) < 0) {
     fprintf(stderr, "ROM Loading failed!\n");
     REGS_MISC.leds = 2u;
     return;
@@ -106,5 +108,6 @@ void main()
     overlay_task();
     keyboard_task();
     tape_task();
+    fdc_task();
   }
 }

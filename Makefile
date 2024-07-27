@@ -152,6 +152,7 @@ SP_MAIN_SRCS += main/board.S
 SP_MAIN_SRCS += main/zipfile.c
 SP_MAIN_SRCS += main/rpk.c
 SP_MAIN_SRCS += main/tape.c
+SP_MAIN_SRCS += main/fdc.c
 SP_MAIN_SRCS += main/strerr.c
 SP_MAIN_SRCS += main/overlay.c
 SP_MAIN_SRCS += main/keyboard.c
