@@ -13,6 +13,7 @@ COMMON_SOURCES += $(GATEWARE)/cartridge_rom.v
 COMMON_SOURCES += $(GATEWARE)/console_rom.v
 COMMON_SOURCES += $(GATEWARE)/scratchpad_ram.v
 COMMON_SOURCES += $(GATEWARE)/peb.v
+COMMON_SOURCES += $(GATEWARE)/peb_ram32k.v
 COMMON_SOURCES += $(GATEWARE)/peb_fdc.v
 
 COMMON_SOURCES += $(GATEWARE)/tms9900/tms9900_cpu.v

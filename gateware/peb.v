@@ -22,17 +22,21 @@ module peb(input            clk,
 	   input	    wb_cyc_i);
 
    wire	      q_select_fdc;
+   wire	      q_select_ram32k;
    wire       cru_select_fdc;
    wire [0:7] q_fdc;
+   wire [0:7] q_ram32k;
    wire	      cruin_fdc;
    wire	      ready_fdc;
+   wire	      ready_ram32k;
    reg	      wb_stb_fdc;
    wire [0:7] wb_dat_fdc;
    wire	      wb_ack_fdc;
 
-   assign q = (q_select_fdc ? q_fdc : 8'hff);
+   assign q = (q_select_fdc ? q_fdc : 8'hff) &
+	      (q_select_ram32k ? q_ram32k : 8'hff);
    assign cruin = (cru_select_fdc ? cruin_fdc : 1'b0);
-   assign ready = ready_fdc;
+   assign ready = ready_fdc & ready_ram32k;
 
    always @(*) begin
       wb_dat_o <= 8'h00;
@@ -51,6 +55,10 @@ module peb(input            clk,
 	default: ;
       endcase // case (wb_adr_i[0 +: 3])
    end
+
+   peb_ram32k ram32k(.clk(clk), .reset(reset),
+		     .a(a), .d(d), .q(q_ram32k), .q_select(q_select_ram32k),
+		     .memen(memen), .we(we), .ready(ready_ram32k));
 
    peb_fdc fdc(.clk(clk), .clk_3mhz_en(clk_3mhz_en), .reset(reset),
 	       .a(a), .d(d), .q(q_fdc), .q_select(q_select_fdc),

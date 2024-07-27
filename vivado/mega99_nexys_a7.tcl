@@ -32,6 +32,7 @@ proc checkRequiredFiles { origin_dir} {
  "[file normalize "$origin_dir/gateware/console_rom.v"]"\
  "[file normalize "$origin_dir/gateware/scratchpad_ram.v"]"\
  "[file normalize "$origin_dir/gateware/peb.v"]"\
+ "[file normalize "$origin_dir/gateware/peb_ram32k.v"]"\
  "[file normalize "$origin_dir/gateware/peb_fdc.v"]"\
  "[file normalize "$origin_dir/gateware/tms9900/tms9900_cpu.v"]"\
  "[file normalize "$origin_dir/gateware/tms9900/tms9901_psi.v"]"\
@@ -246,6 +247,7 @@ set files [list \
  [file normalize "${origin_dir}/gateware/console_rom.v"] \
  [file normalize "${origin_dir}/gateware/scratchpad_ram.v"] \
  [file normalize "${origin_dir}/gateware/peb.v"] \
+ [file normalize "${origin_dir}/gateware/peb_ram32k.v"] \
  [file normalize "${origin_dir}/gateware/peb_fdc.v"] \
  [file normalize "${origin_dir}/gateware/tms9900/tms9900_cpu.v"] \
  [file normalize "${origin_dir}/gateware/tms9900/tms9901_psi.v"] \
@@ -460,6 +462,7 @@ set_msg_config -id {Synth 8-7129} -string {{.*Port d\[.*\] in module spmmio_misc
 set_msg_config -id {Synth 8-7129} -string {{.*Port adr\[.\] in module spmmio_tape.*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{Port dbin in module peb}} -suppress
 set_msg_config -id {Synth 8-7129} -string {{.*Port wb_adr_i\[.\] in module peb.*}} -regexp -suppress
+set_msg_config -id {Synth 8-7129} -string {{Port reset in module peb_ram32k}} -suppress
 
 
 # Suppress fdc1772 warnings

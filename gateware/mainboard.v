@@ -184,7 +184,7 @@ module mainboard #(
       d8_grom_valid <= dbin && gs;
       d8_crom_valid <= dbin && romg;
       d8_vsp_valid <= dbin && sbe;
-      d8_peb_valid <= dbin && mbe;
+      d8_peb_valid <= dbin && (mbe || memex);
    end
 
    always @(*) begin
