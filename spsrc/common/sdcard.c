@@ -13,6 +13,7 @@
 #define TIMEOUT_IDLE     MS_TO_TICKS(500)
 #define TIMEOUT_ACTIVE   MS_TO_TICKS(500)
 #define TIMEOUT_READBLK  MS_TO_TICKS(125)
+#define TIMEOUT_WRITEBLK MS_TO_TICKS(250)
 
 #define DEBUG_PRINT(...) do { } while(0)
 // #define DEBUG_PRINT(...) do { display_printf(__VA_ARGS__); } while(0)
@@ -209,3 +210,45 @@ bool sdcard_read_block(uint32_t blkid, uint8_t *ptr)
   sdcard_deselect();
   return result;
 }
+
+#ifndef BOOTCODE
+bool sdcard_write_block(uint32_t blkid, const uint8_t *ptr)
+{
+  bool result = false;
+  DEBUG_PRINT("Write block %x\n", blkid);
+  uint8_t r1 = sdcard_docmd_nodeselect(24, blkid);
+  DEBUG_PRINT("CMD24, R1 = %x\n", r1);
+  if (r1 == 0) {
+    uint32_t time0 = timer_read();
+    uint8_t byt;
+    unsigned i;
+    sdcard_sendbyte(0xfe);
+    REGS_SDCARD.crc16 = 1;
+    for (i=0; i<512; i++)
+      sdcard_sendbyte(ptr[i]);
+    uint16_t crc16_calc = REGS_SDCARD.crc16;
+    DEBUG_PRINT("CRC16 = %x\n", crc16_calc);
+    sdcard_sendbyte(crc16_calc >> 8);
+    sdcard_sendbyte(crc16_calc);
+    do
+      byt = sdcard_recvbyte();
+    while(byt == 0xff && (REGS_SDCARD.ctrl & 1) &&
+	  (timer_read() - time0) < TIMEOUT_WRITEBLK);
+    if ((byt & 0x1f) == 0x05) {
+      do
+	byt = sdcard_recvbyte();
+      while(byt == 0x00 && (REGS_SDCARD.ctrl & 1) &&
+	    (timer_read() - time0) < TIMEOUT_WRITEBLK);
+      if (byt != 0x00)
+	result = true;
+      else {
+	DEBUG_PRINT("Card did not leave busy state\n");
+      }
+    } else {
+      DEBUG_PRINT("Data not accepted by card (%x)\n", byt);
+    }
+  }
+  sdcard_deselect();
+  return result;
+}
+#endif
