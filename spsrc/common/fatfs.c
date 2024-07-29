@@ -442,6 +442,98 @@ int fatfs_read(fatfs_filehandle_t *fh, void *p, uint32_t bytes)
 
 #ifndef BOOTCODE
 
+static int fatfs_block_write(uint32_t blkid, const uint8_t *ptr, uint32_t card_id)
+{
+  if (current_card_type < SDCARD_SDHC)
+    blkid <<= 9;
+  unsigned retries;
+  for (retries = 0; retries < 5; retries ++) {
+    int r = fatfs_check_card(card_id, OP_WRITE);
+    if (r < 0)
+      return r;
+    if (sdcard_write_block(blkid, ptr))
+      return fatfs_check_card(card_id, OP_WRITE);
+  }
+  return -EIO;
+}
+
+static int fatfs_cluster_block_write(uint32_t cluster, uint32_t sub,
+				     const uint8_t *ptr, uint32_t card_id)
+{
+  if ((cluster & FAT_EOC))
+    return ((cluster & FAT_ERROR)? (int16_t)(cluster & 0xffffu) : -ETRUNC);
+  if (cluster < 2)
+    return -ETRUNC;
+  return fatfs_block_write(fatfs_cluster_block_id(cluster, sub), ptr, card_id);
+}
+
+int fatfs_write(fatfs_filehandle_t *fh, const void *p, uint32_t bytes)
+{
+  uint8_t buf[512];
+  int r;
+  uint32_t total = 0;
+  uint32_t card_id = fh->card_id;
+  if ((r = fatfs_check_card(card_id, OP_WRITE)) < 0)
+    return r;
+  uint32_t pos = fh->filepos;
+  if (!bytes || pos >= fh->size)
+    return 0;
+  if (bytes > fh->size - pos)
+    bytes = fh->size - pos;
+  uint32_t cluster = fh->current_cluster;
+  uint32_t sub = (pos >> 9) & (fatfs_blocks_per_cluster-1);
+  if ((pos & 0x1ff)) {
+    uint32_t fragment = ((~pos)&0x1ff)+1;
+    uint32_t sub0 = sub;
+    r = fatfs_cluster_block_read(cluster, sub0, buf, card_id);
+    if (r < 0)
+      return r;
+    else if (fragment > bytes)
+      fragment = bytes;
+    else
+      ++sub;
+    memcpy(buf+(pos & 0x1ff), p, fragment);
+    r = fatfs_cluster_block_write(cluster, sub0, buf, card_id);
+    if (r < 0)
+      return r;
+    p = ((uint8_t *)p) + fragment;
+    total = fragment;
+    bytes -= fragment;
+    pos += fragment;
+    if (sub == fatfs_blocks_per_cluster) {
+      cluster = fatfs_get_fat_entry(card_id, cluster, buf);
+      sub = 0;
+    }
+  }
+  while (bytes >= 512) {
+    r = fatfs_cluster_block_write(cluster, sub, p, card_id);
+    if (r < 0)
+      return r;
+    p = ((uint8_t *)p) + 512;
+    total += 512;
+    bytes -= 512;
+    pos += 512;
+    if (++sub == fatfs_blocks_per_cluster) {
+      cluster = fatfs_get_fat_entry(card_id, cluster, buf);
+      sub = 0;
+    }
+  }
+  if (bytes > 0) {
+    r = fatfs_cluster_block_read(cluster, sub, buf, card_id);
+    if (r < 0)
+      return r;
+    memcpy(buf, p, bytes);
+    r = fatfs_cluster_block_write(cluster, sub, buf, card_id);
+    if (r < 0)
+      return r;
+    total += bytes;
+    pos += bytes;
+  }
+  fh->current_cluster = cluster;
+  fh->filepos = pos;
+  return total;
+}
+
 int fatfs_setpos(fatfs_filehandle_t *fh, uint32_t newpos)
 {
   uint8_t buf[512];
@@ -649,6 +741,12 @@ int fatfs_read_directory(fatfs_filehandle_t *fh, fatfs_filehandle_t *entry,
   if ((cluster & FAT_ERROR))
     return (int16_t)(cluster & 0xffffu);
   return 0;
+}
+
+bool fatfs_is_readonly(fatfs_filehandle_t *fh)
+{
+  uint32_t card_id = fh->card_id;
+  return fatfs_check_card(card_id, OP_WRITE) == -EREADONLYFS;
 }
 
 #endif

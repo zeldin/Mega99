@@ -13,7 +13,9 @@ void fdc_mount(unsigned drive, const fatfs_filehandle_t *fh)
     if (fh) {
       dsk[drive] = *fh;
       FDCREGS.img_size = fh->size >> 8;
-      FDCREGS.mounted_wp |= (0x11 << drive);
+      if (fatfs_is_readonly(&dsk[drive]))
+	FDCREGS.mounted_wp |= (0x01 << drive);
+      FDCREGS.mounted_wp |= (0x10 << drive);
     } else
       dsk[drive].size = 0;
   }
@@ -31,8 +33,17 @@ void fdc_task(void)
   lba = ((track*9)+sector) << 8;
   FDCREGS.ack = 1u;
   for (unsigned drive = 0; drive < 2; drive ++) {
-    if ((rd_wr >> drive) & 0x01) {
-      /* FIXME: Write */
+    if (((rd_wr >> drive) & 0x01) && !((FDCREGS.mounted_wp >> drive) & 0x01)) {
+      /* Write */
+      if (dsk[drive].size > lba) {
+	int r = fatfs_setpos(&dsk[drive], lba);
+	if (r >= 0)
+	  r = fatfs_write(&dsk[drive], FDCBUF, 256);
+	if (r < 0) {
+	  printf("DSK%u: ", drive+1);
+	  fprintf(stderr, "%s\n", fatfs_strerror(-r));
+	}
+      }
     }
     if ((rd_wr >> drive) & 0x10) {
       /* Read */
