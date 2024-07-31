@@ -1,5 +1,6 @@
 module peb(input            clk,
 	   input	    clk_3mhz_en,
+	   input	    cpu_clk_en,
 	   input	    reset,
 
 	   input [0:15]	    a,
@@ -60,7 +61,7 @@ module peb(input            clk,
 		     .a(a), .d(d), .q(q_ram32k), .q_select(q_select_ram32k),
 		     .memen(memen), .we(we), .ready(ready_ram32k));
 
-   peb_fdc fdc(.clk(clk), .clk_3mhz_en(clk_3mhz_en), .reset(reset),
+   peb_fdc fdc(.clk(clk), .clk_3mhz_en(cpu_clk_en), .reset(reset),
 	       .a(a), .d(d), .q(q_fdc), .q_select(q_select_fdc),
 	       .memen(memen), .we(we), .cruclk(cruclk), .cruin(cruin_fdc),
 	       .cru_select(cru_select_fdc), .ready(ready_fdc), .led(),

@@ -334,7 +334,8 @@ module mainboard #(
 		      .wb_sel_i(wb_sel_i), .wb_stb_i(wb_stb_crom),
 		      .wb_ack_o(wb_ack_crom), .wb_cyc_i(wb_cyc_i));
 
-   peb peb(.clk(clk), .clk_3mhz_en(clk_3mhz_en), .reset(reset),
+   peb peb(.clk(clk), .clk_3mhz_en(clk_3mhz_en), .cpu_clk_en(cpu_clk_en),
+	   .reset(reset),
 	   .a({a, a15 & (cruout | memen)}), .d(q8), .q(d8_peb),
 	   .memen(memen8), .dbin(dbin), .we(we), .cruclk(cruclk),
 	   .cruin(cruin_peb), .ready(ready_peb),
