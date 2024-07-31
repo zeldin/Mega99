@@ -56,8 +56,8 @@ proc checkRequiredFiles { origin_dir} {
  "[file normalize "$origin_dir/gateware/tms5200/tms5200_vsp.v"]"\
  "[file normalize "$origin_dir/gateware/tms5200/tms5200_wrapper.v"]"\
  "[file normalize "$origin_dir/gateware/tms5200/tms6100_vsm.v"]"\
- "[file normalize "$origin_dir/gateware/fdc1772/fdc1772.v"]"\
- "[file normalize "$origin_dir/gateware/fdc1772/floppy.v"]"\
+ "[file normalize "$origin_dir/gateware/fdc1771/fdc1771.v"]"\
+ "[file normalize "$origin_dir/gateware/fdc1771/fdc1771_mockdrive.v"]"\
  "[file normalize "$origin_dir/mor1kx/rtl/verilog/mor1kx-defines.v"]"\
  "[file normalize "$origin_dir/mor1kx/rtl/verilog/mor1kx-sprs.v"]"\
  "[file normalize "$origin_dir/mor1kx/rtl/verilog/mor1kx_utils.vh"]"\
@@ -271,8 +271,8 @@ set files [list \
  [file normalize "${origin_dir}/gateware/tms5200/tms5200_vsp.v"] \
  [file normalize "${origin_dir}/gateware/tms5200/tms5200_wrapper.v"] \
  [file normalize "${origin_dir}/gateware/tms5200/tms6100_vsm.v"] \
- [file normalize "${origin_dir}/gateware/fdc1772/fdc1772.v"] \
- [file normalize "${origin_dir}/gateware/fdc1772/floppy.v"] \
+ [file normalize "${origin_dir}/gateware/fdc1771/fdc1771.v"] \
+ [file normalize "${origin_dir}/gateware/fdc1771/fdc1771_mockdrive.v"] \
  [file normalize "${origin_dir}/mor1kx/rtl/verilog/mor1kx-defines.v"] \
  [file normalize "${origin_dir}/mor1kx/rtl/verilog/mor1kx-sprs.v"] \
  [file normalize "${origin_dir}/mor1kx/rtl/verilog/mor1kx_utils.vh"] \
@@ -311,7 +311,6 @@ add_files -norecurse -fileset $obj $files
 
 # Set 'sources_1' fileset file properties for local files
 set_property file_type {Memory File} [get_files -of $obj *.hex]
-set_property file_type SystemVerilog [get_files -of $obj fdc1772.v]
 
 # Set 'sources_1' fileset properties
 set obj [get_filesets sources_1]
@@ -463,16 +462,6 @@ set_msg_config -id {Synth 8-7129} -string {{.*Port adr\[.\] in module spmmio_tap
 set_msg_config -id {Synth 8-7129} -string {{Port dbin in module peb}} -suppress
 set_msg_config -id {Synth 8-7129} -string {{.*Port wb_adr_i\[.\] in module peb.*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{Port reset in module peb_ram32k}} -suppress
-
-
-# Suppress fdc1772 warnings
-set_msg_config -id {Synth 8-689} -string {fdc1772_dpram} -suppress
-set_msg_config -id {Synth 8-3332} -string {fdc1772} -suppress
-set_msg_config -id {Synth 8-6014} -string {fdc1772} -suppress
-set_msg_config -id {Synth 8-6901} -string {fdc1772} -suppress
-set_msg_config -id {Synth 8-7129} -string {fdc1772} -suppress
-set_msg_config -id {Synth 8-7129} -string {floppy} -suppress
-set_msg_config -id {Synth 8-8895} -string {fdc1772} -suppress
 
 
 # Suppress mor1kx and mig warnings

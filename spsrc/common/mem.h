@@ -15,9 +15,10 @@ struct mem_regs_fdc {
   uint8_t mounted_wp;
   uint8_t rd_wr;
   uint8_t ack;
-  uint8_t pad;
-  uint16_t img_size;
-  uint16_t lba;
+  uint8_t img_shape;
+  uint8_t track_side;
+  uint8_t sector;
+  uint8_t cmd;
 };
 
 #define FDCROM ((uint8_t *)(void *)0x80800000)

@@ -44,6 +44,7 @@ static const char * const main_menu_entries[] = {
   "Load RPK",
   "Mount DSK1 disk image",
   "Mount DSK2 disk image",
+  "Mount DSK3 disk image",
   "Open CS1 input file",
   "-",
   "Reset and exit",
@@ -109,17 +110,18 @@ static void main_menu_select(unsigned entry)
     break;
   case 4:
   case 5:
+  case 6:
     menu_dsk_number = entry-4;
     menu_open_fileselector("&Select DSK file to open", menu_open_func_disk);
     break;
-  case 6:
+  case 7:
     menu_open_fileselector("&Select WAV or TAP file to open", menu_open_func_tape);
     break;
-  case 8:
+  case 9:
     reset_set_other(true);
     reset_set_other(false);
     /* FALLTHRU */
-  case 9:
+  case 10:
     menu_close();
     break;
   }

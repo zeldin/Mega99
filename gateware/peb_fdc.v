@@ -12,7 +12,7 @@ module peb_fdc(input         clk,
 	       output reg    cruin,
 	       output	     cru_select,
 	       output	     ready,
-	       output        led,
+	       output	     led,
 
 	       // ROM / FIFO / img regs access wishbone slave
 	       input [0:13]  wb_adr_i,
@@ -27,6 +27,7 @@ module peb_fdc(input         clk,
    reg dskpgena;
    reg kaclk, kaclk_prev;
    reg waiten;
+   wire hld;
    reg hlt;
    reg dsel1, dsel2, dsel3;
    reg sidsel;
@@ -38,25 +39,71 @@ module peb_fdc(input         clk,
    wire	wdsel;
    wire	d1c, d2c, d3c;
 
-   wire	intrq;
-   wire	drq;
+   wire	      intrq;
+   wire	      drq;
    wire [0:7] ddb;
-   reg [0:7]  ddb_reg;
+   wire	      step;
+   wire	      dirc;
 
    wire	       dsr_select;
    reg [0:7]   dsr_rom [0:8191];
    reg [0:7]   dsr_rom_data;
    wire [0:12] readaddr;
 
-   wire [7:0]  img_din;
-   reg [1:0]   img_mounted;
-   reg [1:0]   img_wp;
-   reg [15:0]  img_size;
-   wire [31:0] img_lba;
-   wire [1:0]  img_rd;
-   wire [1:0]  img_wr;
-   reg	       img_ack;
+   reg [2:0]   img_mounted = 3'b000;
+   reg [2:0]   img_wp = 3'b000;
+   reg [2:0]   img_strobe;
+   reg	       img_ds;
+   reg	       img_dd;
+   reg [4:0]   img_sps;
+   reg [2:0]   img_rd = 3'b000;
+   reg [2:0]   img_wr = 3'b000;
    reg [0:7]   wb_reg_q;
+
+   wire [7:0]  sector;
+   wire [7:0]  cmd;
+
+   wire [7:0]  data_pos;
+   wire [7:0]  data_write_d;
+   wire	       data_write_strobe;
+   wire	       data_read_strobe;
+   wire	       header_read_strobe;
+   wire	       data_transfer_read_strobe;
+   wire	       data_transfer_write_strobe;
+   reg	       data_is_header;
+   reg [0:7]   header_data;
+   reg	       data_transfer_ack = 1'b0;
+
+   reg [0:7]   sector_buffer[0:255];
+   reg [0:7]   sector_buffer_data;
+
+   wire	       dsk1_byte_clk;
+   wire	       dsk1_header_clk;
+   wire [5:0]  dsk1_track;
+   wire [4:0]  dsk1_sector;
+   wire	       dsk1_ip;
+   wire	       dsk1_ready;
+   wire	       dsk1_ds;
+   wire	       dsk2_byte_clk;
+   wire	       dsk2_header_clk;
+   wire [5:0]  dsk2_track;
+   wire [4:0]  dsk2_sector;
+   wire	       dsk2_ip;
+   wire	       dsk2_ready;
+   wire	       dsk2_ds;
+   wire	       dsk3_byte_clk;
+   wire	       dsk3_header_clk;
+   wire [5:0]  dsk3_track;
+   wire [4:0]  dsk3_sector;
+   wire	       dsk3_ip;
+   wire	       dsk3_ready;
+   wire	       dsk3_ds;
+
+   reg tr00;
+   reg ip;
+   reg byte_clk;
+   reg header_clk;
+   reg sector_header_match;
 
    assign led = dskpgena;
 
@@ -69,12 +116,12 @@ module peb_fdc(input         clk,
    assign cru_select = (a[0:7] == 8'h11);
    assign dsr_select = q_select && memen && !we;
 
-   assign q = (a[0:11] == 12'h5ff ? ddb_reg : dsr_rom_data);
+   assign q = (a[0:11] == 12'h5ff ? ~ddb : dsr_rom_data);
    assign ready = ~wdsel | ~waiten | wait_completed;
 
    assign readaddr = (dsr_select ? a[3:15] : wb_adr_i[1:13]);
    assign wb_dat_o = ( wb_adr_i[0] ?
-		       ( wb_adr_i[1] ? wb_reg_q : img_din )
+		       ( wb_adr_i[1] ? wb_reg_q : sector_buffer_data )
 		       : dsr_rom_data );
 
    /* u11 */
@@ -88,7 +135,7 @@ module peb_fdc(input         clk,
    always @(*) begin
       cruin <= 1'b0;
       case (a[12:14])
-	3'b000: cruin <= hlt; // HLD
+	3'b000: cruin <= hld;
 	3'b001: cruin <= d1c;
 	3'b010: cruin <= d2c;
 	3'b011: cruin <= d3c;
@@ -150,81 +197,177 @@ module peb_fdc(input         clk,
       // Write port
       if (wb_cyc_i && wb_stb_i && wb_we_i && wb_ack_o && wb_sel_i[0] && !wb_adr_i[0])
 	dsr_rom[wb_adr_i[1:13]] <= wb_dat_i;
-
-      // Wishbone handshake
-      wb_ack_o <= wb_cyc_i && wb_stb_i && !wb_ack_o && (wb_we_i || wb_adr_i[0] || !dsr_select);
    end // always @ (posedge clk)
 
    /* u28 */
-   fdc1772 #(.CLK(107386350), .CLK_EN(3579545), .SECTOR_SIZE_CODE(2'd1))
-   floppy_controller(.clkcpu(clk), .clk8m_en(clk_3mhz_en),
-		     .floppy_drive({ 1'b1, ~d3c, ~d2c, ~d1c }),
-		     .floppy_side(sidsel),
-		     .floppy_reset(~reset), .irq(intrq), .drq(drq),
-		     .cpu_addr(a[13:14]),
-		     .cpu_sel(wdsel & (we ^ ~a[12]) & ~a[15]),
-		     .cpu_rw(~a[12]), .cpu_din(~d), .cpu_dout(ddb),
+   fdc1771 #(.SECTOR_SIZE_CODE(2'd1))
+   floppy_controller(.clk(clk), .clk_3mhz_en(clk_3mhz_en), .mr(reset),
+		     .dal_in(~d), .dal_out(ddb), .a(a[13:14]), .cs(wdsel),
+		     .re(wdsel & ~a[15] & ~a[12] & ~we),
+		     .we(wdsel & ~a[15] & a[12] & we),
+		     .irq(intrq), .drq(drq),
+		     .hld(hld), .hlt(hlt),
 
-		     .img_mounted(img_mounted), .img_wp(img_wp),
-		     .img_size({7'd0, img_size, 9'd0}), .sd_lba(img_lba),
-		     .sd_rd(img_rd), .sd_wr(img_wr), .sd_ack(img_ack),
-		     .sd_buff_addr(wb_adr_i[5:13]),
-		     .sd_dout(wb_dat_i), .sd_din(img_din),
-		     .sd_dout_strobe(wb_cyc_i && wb_stb_i && wb_we_i &&
-				     wb_ack_o && wb_sel_i[0] &&
-				     wb_adr_i[0:1] == 2'b10),
-		     .sd_din_strobe(wb_cyc_i && wb_stb_i && !wb_we_i &&
-				    wb_ack_o && wb_adr_i[0:1] == 2'b10));
-   always @(posedge clk)
-     if (wdsel && ~a[12])
-       ddb_reg <= ~ddb;
-     else
-       ddb_reg <= 8'hff;
+		     .tr00(tr00), .ip(ip), .wprt(|(img_wp & {d3c, d2c, d1c})),
+		     .ready(dvena), .wd(), .wg(), .dirc(dirc), .step(step),
+		     .byte_clk(byte_clk), .header_clk(header_clk),
+		     .sector_header_match(sector_header_match),
+
+		     .data_pos(data_pos), .data_write_d(data_write_d),
+		     .data_write_strobe(data_write_strobe),
+		     .data_read_d(data_is_header ? header_data :
+				  sector_buffer_data),
+		     .data_read_strobe(data_read_strobe),
+		     .header_read_strobe(header_read_strobe),
+		     .data_transfer_read_strobe(data_transfer_read_strobe),
+		     .data_transfer_write_strobe(data_transfer_write_strobe),
+		     .data_transfer_ack(data_transfer_ack),
+		     .track(), .sector(sector), .cmd(cmd));
+
+   fdc1771_mockdrive dsk1(.clk(clk), .clk_3mhz_en(clk_3mhz_en),
+			  .byte_clk(dsk1_byte_clk),
+			  .header_clk(dsk1_header_clk),
+			  .track(dsk1_track), .sector(dsk1_sector),
+			  .ip(dsk1_ip), .ready(dsk1_ready), .ds(dsk1_ds),
+			  .sel(d1c), .step(step), .dir(~dirc),
+			  .byte_clk_next(dsk2_byte_clk),
+			  .header_clk_next(dsk2_header_clk),
+			  .track_next(dsk2_track), .sector_next(dsk2_sector),
+			  .ip_next(dsk2_ip), .ds_next(dsk2_ds),
+			  .load_mounted(img_mounted[0]),
+			  .load_ds(img_ds), .load_dd(img_dd),
+			  .load_sps(img_sps), .load_strobe(img_strobe[0]));
+
+   fdc1771_mockdrive dsk2(.clk(clk), .clk_3mhz_en(clk_3mhz_en),
+			  .byte_clk(dsk2_byte_clk),
+			  .header_clk(dsk2_header_clk),
+			  .track(dsk2_track), .sector(dsk2_sector),
+			  .ip(dsk2_ip), .ready(dsk2_ready), .ds(dsk2_ds),
+			  .sel(d1c), .step(step), .dir(~dirc),
+			  .byte_clk_next(dsk3_byte_clk),
+			  .header_clk_next(dsk3_header_clk),
+			  .track_next(dsk3_track), .sector_next(dsk3_sector),
+			  .ip_next(dsk3_ip), .ds_next(dsk3_ds),
+			  .load_mounted(img_mounted[1]),
+			  .load_ds(img_ds), .load_dd(img_dd),
+			  .load_sps(img_sps), .load_strobe(img_strobe[1]));
+
+   fdc1771_mockdrive dsk3(.clk(clk), .clk_3mhz_en(clk_3mhz_en),
+			  .byte_clk(dsk3_byte_clk),
+			  .header_clk(dsk3_header_clk),
+			  .track(dsk3_track), .sector(dsk3_sector),
+			  .ip(dsk3_ip), .ready(dsk3_ready), .ds(dsk3_ds),
+			  .sel(d1c), .step(step), .dir(~dirc),
+			  .byte_clk_next(1'b0), .header_clk_next(1'b0),
+			  .track_next(6'd0), .sector_next(5'd0),
+			  .ip_next(1'b0), .ds_next(1'd0),
+			  .load_mounted(img_mounted[2]),
+			  .load_ds(img_ds), .load_dd(img_dd),
+			  .load_sps(img_sps), .load_strobe(img_strobe[2]));
+
+   always @(posedge clk) begin
+      tr00 <= (dsk1_track == 6'd0);
+      ip <= dsk1_ip;
+      byte_clk <= dsk1_byte_clk;
+      header_clk <= dsk1_header_clk;
+      sector_header_match <= (dsk1_header_clk && (dsk1_sector == sector));
+   end
+
+
+   /* Sector buffer */
+   always @(posedge clk) begin
+      // Read port
+      if (data_read_strobe || (wb_cyc_i && wb_stb_i && !wb_we_i &&
+			       wb_adr_i[0:1] == 2'b10))
+	sector_buffer_data <= sector_buffer[( data_read_strobe ?
+					      data_pos : wb_adr_i[6:13] )];
+
+      // Write port
+      if (data_write_strobe || (wb_cyc_i && wb_stb_i && wb_we_i &&
+				wb_sel_i[0] && wb_adr_i[0:1] == 2'b10))
+	sector_buffer[( data_write_strobe ?
+			data_pos : wb_adr_i[6:13] )] <= ( data_write_strobe ?
+							  data_write_d :
+							  wb_dat_i );
+   end
+
+   /* Header */
+   always @(posedge clk) begin
+      data_is_header <= 1'b0;
+      if (header_read_strobe) begin
+	 data_is_header <= 1'b1;
+	 header_data <= 8'h00;
+	 case (data_pos[2:0])
+	   3'b000: header_data[7 -: 6] <= dsk1_track;
+	   3'b001: header_data[7] <= sidsel & dsk1_ds;
+	   3'b010: header_data[7 -: 5] <= dsk1_sector;
+	   3'b011: header_data[7] <= 1'b1; // sector size
+	   default: ;
+	 endcase // case (data_pos[2:0])
+      end
+   end
 
 
    /* Service processor interface */
 
-   reg [15:0] img_lba_reg;
-   always @(posedge clk)
-     if (wb_cyc_i && wb_stb_i && !wb_ack_o && !wb_we_i)
-       img_lba_reg <= img_lba[15:0]; /* Improve timing slack */
+   always @(posedge clk) begin
+      // Wishbone handshake
+      if (!wb_cyc_i || !wb_stb_i || wb_ack_o)
+	wb_ack_o <= 1'b0;
+      else if (!wb_adr_i[0])
+	wb_ack_o <= wb_we_i || !dsr_select;
+      else if (!wb_adr_i[1])
+	wb_ack_o <= !( wb_we_i ? data_write_strobe : data_read_strobe );
+      else
+	wb_ack_o <= 1'b1;
+   end
 
    always @(*) begin
       wb_reg_q <= 8'h00;
       case (wb_adr_i[10:13])
 	4'b0000: begin
-	   wb_reg_q[2:3] <= img_mounted[1:0];
-	   wb_reg_q[6:7] <= img_wp[1:0];
+	   wb_reg_q[1:3] <= img_mounted[2:0];
+	   wb_reg_q[5:7] <= img_wp[2:0];
 	end
 	4'b0001: begin
-	   wb_reg_q[2:3] <= img_rd[1:0];
-	   wb_reg_q[6:7] <= img_wr[1:0];
+	   wb_reg_q[1:3] <= img_rd[2:0];
+	   wb_reg_q[5:7] <= img_wr[2:0];
 	end
-	4'b0010: wb_reg_q[7] <= img_ack;
-	4'b0100: wb_reg_q <= img_size[15:8];
-	4'b0101: wb_reg_q <= img_size[7:0];
-	4'b0110: wb_reg_q <= img_lba_reg[15:8];
-	4'b0111: wb_reg_q <= img_lba_reg[7:0];
+	4'b0010: wb_reg_q[7] <= data_transfer_ack;
+	4'b0011: wb_reg_q <= { img_ds, img_dd, 1'b0, img_sps };
+	4'b0100: wb_reg_q[1:7] <= { dsk1_track, sidsel };
+	4'b0101: wb_reg_q <= sector;
+	4'b0110: wb_reg_q <= cmd;
 	default: ;
       endcase // case (wb_adr_i[10:13])
    end // always @ (*)
 
    always @(posedge clk) begin
-      if (reset) begin
-	 img_mounted <= 2'b00;
-	 img_wp <= 2'b00;
-	 img_ack <= 1'b0;
-	 img_size <= 16'h0000;
-      end else if (wb_cyc_i && wb_stb_i && wb_we_i &&
+      img_strobe <= 3'b000;
+      if (data_transfer_read_strobe)
+	img_rd <= { dsel3, dsel2, dsel1 };
+      if (data_transfer_write_strobe)
+	img_wr <= { dsel3, dsel2, dsel1 };
+      if (wb_cyc_i && wb_stb_i && wb_we_i &&
 		   wb_ack_o && wb_sel_i[0] && wb_adr_i[0:1] == 2'b11)
 	case (wb_adr_i[10:13])
 	  4'b0000: begin
-	     img_mounted[1:0] <= wb_dat_i[2:3];
-	     img_wp[1:0] <= wb_dat_i[6:7];
+	     img_strobe[2:0] <= img_mounted[2:0] ^ wb_dat_i[1:3];
+	     img_mounted[2:0] <= wb_dat_i[1:3];
+	     img_wp[2:0] <= wb_dat_i[5:7];
 	  end
-	  4'b0010: img_ack <= wb_dat_i[7];
-	  4'b0100: img_size[15:8] <= wb_dat_i;
-	  4'b0101: img_size[7:0] <= wb_dat_i;
+	  4'b0010: begin
+	     data_transfer_ack <= wb_dat_i[7];
+	     if (wb_dat_i[7] && !data_transfer_ack) begin
+		img_rd <= 3'b000;
+		img_wr <= 3'b000;
+	     end
+	  end
+	  4'b0011: begin
+	     img_ds <= wb_dat_i[0];
+	     img_dd <= wb_dat_i[1];
+	     img_sps <= wb_dat_i[3:7];
+	  end
 	endcase // case (wb_adr_i[10:13])
    end // always @ (posedge clk)
 
