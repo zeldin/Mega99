@@ -98,6 +98,8 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
    wire	       keyboard_block;
 
    wire	       cs1_cntrl;
+   wire	       cs2_cntrl;
+   wire	       mag_out;
 
    wire [0:23] sp_adr_o;
    wire [0:7]  sp_dat_o;
@@ -192,7 +194,8 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
 				      (|shift_state[2:3])}),
 			.keyboard_block(keyboard_block),
 			.clk_3mhz_en(clk_3mhz_en), .tape_audio(audio_in),
-			.cs1_cntrl(cs1_cntrl),
+			.cs1_cntrl(cs1_cntrl), .cs2_cntrl(cs2_cntrl),
+			.mag_out(mag_out),
 			.sdcard_cs(sdcard_cs), .sdcard_cd(~SD_CD),
 			.sdcard_wp(1'b0), .sdcard_sck(SD_SCK),
 			.sdcard_miso(SD_DAT[0]), .sdcard_mosi(SD_CMD),
@@ -212,7 +215,8 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
       .key_state(key_state), .alpha_state(alpha_state),
       .joy1({~JAhi[8], ~JAlo[3], ~JAlo[4], ~JAlo[2], ~JAlo[1]}),
       .joy2({~JBhi[8], ~JBlo[3], ~JBlo[4], ~JBlo[2], ~JBlo[1]}),
-      .cs1_cntrl(cs1_cntrl), .cs2_cntrl(), .audio_gate(), .mag_out(),
+      .cs1_cntrl(cs1_cntrl), .cs2_cntrl(cs2_cntrl),
+      .audio_gate(), .mag_out(mag_out),
       .debug_pc(debug_pc), .debug_st(debug_st),
       .debug_wp(debug_wp), .debug_ir(debug_ir),
       .debug_vdp_addr(debug_vdp_addr), .debug_grom_addr(debug_grom_addr),

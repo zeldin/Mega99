@@ -26,6 +26,8 @@ module spmmio(input             clk,
 	      input		clk_3mhz_en,
 	      output [0:15]	tape_audio,
 	      input		cs1_cntrl,
+	      input		cs2_cntrl,
+	      input		mag_out,
 
 	      output		sdcard_cs,
 	      input		sdcard_cd,
@@ -132,7 +134,7 @@ module spmmio(input             clk,
    spmmio_tape tape(.clk(clk), .reset(reset), .clk_3mhz_en(clk_3mhz_en),
 		    .adr(adr_i[21 -: 14]), .cs(cyc_i && stb_tape),
 		    .sel(sel_i), .we(we_i), .d(dat_i), .q(dat_tape),
-
-		    .tape_audio(tape_audio), .cs1_cntrl(cs1_cntrl));
+		    .tape_audio(tape_audio), .cs1_cntrl(cs1_cntrl),
+		    .cs2_cntrl(cs2_cntrl), .mag_out(mag_out));
 
 endmodule // spmmio

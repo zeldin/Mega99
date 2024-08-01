@@ -57,6 +57,8 @@ struct mmio_regs_tape {
   uint16_t sample_rate;
   uint16_t head, tail;
   uint16_t memsize;
+  uint16_t pad;
+  uint16_t fifo_read;
 };
 
 #define REGS_TAPE (*(volatile struct mmio_regs_tape *)(void *)0xff05ff00)

@@ -9,9 +9,13 @@ module spmmio_tape(input             clk,
 		   output reg [0:31] q,
 
 		   output reg [0:15] tape_audio,
-		   input	     cs1_cntrl);
+		   input	     cs1_cntrl,
+		   input	     cs2_cntrl,
+		   input	     mag_out);
 
    parameter  memory_size = 8192;
+
+   localparam fifo_depth = 8;
 
    generate
       if (memory_size > 16384)
@@ -36,6 +40,17 @@ module spmmio_tape(input             clk,
    reg [0:4]  data_cnt;
    reg	      phase;
 
+   reg        mag_out_last;
+   reg [0:11] mag_period_counter;
+   reg [0:5]  mag_sync_counter;
+   reg	      mag_bit;
+   reg [0:2]  mag_bit_cnt;
+   reg [0:7]  mag_byte;
+   reg	      mag_synced;
+   reg	      new_mag_bit;
+   reg	      new_mag_byte;
+   reg	      mag_byte_lost;
+
    reg [0:7]  memory0 [0:(memory_size/4-1)];
    reg [0:7]  memory1 [0:(memory_size/4-1)];
    reg [0:7]  memory2 [0:(memory_size/4-1)];
@@ -52,6 +67,18 @@ module spmmio_tape(input             clk,
    wire [0:15] memsize;
    assign memsize = memory_size;
 
+   wire       mag_fifo_produce;
+   wire	      mag_fifo_consume;
+   wire	      mag_fifo_full;
+   wire	      mag_fifo_empty;
+   wire [0:9] mag_fifo_input;
+   wire [0:9] mag_fifo_output;
+
+   assign mag_fifo_produce = new_mag_byte && clk_3mhz_en;
+   assign mag_fifo_consume = (cs && adr[0] == 1'b1 && !we &&
+			      adr[11:13] == 3'h3 && !mag_fifo_empty);
+   assign mag_fifo_input = { mag_byte, cs2_cntrl, cs1_cntrl };
+
    function integer log2;  // Actually floor(log2)+1
       input integer value;
       begin
@@ -61,6 +88,45 @@ module spmmio_tape(input             clk,
    endfunction
 
    localparam  memaddr_bits = log2(memory_size/4-1);
+
+   genvar i;
+   generate
+      for (i=0; i<fifo_depth; i=i+1) begin : ENTRY
+	 reg [0:9]  data;
+	 wire [0:9] prev_data;
+	 reg	    inuse;
+	 wire	    prev_inuse;
+	 wire	    next_inuse;
+	 if (i == 0) begin
+	    assign mag_fifo_full = inuse;
+	    assign prev_data = mag_fifo_input;
+	    assign prev_inuse = mag_fifo_produce;
+	 end else begin
+	    assign prev_data = ENTRY[i-1].data;
+	    assign prev_inuse = ENTRY[i-1].inuse;
+	    assign ENTRY[i-1].next_inuse = inuse;
+	 end
+	 if (i == fifo_depth-1) begin
+	    assign mag_fifo_empty = ~inuse;
+	    assign mag_fifo_output = data;
+	    assign next_inuse = ~mag_fifo_consume;
+	 end
+	 always @(posedge clk) begin
+
+	    if (mag_fifo_consume || (mag_fifo_produce & !inuse))
+	      data <= (prev_inuse ? prev_data : mag_fifo_input);
+
+	    if (reset)
+	      inuse <= 1'b0;
+	    else begin
+	       if (mag_fifo_produce && !mag_fifo_consume)
+		 inuse <= next_inuse;
+	       if (mag_fifo_consume && !mag_fifo_produce)
+		 inuse <= prev_inuse;
+	    end
+	 end
+      end // block: ENTRY
+   endgenerate
 
    always @(posedge clk)
      if (reset) begin
@@ -76,6 +142,7 @@ module spmmio_tape(input             clk,
 	data_available <= 1'b0;
 	data_fetched <= 1'b0;
 	phase <= 1'b0;
+	mag_byte_lost <= 1'b0;
      end else begin
 	if (!playing) begin
 	   tape_audio <= 16'h0000;
@@ -188,6 +255,65 @@ module spmmio_tape(input             clk,
 	     endcase // case (adr[11:13])
 	end
 
+	if (mag_fifo_consume)
+	  mag_byte_lost <= 1'b0;
+	else if (mag_fifo_produce && mag_fifo_full)
+	  mag_byte_lost <= 1'b1;
+
+     end // else: !if(reset)
+
+
+   always @(posedge clk)
+     if (reset) begin
+	mag_period_counter <= 12'h000;
+	mag_sync_counter <= 6'd0;
+	mag_synced <= 1'b0;
+	new_mag_bit <= 1'b0;
+	new_mag_byte <= 1'b0;
+     end else if (clk_3mhz_en) begin
+
+	new_mag_byte <= 1'b0;
+	if (new_mag_bit) begin
+	   mag_byte <= { mag_byte[1:7], mag_bit };
+	   if (mag_bit_cnt == 3'd7)
+	     new_mag_byte <= 1'b1;
+	   mag_bit_cnt <= mag_bit_cnt + 3'd1;
+	end
+
+	new_mag_bit <= 1'b0;
+	if (mag_period_counter[0:3] == 4'b0001)
+	  mag_bit <= 1'b0;
+	if (mag_out != mag_out_last) begin
+	   if (mag_period_counter[0:2] == 3'b100) begin
+	      if (mag_synced)
+		new_mag_bit <= 1'b1;
+	      else if (mag_bit && (&mag_sync_counter)) begin
+		 new_mag_bit <= 1'b1;
+		 if (mag_bit_cnt == 3'd7)
+		   mag_synced <= 1'b1;
+	      end else if (mag_bit)
+		mag_sync_counter <= 6'd0;
+	      else begin
+		 mag_bit_cnt <= 3'd0;
+		 if (!(&mag_sync_counter))
+		   mag_sync_counter <= mag_sync_counter + 6'd1;
+	      end
+	      mag_period_counter <= 12'h000;
+	   end else if (mag_period_counter[0:3] == 4'b0100)
+	     mag_bit <= 1'b1;
+	   else begin
+	      mag_synced <= 1'b0;
+	      mag_sync_counter <= 6'd0;
+	      mag_period_counter <= 12'h000;
+	   end
+	end else if (!(&mag_period_counter))
+	  mag_period_counter <= mag_period_counter + 12'd1;
+	else if (mag_synced) begin
+	   mag_synced <= 1'b0;
+	   mag_sync_counter <= 6'd0;
+	   new_mag_bit <= 1'b1;
+	end
+	mag_out_last <= mag_out;
      end
 
    always @(*) begin
@@ -206,6 +332,13 @@ module spmmio_tape(input             clk,
 	end
 	3'h2: begin
 	   q[0 +: 16] <= memsize;
+	end
+	3'h3: begin
+	   q[0:1] <= { cs2_cntrl, cs1_cntrl };
+	   q[4:5] <= mag_fifo_output[8 +: 2];
+	   q[6] <= mag_byte_lost;
+	   q[7] <= ~mag_fifo_empty;
+	   q[8 +: 8] <= mag_fifo_output[0 +: 8];
 	end
       endcase // case (adr[11:13])
    end
