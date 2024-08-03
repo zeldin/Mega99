@@ -51,7 +51,7 @@ static int tape_check_format(void)
       return r;
     memset(TAPE_SAMPLES, 0, 768);
     REGS_TAPE.tail = 768u;
-    REGS_TAPE.sample_rate = 1279u;
+    REGS_TAPE.sample_rate = 1151u;
     return FORMAT_TAP | 1u;
   }
   if (r < 12) {
