@@ -306,7 +306,7 @@ module spmmio_tape(input             clk,
 	      mag_sync_counter <= 6'd0;
 	      mag_period_counter <= 12'h000;
 	   end
-	end else if (!(&mag_period_counter))
+	end else if (mag_period_counter[0:1] != 2'b11)
 	  mag_period_counter <= mag_period_counter + 12'd1;
 	else if (mag_synced) begin
 	   mag_synced <= 1'b0;
