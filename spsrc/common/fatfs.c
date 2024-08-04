@@ -89,7 +89,7 @@ static int fatfs_check_card(uint32_t card_id, fatfs_op_t op)
       SDCARD_STATUS_PRESENT)
     current_card_type = SDCARD_REMOVED;
   if (op != OP_INIT) {
-    if (current_card_type == SDCARD_REMOVED || current_card_id != card_id)
+    if (current_card_type <= SDCARD_INVALID || current_card_id != card_id)
       return -ECARDCHANGED;
     if (op == OP_WRITE && (status & SDCARD_STATUS_WRITEPROT))
       return -EREADONLYFS;
@@ -102,7 +102,7 @@ static int fatfs_check_card(uint32_t card_id, fatfs_op_t op)
     if ((current_card_type = sdcard_activate()) > SDCARD_INVALID) {
       int r = fatfs_check_fs(++current_card_id);
       if (r < 0) {
-	current_card_type = SDCARD_REMOVED;
+	current_card_type = SDCARD_INVALID;
 	--current_card_id;
 	return r;
       }
