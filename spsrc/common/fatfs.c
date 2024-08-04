@@ -276,23 +276,24 @@ static inline uint8_t fatfs_compute_lfn_key(const char *filename)
   return n / 13;
 }
 
-static int fatfs_search_rootdir(uint32_t card_id, const char *filename,
-				fatfs_filehandle_t *fh)
+static int fatfs_search_dir(const char *filename,
+			    fatfs_filehandle_t *fh, fatfs_filehandle_t *dirfh)
 {
-  uint32_t blk = fatfs_root_dir_start;
-  uint16_t rde = fatfs_root_dir_entries;
-  uint8_t entry = 0, cnr = 0;
+  uint32_t card_id = dirfh->card_id;
+  uint32_t blk = dirfh->start_cluster;
+  uint32_t rde = dirfh->size;
+  uint32_t entry = 0, cnr = 0;
   uint16_t lfn_match = ~0;
   uint8_t lfn_key = fatfs_compute_lfn_key(filename);
   uint8_t buf[512];
   const uint8_t *p;
   for (;;) {
-    if (!fatfs_fat32 && !rde)
+    if (!dirfh->current_cluster && !rde)
       break;
     if (!entry) {
       int r;
       p = buf;
-      if (fatfs_fat32)
+      if (dirfh->current_cluster)
 	r = fatfs_cluster_block_read(blk, cnr++, buf, card_id);
       else
 	r = fatfs_block_read(blk++, buf, card_id);
@@ -356,10 +357,10 @@ static int fatfs_search_rootdir(uint32_t card_id, const char *filename,
       lfn_match = ~0;
     }
     p += 32;
-    --rde;
+    rde -= 32;
     if (++entry == 16) {
       entry = 0;
-      if (fatfs_fat32) {
+      if (dirfh->current_cluster) {
 	if (cnr == fatfs_blocks_per_cluster) {
 	  cnr = 0;
 	  blk = fatfs_get_fat_entry(card_id, blk, buf);
@@ -372,12 +373,31 @@ static int fatfs_search_rootdir(uint32_t card_id, const char *filename,
   return -EFILENOTFOUND;
 }
 
-int fatfs_open(const char *filename, fatfs_filehandle_t *fh)
+int fatfs_open_rootdir(fatfs_filehandle_t *fh)
 {
   int r;
   if ((r = fatfs_check_card(0, OP_INIT)) < 0)
     return r;
-  return fatfs_search_rootdir(current_card_id, filename, fh);
+  fh->card_id = current_card_id;
+  fh->start_cluster = fatfs_root_dir_start;
+  if (fatfs_fat32) {
+    fh->size = 0;
+    fh->current_cluster = fh->start_cluster;
+  } else {
+    fh->size = fatfs_root_dir_entries << 5;
+    fh->current_cluster = 0;
+  }
+  fh->filepos = 0;
+  return 0;
+}
+
+int fatfs_open(const char *filename, fatfs_filehandle_t *fh)
+{
+  fatfs_filehandle_t dirfh;
+  int r;
+  if ((r = fatfs_open_rootdir(&dirfh)) < 0)
+    return r;
+  return fatfs_search_dir(filename, fh, &dirfh);
 }
 
 int fatfs_read(fatfs_filehandle_t *fh, void *p, uint32_t bytes)
@@ -561,24 +581,6 @@ int fatfs_setpos(fatfs_filehandle_t *fh, uint32_t newpos)
     fh->current_cluster = cluster;
   }
   fh->filepos = newpos;
-  return 0;
-}
-
-int fatfs_open_rootdir(fatfs_filehandle_t *fh)
-{
-  int r;
-  if ((r = fatfs_check_card(0, OP_INIT)) < 0)
-    return r;
-  fh->card_id = current_card_id;
-  fh->start_cluster = fatfs_root_dir_start;
-  if (fatfs_fat32) {
-    fh->size = 0;
-    fh->current_cluster = fh->start_cluster;
-  } else {
-    fh->size = fatfs_root_dir_entries << 5;
-    fh->current_cluster = 0;
-  }
-  fh->filepos = 0;
   return 0;
 }
 
