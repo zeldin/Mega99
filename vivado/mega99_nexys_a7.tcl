@@ -18,10 +18,7 @@ proc checkRequiredFiles { origin_dir} {
  "[file normalize "$origin_dir/gateware/spmmio_overlay.v"]"\
  "[file normalize "$origin_dir/gateware/spmmio_keyboard.v"]"\
  "[file normalize "$origin_dir/gateware/spmmio_tape.v"]"\
- "[file normalize "$origin_dir/or1k_boot_code0.hex"]"\
- "[file normalize "$origin_dir/or1k_boot_code1.hex"]"\
- "[file normalize "$origin_dir/or1k_boot_code2.hex"]"\
- "[file normalize "$origin_dir/or1k_boot_code3.hex"]"\
+ "[file normalize "$origin_dir/or1k_boot_code.hex"]"\
  "[file normalize "$origin_dir/gateware/mainboard.v"]"\
  "[file normalize "$origin_dir/gateware/clkgen.v"]"\
  "[file normalize "$origin_dir/gateware/address_decoder.v"]"\
@@ -233,10 +230,7 @@ set files [list \
  [file normalize "${origin_dir}/gateware/spmmio_overlay.v"] \
  [file normalize "${origin_dir}/gateware/spmmio_keyboard.v"] \
  [file normalize "${origin_dir}/gateware/spmmio_tape.v"] \
- [file normalize "${origin_dir}/or1k_boot_code0.hex"] \
- [file normalize "${origin_dir}/or1k_boot_code1.hex"] \
- [file normalize "${origin_dir}/or1k_boot_code2.hex"] \
- [file normalize "${origin_dir}/or1k_boot_code3.hex"] \
+ [file normalize "${origin_dir}/or1k_boot_code.hex"] \
  [file normalize "${origin_dir}/gateware/mainboard.v"] \
  [file normalize "${origin_dir}/gateware/clkgen.v"] \
  [file normalize "${origin_dir}/gateware/address_decoder.v"] \

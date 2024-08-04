@@ -1,7 +1,4 @@
 /proj/
 /build/
-/or1k_boot_code0.hex
-/or1k_boot_code1.hex
-/or1k_boot_code2.hex
-/or1k_boot_code3.hex
+/or1k_boot_code.hex
 /mega99sp.bin

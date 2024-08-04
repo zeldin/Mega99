@@ -81,10 +81,7 @@ MOR1KX_SOURCES += $(MOR1KXPATH)/mor1kx_ticktimer.v
 MOR1KX_SOURCES += $(MOR1KXPATH)/mor1kx.v
 MOR1KX_SOURCES += $(MOR1KXPATH)/mor1kx_wb_mux_cappuccino.v
 
-BOOTHEX  = or1k_boot_code0.hex
-BOOTHEX += or1k_boot_code1.hex
-BOOTHEX += or1k_boot_code2.hex
-BOOTHEX += or1k_boot_code3.hex
+BOOTHEX  = or1k_boot_code.hex
 
 NEXYS_A7_SOURCES  = $(GATEWARE)/mega99_nexys_a7_top.v
 NEXYS_A7_SOURCES += $(GATEWARE)/nexys_a7_clkwiz.v
@@ -186,10 +183,8 @@ PYTHON = python
 
 .DELETE_ON_ERROR:
 
-or1k_boot_code0.hex : $(SP_BOOT_BUILD)/or1k_boot_code.bin
-	$(PYTHON) genhex.py -o or1k_boot_code.hex -n 4 $<
-
-or1k_boot_code1.hex or1k_boot_code2.hex or1k_boot_code3.hex : or1k_boot_code0.hex
+or1k_boot_code.hex : $(SP_BOOT_BUILD)/or1k_boot_code.bin
+	$(PYTHON) genhex.py -o or1k_boot_code.hex $<
 
 $(SP_BOOT_BUILD)/or1k_boot_code.bin : $(SP_BOOT_BUILD)/or1k_boot_code.elf | $(TCSTAMP)
 	$(SP_OBJCOPY_BIN) $< $@
