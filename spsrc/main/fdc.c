@@ -21,18 +21,22 @@ void fdc_mount(unsigned drive, const fatfs_filehandle_t *fh)
       uint16_t nsec;
       int r = fatfs_read(&dsk[drive], hdr, 20);
       if (r == 20 && hdr[0xd] == 'D' && hdr[0xe] == 'S' && hdr[0xf] == 'K' &&
-	  hdr[0xc] > 0 && hdr[0xc] < 32 && hdr[0x11] > 0 && hdr[0x11] < 64 &&
-	  (hdr[0x12] == 1 || hdr[0x12] == 2) &&
-	  (hdr[0x13] == 1 || hdr[0x13] == 2) &&
-	  (nsec = (hdr[0xa]<<8)|hdr[0xb]) == hdr[0x0c]*hdr[0x11]*hdr[0x12] &&
-	  dsk[drive].size >= (nsec << 8)) {
+	  hdr[0xc] > 0 && hdr[0xc] < 32 && hdr[0x11] < 64 &&
+	  hdr[0x12] <= 2 && hdr[0x13] <= 2 &&
+	  (nsec = (hdr[0xa]<<8)|hdr[0xb]) % hdr[0xc] == 0 &&
+	  (!hdr[0x11] || nsec == hdr[0x0c]*hdr[0x11]*(hdr[0x12] == 2? 2 : 1))
+	  && dsk[drive].size >= (nsec << 8)) {
 	sectors = hdr[0xc];
 	tracks = hdr[0x11];
-	if (hdr[0x12] == 2) {
+	if (!tracks) {
+	  tracks = nsec / sectors;
+	  if (hdr[0x12] == 2 || (hdr[0x12] == 0 && tracks >= 64))
+	    sectors |= 0x80;
+	} else if (hdr[0x12] == 2) {
 	  tracks <<= 1;
 	  sectors |= 0x80;
 	}
-	if (hdr[0x13] == 2)
+	if (hdr[0x13] == 2 || (hdr[0x13] == 0 && hdr[0xc] >= 16))
 	  sectors |= 0x40;
 	unsigned i;
 	for (i = 10; i>0 && hdr[i-1] == 0x20; --i)
@@ -56,11 +60,11 @@ void fdc_mount(unsigned drive, const fatfs_filehandle_t *fh)
 	if (dsk[drive].size < ((tracks*sectors)<<8))
 	  sectors = 0;
 	if (!sectors) {
-	  fprintf(stderr, "Error: Not a valid disk image");
+	  fprintf(stderr, "Error: Not a valid disk image\n");
 	  fh = NULL;
 	} else {
 	  fprintf(stderr, "Warning: ");
-	  printf("Image is not formatted, guessing type");
+	  printf("Image is not formatted, guessing type\n");
 	}
       }
     }
