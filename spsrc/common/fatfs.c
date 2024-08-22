@@ -72,10 +72,26 @@ static uint8_t fatfs_filename_checksum(const uint8_t *entry)
 
 static inline uint16_t fatfs_get16(const uint8_t *p)
 {
-  return p[0] | (p[1] << 8);
+  uint16_t v = *(const uint16_t *)p;
+#if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
+  v = (v >> 8) | (v << 8);
+#endif
+  return v;
 }
 
 static inline uint32_t fatfs_get32(const uint8_t *p)
+{
+  uint32_t v = *(const uint32_t *)p;
+#if __BYTE_ORDER__ != __ORDER_LITTLE_ENDIAN__
+  uint32_t a, b;
+  __asm__("l.rori %0,%1,24" : "=r"(a) : "r"(v & 0xff00ff00));
+  __asm__("l.rori %0,%1,8" : "=r"(b) : "r"(v & 0x00ff00ff));
+  v = a | b;
+#endif
+  return v;
+}
+
+static inline uint32_t fatfs_get32_unaligned(const uint8_t *p)
 {
   return fatfs_get16(p) | (fatfs_get16(p+2) << 16);
 }
@@ -259,7 +275,7 @@ static int fatfs_check_fs(uint32_t card_id)
     if (blk[0x1fe] != 0x55 || blk[0x1ff] != 0xaa ||
 	(blk[0x1be] & 0x7f) != 0)
       break;
-    part_start = fatfs_get32(blk+0x1c6);
+    part_start = fatfs_get32_unaligned(blk+0x1c6);
     if (!part_start)
       break;
   }
