@@ -194,6 +194,17 @@ static uint32_t fatfs_get_fat_entry(uint32_t card_id, uint32_t cluster,
   return cluster;
 }
 
+static bool fatfs_check_sig(const uint8_t *p)
+{
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+  const uint16_t fa = ('F' << 8) | 'A';
+#else
+  const uint16_t fa = ('A' << 8) | 'F';
+#endif
+
+  return (*(const uint16_t *)p) == fa && p[2] == 'T';
+}
+
 static bool fatfs_check_root_block(const uint8_t *blk, uint32_t offs)
 {
   DEBUG_PRINT("Checking blk %x for FATFS\n", offs);
@@ -202,7 +213,7 @@ static bool fatfs_check_root_block(const uint8_t *blk, uint32_t offs)
     return false;
 
   /* Check file system type */
-  if (blk[82] != 'F' || blk[83] != 'A' || blk[84] != 'T')
+  if (!fatfs_check_sig(&blk[54]) && !fatfs_check_sig(&blk[82]))
     return false;
 
   /* Check required parameters */
