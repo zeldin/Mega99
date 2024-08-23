@@ -26,6 +26,15 @@ static uint8_t fatfs_cluster_shift, fatfs_blocks_per_cluster;
 static uint16_t fatfs_root_dir_entries;
 static bool fatfs_fat32;
 
+static unsigned fatfs_filename_char_compare(unsigned a, unsigned b)
+{
+  unsigned z = a ^ b;
+  if (z == 0x20)
+    return (a & ~0x20) < 'A' || (a & ~0x20) > 'Z';
+  else
+    return z;
+}
+
 static bool fatfs_filename_compare(const char *entry, const char *fn)
 {
   unsigned i;
@@ -33,7 +42,7 @@ static bool fatfs_filename_compare(const char *entry, const char *fn)
     if (*fn == '.' || !*fn) {
       if (entry[i] != ' ')
 	return false;
-    } else if (*fn++ != entry[i])
+    } else if (fatfs_filename_char_compare(*fn++, entry[i]))
       return false;
   if (*fn == '.')
     fn ++;
@@ -41,7 +50,7 @@ static bool fatfs_filename_compare(const char *entry, const char *fn)
     if (!*fn) {
       if (entry[8+i] != ' ')
 	return false;
-    } else if (*fn++ != entry[8+i])
+    } else if (fatfs_filename_char_compare(*fn++, entry[8+i]))
       return false;
   return !*fn;
 }
@@ -50,7 +59,7 @@ static bool fatfs_filename_long_compare(const char *entry, const char *fn)
 {
   unsigned i = 1;
   while (i < 32) {
-    if (entry[i] != *fn++ || entry[i+1] != 0)
+    if (fatfs_filename_char_compare(entry[i], *fn++) || entry[i+1] != 0)
       return false;
     if (!entry[i])
       return true;
