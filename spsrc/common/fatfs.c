@@ -330,6 +330,7 @@ static int fatfs_search_dir(const char *filename,
     if (!*p)
       break;
     if ((p[11]&0x3f) == 0x0f) {
+#ifdef LFN_DEBUG
       DEBUG_PRINT("LFN %x ", p[0] | (p[0xb] << 24) | (p[0xd] << 16));
       unsigned i = 1;
       while (i < 32) {
@@ -342,6 +343,7 @@ static int fatfs_search_dir(const char *filename,
 	else if (i == 0x0b)
 	  i += 3;
       }
+#endif
       if (*p == lfn_key)
 	lfn_match = (p[0xd]<<8)|(lfn_key - 0x40);
       else if (!*p || (*p & 0xc0) || ((p[0xd] << 8)|*p) != lfn_match)
@@ -350,13 +352,20 @@ static int fatfs_search_dir(const char *filename,
 	--lfn_match;
 	if (fatfs_filename_long_compare((const char *)p,
 					filename+13*(0xff&lfn_match))) {
+#ifdef LFN_DEBUG
 	  DEBUG_PRINT(" +\n");
+#endif
 	} else {
+#ifdef LFN_DEBUG
 	  DEBUG_PRINT(" -\n");
+#endif
 	  lfn_match = ~0;
 	}
-      } else
+      }
+#ifdef LFN_DEBUG
+      else
 	DEBUG_PRINT(" !\n");
+#endif
     } else if (*p == 0xe5)
       lfn_match = ~0;
     else {
