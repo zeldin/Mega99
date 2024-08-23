@@ -218,7 +218,7 @@ static bool fatfs_check_root_block(const uint8_t *blk, uint32_t offs)
 
   /* Check required parameters */
   if (blk[11] != 0 || blk[12] != 2 || /* 512 bytes per sector */
-      (blk[14] == 0 && blk[15] == 0) || /* reserved sectors > 0 */
+      (!*(const uint16_t *)&blk[14]) || /* reserved sectors > 0 */
       blk[16] != 2) /* fat count */
     return false;
 
