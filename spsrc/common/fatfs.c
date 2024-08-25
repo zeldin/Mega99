@@ -25,6 +25,11 @@ static uint32_t fatfs_fat_start, fatfs_data_start, fatfs_root_dir_start;
 static uint8_t fatfs_cluster_shift, fatfs_blocks_per_cluster;
 static uint16_t fatfs_root_dir_entries;
 static bool fatfs_fat32;
+#ifndef BOOTCODE
+static uint32_t fatfs_num_clusters;
+static uint32_t fatfs_next_free_cluster;
+static uint32_t fatfs_fat2_start;
+#endif
 
 static unsigned fatfs_filename_char_compare(unsigned a, unsigned b)
 {
@@ -104,6 +109,20 @@ static inline uint32_t fatfs_get32_unaligned(const uint8_t *p)
 {
   return fatfs_get16(p) | (fatfs_get16(p+2) << 16);
 }
+
+#ifndef BOOTCODE
+static inline void fatfs_put16(uint8_t *p, uint16_t v)
+{
+  p[0] = v;
+  p[1] = v >> 8;
+}
+
+static inline void fatfs_put32(uint8_t *p, uint32_t v)
+{
+  fatfs_put16(p, v);
+  fatfs_put16(p+2, v >> 16);
+}
+#endif
 
 static int fatfs_check_fs(uint32_t card_id);
 
@@ -251,6 +270,9 @@ static bool fatfs_check_root_block(const uint8_t *blk, uint32_t offs)
     bpf = fatfs_get32(blk+36); /* sectorsPerFat32 */
   uint32_t ds = fatfs_get16(blk+14) + offs;
   fatfs_fat_start = ds;
+#ifndef BOOTCODE
+  fatfs_fat2_start = ds + bpf;
+#endif
   ds += bpf<<1;
   fatfs_root_dir_start = ds;
   ds += rds;
@@ -275,6 +297,11 @@ static bool fatfs_check_root_block(const uint8_t *blk, uint32_t offs)
   }
 
   DEBUG_PRINT("FS has %x clusters\n", cc);
+
+#ifndef BOOTCODE
+  fatfs_num_clusters = cc;
+  fatfs_next_free_cluster = 2;
+#endif
 
   return true;
 }
@@ -397,6 +424,14 @@ static int fatfs_search_dir(const char *filename,
 	fh->current_cluster = file_start_cluster;
 	fh->size = fatfs_get32(p+28);
 	fh->filepos = 0;
+#ifndef BOOTCODE
+	if (cnr) {
+	  dirfh->current_cluster = blk;
+	  dirfh->filepos = ((cnr-1) << 9) + (entry << 5);
+	} else {
+	  dirfh->filepos = ((blk-1-dirfh->start_cluster) << 9) + (entry << 5);
+	}
+#endif
 	return 0;
       }
       lfn_match = ~0;
@@ -522,6 +557,52 @@ static int fatfs_block_write(uint32_t blkid, const uint8_t *ptr, uint32_t card_i
   return -EIO;
 }
 
+static int fatfs_set_fat_entry(uint32_t card_id, uint32_t cluster,
+			       uint8_t *buf, uint32_t entry)
+{
+  uint8_t n;
+  if ((cluster & FAT_EOC) || cluster < 2)
+    return -ETRUNC;
+  if (fatfs_fat32) {
+    n = cluster&0x7f;
+    cluster >>= 7;
+  } else {
+    n = cluster;
+    cluster >>= 8;
+  }
+  int r = fatfs_block_read(fatfs_fat_start + cluster, buf, card_id);
+  if (r < 0)
+    return r;
+  if (fatfs_fat32)
+    fatfs_put32(buf+(4*n), entry & 0x0fffffffu);
+  else
+    fatfs_put16(buf+(2*n), entry);
+  r = fatfs_block_write(fatfs_fat_start + cluster, buf, card_id);
+  if (r >= 0)
+    r = fatfs_block_write(fatfs_fat2_start + cluster, buf, card_id);
+  return r;
+}
+
+static uint32_t fatfs_allocate_cluster(uint32_t card_id, uint8_t *buf)
+{
+  uint32_t c = fatfs_next_free_cluster;
+  do {
+    uint32_t e = fatfs_get_fat_entry(card_id, c, buf);
+    if (e == FAT_EOC) {
+      fatfs_next_free_cluster = c;
+      int r = fatfs_set_fat_entry(card_id, c, buf, 0xffffffffu);
+      if (r < 0)
+	return FAT_ERROR|FAT_EOC|(uint16_t)r;
+      return c;
+    }
+    else if ((e & FAT_ERROR))
+      return e;
+    if (++c >= fatfs_num_clusters)
+      c = 2;
+  } while(c != fatfs_next_free_cluster);
+  return FAT_EOC|FAT_ERROR|((uint16_t)-ENOSPC);
+}
+
 static int fatfs_cluster_block_write(uint32_t cluster, uint32_t sub,
 				     const uint8_t *ptr, uint32_t card_id)
 {
@@ -530,6 +611,326 @@ static int fatfs_cluster_block_write(uint32_t cluster, uint32_t sub,
   if (cluster < 2)
     return -ETRUNC;
   return fatfs_block_write(fatfs_cluster_block_id(cluster, sub), ptr, card_id);
+}
+
+static int fatfs_search_directory_gap(fatfs_filehandle_t *dirfh,
+				      unsigned needed, uint8_t *buf)
+{
+  unsigned left = needed;
+  uint32_t card_id = dirfh->card_id;
+  uint32_t blk = dirfh->start_cluster;
+  uint32_t rde = dirfh->size;
+  uint32_t entry = 0, cnr = 0;
+  bool extend = false;
+  int r;
+  uint8_t *p;
+  for (;;) {
+    if (!dirfh->current_cluster && !rde) {
+      if (!entry)
+	extend = false;
+      break;
+    }
+    if (!entry) {
+      p = buf;
+      if (extend) {
+	memset(buf, 0, 512);
+	if (dirfh->current_cluster)
+	  cnr++;
+	else
+	  blk++;
+      } else {
+	int r;
+	if (dirfh->current_cluster)
+	  r = fatfs_cluster_block_read(blk, cnr++, buf, card_id);
+	else
+	  r = fatfs_block_read(blk++, buf, card_id);
+	if (r < 0)
+	  return r;
+      }
+    }
+    if (!*p)
+      extend = true;
+    if (extend || *p == 0xe5) {
+      if (extend)
+	memset(p, 0, 32);
+      if (left == needed) {
+	if (cnr) {
+	  dirfh->current_cluster = blk;
+	  dirfh->filepos = ((cnr-1) << 9) + (entry << 5);
+	} else {
+	  dirfh->filepos = ((blk-1-dirfh->start_cluster) << 9) + (entry << 5);
+	}
+      }
+      if (!left)
+	break;
+      if (!--left && !extend)
+	break;
+    } else
+      left = needed;
+    p += 32;
+    rde -= 32;
+    if (++entry == 16) {
+      entry = 0;
+      if (extend) {
+	int r;
+	if (cnr)
+	  r = fatfs_cluster_block_write(blk, cnr-1, buf, card_id);
+	else
+	  r = fatfs_block_write(blk-1, buf, card_id);
+	if (r < 0)
+	  return r;
+      }
+      if (dirfh->current_cluster && cnr == fatfs_blocks_per_cluster) {
+	uint32_t blk2 = fatfs_get_fat_entry(card_id, blk, buf);
+	if (blk2 & FAT_EOC) {
+	  if (!left && !(blk2 & FAT_ERROR))
+	    break;
+	  extend = true;
+	  blk2 = fatfs_allocate_cluster(card_id, buf);
+	  if ((blk2 & FAT_ERROR))
+	    return (int16_t)(blk2 & 0xffffu);
+	  if ((r = fatfs_set_fat_entry(card_id, blk, buf, blk2)) < 0)
+	    return r;
+	  memset(buf, 0, 512);
+	  for(cnr = 1; cnr < fatfs_blocks_per_cluster; cnr++)
+	    if ((r = fatfs_cluster_block_write(blk2, cnr, buf, card_id)) < 0)
+	      return r;
+	}
+	blk = blk2;
+	cnr = 0;
+      }
+    }
+  }
+  if (left)
+    return -ENOSPC;
+  if (extend) {
+    int r;
+    if (cnr)
+      r = fatfs_cluster_block_write(blk, cnr-1, buf, card_id);
+    else
+      r = fatfs_block_write(blk-1, buf, card_id);
+    return r;
+  }
+  return 0;
+}
+
+static char fatfs_translate_shortname_char(char c)
+{
+  if (c <= ' ' || c >= 0x7f)
+    return 0;
+  else if (c >= 'a' && c <= 'z')
+    return c - 0x20;
+  switch (c) {
+      case 0x22:
+      case 0x2a:
+      case 0x2b:
+      case 0x2c:
+      case 0x2e:
+      case 0x2f:
+      case 0x3a:
+      case 0x3b:
+      case 0x3c:
+      case 0x3d:
+      case 0x3e:
+      case 0x3f:
+      case 0x5b:
+      case 0x5c:
+      case 0x5d:
+      case 0x7c:
+	return '_';
+  }
+  return c;
+}
+
+static bool fatfs_make_shortname(const char *filename, char *shortname)
+{
+  unsigned n = 0;
+  bool changed = false;
+  while (n < 8) {
+    if (!*filename || *filename == '.')
+      break;
+    char c = *filename++;
+    char c2 = fatfs_translate_shortname_char(c);
+    shortname[n] = c2;
+    if (c2)
+      n++;
+    if (c2 != c)
+      changed = true;
+  }
+  while (n < 8)
+    shortname[n++] = ' ';
+  while (*filename && *filename != '.') {
+    filename++;
+    changed = true;
+  }
+  shortname[n++] = '.';
+  if (*filename++ == '.') {
+    while (n < 12) {
+      if (!*filename)
+	break;
+      char c = *filename++;
+      char c2 = fatfs_translate_shortname_char(c);
+      shortname[n] = c2;
+      if (c2)
+	n++;
+      if (c2 != c)
+	changed = true;
+    }
+    if (*filename)
+      changed = true;
+  } else
+    changed = true;
+  while (n < 12)
+    shortname[n++] = ' ';
+  shortname[12] = 0;
+  return changed;
+}
+
+static int fatfs_create_dir_entry(const char *filename, fatfs_filehandle_t *fh,
+				  fatfs_filehandle_t *dirent_fh)
+{
+  char shortname[13];
+  unsigned needed = 1;
+  unsigned lfn_key = 0;
+  uint8_t checksum = 0;
+  if (fatfs_make_shortname(filename, shortname)) {
+    shortname[6] = '~';
+    shortname[7] = '1';
+    for (;;) {
+      unsigned i;
+      for (i=0; shortname[i] != '~'; i++)
+	if (shortname[i] == ' ') {
+	  unsigned j = i;
+	  while (shortname[++j] != '~')
+	    ;
+	  memmove(shortname+i, shortname+j, 8-j);
+	  j -= i;
+	  memset(shortname+8-j, ' ', j);
+	  break;
+	}
+      fatfs_filehandle_t dircheck = *dirent_fh;
+      int r = fatfs_search_dir(shortname, fh, &dircheck);
+      if (r == -EFILENOTFOUND)
+	break;
+      else if (r < 0)
+	return r;
+      if (shortname[7] == ' ') {
+	unsigned j;
+	for (i=7; shortname[i] != '~'; --i)
+	  if (shortname[i] == ' ')
+	    j = i;
+	memmove(shortname+i+8-j, shortname+i, j-i);
+	memset(shortname+i, ' ', 8-j);
+      }
+      i = 7;
+      for (;;) {
+	if (shortname[i] < '9') {
+	  shortname[i] ++;
+	  break;
+	}
+	if (shortname[i] == '~') {
+	  if (i == 0)
+	    return -ENOSPC;
+	  shortname[i-1] = '~';
+	  shortname[i] = '1';
+	  break;
+	}
+	shortname[i] = '0';
+	--i;
+      }
+    }
+    memmove(shortname+8, shortname+9, 4);
+    checksum = fatfs_filename_checksum(shortname);
+    memmove(shortname+9, shortname+8, 4);
+    shortname[8] = '.';
+    lfn_key = fatfs_compute_lfn_key(filename);
+    needed += lfn_key & 31;
+  }
+  memset(fh, 0, sizeof(*fh));
+  fh->card_id = dirent_fh->card_id;
+  uint8_t buf[512];
+  int r = fatfs_search_directory_gap(dirent_fh, needed, buf);
+  if (r < 0)
+    return -ENOSPC;
+  uint32_t sub = dirent_fh->filepos >> 9;
+  if (dirent_fh->current_cluster)
+    r = fatfs_cluster_block_read(dirent_fh->current_cluster, sub, buf,
+				 dirent_fh->card_id);
+  else
+    r = fatfs_block_read(dirent_fh->start_cluster + sub, buf,
+			 dirent_fh->card_id);
+  if (r < 0)
+    return r;
+  uint8_t *p = &buf[dirent_fh->filepos & 0x1ff];
+  while (lfn_key) {
+    memset(p, 0, 32);
+    p[11] = 0xf;
+    p[13] = checksum;
+    p[0] = lfn_key;
+    lfn_key &= 0x3f;
+    --lfn_key;
+    const char *fn = filename + 13*lfn_key;
+    unsigned i = 1;
+    while (i < 32) {
+      if ((p[i] = *fn))
+	fn++;
+      if ((i += 2) == 0x1a)
+	i += 2;
+      else if (i == 0x0b)
+	i += 3;
+    }
+    p += 32;
+    if (!((dirent_fh->filepos += 32) & 0x1ff)) {
+      int r;
+      p = buf;
+      if (dirent_fh->current_cluster)
+	r = fatfs_cluster_block_write(dirent_fh->current_cluster, sub, buf,
+				      dirent_fh->card_id);
+      else
+	r = fatfs_block_write(dirent_fh->start_cluster + sub, buf,
+			     dirent_fh->card_id);
+      if (r < 0)
+	return r;
+      sub++;
+      if (dirent_fh->current_cluster) {
+	if (sub == fatfs_blocks_per_cluster) {
+	  sub = 0;
+	  dirent_fh->current_cluster =
+	    fatfs_get_fat_entry(dirent_fh->card_id,
+				dirent_fh->current_cluster, buf);
+	  dirent_fh->filepos = 0;
+	}
+	r = fatfs_cluster_block_read(dirent_fh->current_cluster, sub, buf,
+				     dirent_fh->card_id);
+      } else
+	r = fatfs_block_read(dirent_fh->start_cluster + sub, buf,
+			     dirent_fh->card_id);
+      if (r < 0)
+	return r;
+    }
+  }
+  memset(p, 0, 32);
+  memcpy(p, shortname, 8);
+  memcpy(p+8, shortname+9, 3);
+  if (dirent_fh->current_cluster)
+    r = fatfs_cluster_block_write(dirent_fh->current_cluster, sub, buf,
+				  dirent_fh->card_id);
+  else
+    r = fatfs_block_write(dirent_fh->start_cluster + sub, buf,
+			  dirent_fh->card_id);
+  return r;
+}
+
+int fatfs_open_or_create(const char *filename, fatfs_filehandle_t *fh,
+			 fatfs_filehandle_t *dirent_fh)
+{
+  int r;
+  if ((r = fatfs_open_rootdir(dirent_fh)) < 0)
+    return r;
+  r = fatfs_search_dir(filename, fh, dirent_fh);
+  if (r == -EFILENOTFOUND)
+    r = fatfs_create_dir_entry(filename, fh, dirent_fh);
+  return r;
 }
 
 int fatfs_write(fatfs_filehandle_t *fh, const void *p, uint32_t bytes)
@@ -794,6 +1195,91 @@ bool fatfs_is_readonly(fatfs_filehandle_t *fh)
 {
   uint32_t card_id = fh->card_id;
   return fatfs_check_card(card_id, OP_WRITE) == -EREADONLYFS;
+}
+
+int fatfs_setsize(fatfs_filehandle_t *fh, fatfs_filehandle_t *dirent_fh,
+		  uint32_t newsize)
+{
+  uint8_t buf[512];
+  int r;
+  uint32_t cluster = fh->start_cluster;
+  uint32_t nblk = newsize >> 9;
+  bool new_alloc = false;
+  if ((newsize & 0x1ff))
+    nblk ++;
+  if (!newsize) {
+    fh->start_cluster = 0;
+    fh->current_cluster = 0;
+    fh->filepos = 0;
+  } else if (!cluster) {
+    if (((cluster = fatfs_allocate_cluster(fh->card_id, buf)) & FAT_ERROR))
+      return (int16_t)(cluster & 0xffffu);
+    else {
+      fh->start_cluster = cluster;
+      fh->current_cluster = cluster;
+      fh->filepos = 0;
+    }
+    new_alloc = true;
+  }
+  while (nblk > 0) {
+    uint32_t next_cluster = new_alloc? 0 :
+      fatfs_get_fat_entry(fh->card_id, cluster, buf);
+    if ((next_cluster & FAT_ERROR))
+      return (int16_t)(next_cluster & 0xffffu);
+    if (nblk <= fatfs_blocks_per_cluster) {
+      nblk = 0;
+      if (!(next_cluster & FAT_EOC))
+	if ((r = fatfs_set_fat_entry(fh->card_id, cluster, buf, 0xffffffffu)) < 0)
+	  return r;
+    } else {
+      nblk -= fatfs_blocks_per_cluster;
+      if (new_alloc || (next_cluster & FAT_EOC)) {
+	if (((next_cluster = fatfs_allocate_cluster(fh->card_id, buf)) & FAT_ERROR)) {
+	  /* Terminate chain before returning */
+	  if ((r = fatfs_set_fat_entry(fh->card_id, cluster, buf, 0xffffffffu)) < 0)
+	    return r;
+	  return (int16_t)(next_cluster & 0xffffu);
+	}
+	new_alloc = true;
+	if ((r = fatfs_set_fat_entry(fh->card_id, cluster, buf, next_cluster)) < 0)
+	  return r;
+      }
+    }
+    cluster = next_cluster;
+  }
+  if (cluster && !new_alloc)
+    while (!(cluster & FAT_EOC)) {
+      uint32_t next_cluster = fatfs_get_fat_entry(fh->card_id, cluster, buf);
+      if ((r = fatfs_set_fat_entry(fh->card_id, cluster, buf, 0u)) < 0)
+	return r;
+      cluster = next_cluster;
+    }
+  if ((cluster & FAT_ERROR))
+    return (int16_t)(cluster & 0xffffu);
+  uint32_t sub = dirent_fh->filepos >> 9;
+  if (dirent_fh->current_cluster)
+    r = fatfs_cluster_block_read(dirent_fh->current_cluster, sub, buf,
+				 dirent_fh->card_id);
+  else
+    r = fatfs_block_read(dirent_fh->start_cluster + sub, buf,
+			 dirent_fh->card_id);
+  if (r < 0)
+    return r;
+  uint8_t *p = &buf[dirent_fh->filepos & 0x1ff];
+  fatfs_put32(p+28, newsize);
+  fatfs_put16(p+26, fh->start_cluster);
+  if (fatfs_fat32)
+    fatfs_put16(p+20, fh->start_cluster >> 16);
+
+  if (dirent_fh->current_cluster)
+    r = fatfs_cluster_block_write(dirent_fh->current_cluster, sub, buf,
+				  dirent_fh->card_id);
+  else
+    r = fatfs_block_write(dirent_fh->start_cluster + sub, buf,
+			  dirent_fh->card_id);
+  if (r >= 0)
+    fh->size = newsize;
+  return r;
 }
 
 #endif

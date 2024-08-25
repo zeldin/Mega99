@@ -11,7 +11,8 @@ static const char * const fatfs_errstr[] = {
   "File not found",
   "Read-only file system",
   "I/O error",
-  "Truncated file"
+  "Truncated file",
+  "No space left on device"
 };
 
 static const char * const yxml_errstr[] = {
