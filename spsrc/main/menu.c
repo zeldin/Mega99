@@ -54,6 +54,7 @@ static const char * const main_menu_entries[] = {
 
 static const char * fileselector_menu_entries[MAX_FILESELECTOR_ENTRIES];
 static char fileselector_menu_names[MAX_FILESELECTOR_FILES][MAX_FILESELECTOR_NAMELEN+1];
+static char textinput_buffer[256];
 
 static void main_menu_select(unsigned entry);
 static void fileselector_menu_select(unsigned entry);
@@ -61,6 +62,8 @@ static void fileselector_menu_refill(void);
 static void menu_open_fileselector(const char *title,
 				   void (*open_func)(fatfs_filehandle_t *fh,
 						     const char *filename));
+static void menu_text_input(const char *title,
+			    void (*input_func)(const char *data, unsigned len));
 
 static const struct menu_page main_menu = {
   main_menu_entries,
@@ -85,6 +88,8 @@ static fatfs_filehandle_t fileselector_dir, fileselector_file[MAX_FILESELECTOR_F
 static void (*fileselector_open_func)(fatfs_filehandle_t *fh, const char *filename);
 static unsigned fileselector_cnt;
 static unsigned menu_dsk_number;
+static void (*textinput_func)(const char *data, unsigned len) = NULL;
+static unsigned textinput_cnt, textinput_offs;
 
 static void menu_open_func_rpk(fatfs_filehandle_t *fh, const char *filename)
 {
@@ -215,6 +220,70 @@ static void menu_draw(struct overlay_window *ow, const char * const * items,
   ow->cursor_y = 0;
 }
 
+static void menu_textinput_draw(struct overlay_window *ow, const char * title)
+{
+  unsigned scmarker;
+  overlay_window_resize(ow, 40, 5);
+  ow->cursor_y = 1;
+  while (ow->cursor_y < 3) {
+    const char *p = (ow->cursor_y == 1? title : "-");
+    ow->cursor_x = 1;
+    if (*p == '&') {
+      ow->text_color = WINDOW_COLOR(11, 4);
+      ++p;
+      unsigned l = strlen(p);
+      if (l+2 < ow->current_w)
+	ow->cursor_x += (ow->current_w-2-l) >> 1;
+    } else
+      ow->text_color = WINDOW_COLOR(15, 4);
+    if (*p >= 0x10 && *p < 0x10+sizeof(menu_altcolor)/sizeof(menu_altcolor[0]))
+      ow->text_color = menu_altcolor[*p++ - 0x10];
+    ow->background_color = ow->text_color;
+    const char *pattern = NULL;
+    if (p[0] && !p[1])
+      switch(p[0]) {
+      case '=':
+	pattern = "\x90\x80\x93";
+	p++;
+	break;
+      case '-':
+	pattern = "\x8f\x10\x92";
+	/* FALLTHRU */
+      case ' ':
+	p ++;
+	break;
+      }
+    overlay_window_clear_line(ow, ow->cursor_y, pattern);
+    while (*p && ow->cursor_x+1 < ow->current_w) {
+      if (ow->cursor_x+2 == ow->current_w && p[1]) {
+	overlay_window_putchar(ow, 0xf);
+	break;
+      }
+      char c = *p++;
+      overlay_window_putchar(ow, (c == 0x1a? 0 : c));
+    }
+    ow->cursor_y++;
+  }
+  ow->cursor_x = 1;
+  ow->cursor_y = 3;
+  ow->text_color = ow->background_color = WINDOW_COLOR(15, 4);
+  overlay_window_clear_line(ow, 3, NULL);
+  overlay_window_toggle_cursor(ow);
+}
+
+static void menu_textinput_redraw(struct overlay_window *ow)
+{
+  unsigned n = textinput_offs;
+  ow->cursor_x = 1;
+  while (n < textinput_cnt && ow->cursor_x < ow->current_w-1)
+    overlay_window_putchar(ow, textinput_buffer[n++]);
+  while (ow->cursor_x < ow->current_w-1)
+    overlay_window_putchar(ow, ' ');
+  overlay_window_update_line_border(ow, ow->cursor_y,
+				    (textinput_offs? 0x0b : 0x81),
+				    (n < textinput_cnt? 0x0a : 0x81));
+}
+
 static void menu_move(struct overlay_window *ow, const char * const * items,
 		      int dir, struct menu_scroll_control *sc)
 {
@@ -341,6 +410,15 @@ static void menu_open_fileselector(const char *title,
   }
 }
 
+static void menu_text_input(const char *title,
+			    void (*input_func)(const char *data, unsigned len))
+{
+  textinput_func = input_func;
+  textinput_cnt = 0;
+  textinput_offs = 0;
+  menu_textinput_draw(&menu_window, title);
+}
+
 void menu_open(void)
 {
   if (current_menu)
@@ -354,7 +432,10 @@ void menu_close(void)
 {
   if (!current_menu)
     return;
-  if (current_menu->parent)
+  if (textinput_func) {
+    textinput_func = NULL;
+    menu_set(current_menu);
+  } else if (current_menu->parent)
     menu_set(current_menu->parent);
   else {
     current_menu = NULL;
@@ -363,10 +444,88 @@ void menu_close(void)
   }
 }
 
+static void menu_textinput_key(struct overlay_window *ow, char key)
+{
+  unsigned input_pos = textinput_offs + ow->cursor_x - 1;
+  if (key < 32)
+    switch(key) {
+    case '\x06':
+      if (input_pos < textinput_cnt) {
+	overlay_window_toggle_cursor(ow);
+	if (++ow->cursor_x >= ow->current_w-1) {
+	  textinput_offs += 8;
+	  menu_textinput_redraw(ow);
+	  ow->cursor_x = ow->current_w-9;
+	}
+	overlay_window_toggle_cursor(ow);
+      }
+      break;
+    case '\x07':
+      if (input_pos > 0) {
+	overlay_window_toggle_cursor(ow);
+	if (!--ow->cursor_x) {
+	  textinput_offs -= 8;
+	  menu_textinput_redraw(ow);
+	  ow->cursor_x = 8;
+	}
+	overlay_window_toggle_cursor(ow);
+      }
+      break;
+    case '\b':
+      if (input_pos > 0) {
+	overlay_window_toggle_cursor(ow);
+	unsigned p = --ow->cursor_x;
+	if (!p) {
+	  textinput_offs -= 8;
+	  p = 8;
+	}
+	if (input_pos < textinput_cnt)
+	  memmove(textinput_buffer+input_pos-1, textinput_buffer+input_pos,
+		  textinput_cnt - input_pos);
+	--textinput_cnt;
+	menu_textinput_redraw(ow);
+	ow->cursor_x = p;
+	overlay_window_toggle_cursor(ow);
+      }
+      break;
+    case '\n':
+      textinput_buffer[textinput_cnt] = 0;
+      textinput_func(textinput_buffer, textinput_cnt);
+      menu_close();
+    }
+  else if(key >= 127 && key < 160)
+    ;
+  else if (textinput_cnt < sizeof(textinput_buffer)-1) {
+    overlay_window_putchar(ow, key);
+    if (input_pos < textinput_cnt++) {
+      memmove(textinput_buffer+input_pos+1, textinput_buffer+input_pos,
+	      textinput_cnt-input_pos-1);
+      textinput_buffer[input_pos] = key;
+      unsigned p = ow->cursor_x;
+      if (p >= ow->current_w-1) {
+	textinput_offs += 8;
+	p = ow->current_w-9;
+      }
+      menu_textinput_redraw(ow);
+      ow->cursor_x = p;
+    } else {
+      textinput_buffer[input_pos] = key;
+      if (ow->cursor_x >= ow->current_w-1) {
+	textinput_offs += 8;
+	menu_textinput_redraw(ow);
+	ow->cursor_x = ow->current_w-9;
+      }
+    }
+    overlay_window_toggle_cursor(ow);
+  }
+}
+
 void menu_key(char key)
 {
   if (key == '\x1b')
     menu_close();
+  else if (textinput_func)
+    menu_textinput_key(&menu_window, key);
   else if (current_menu) {
     switch (key) {
     case '\x04':

@@ -24,7 +24,7 @@ struct overlay_window console_window = {
 struct overlay_window menu_window = {
   .window_id = 2,
   .min_w = 20,
-  .min_h = 8,
+  .min_h = 5,
   .max_w = 40,
   .max_h = 16,
   .background_color = WINDOW_COLOR(15, 4),
@@ -81,6 +81,29 @@ void overlay_window_clear_line(struct overlay_window *ow, uint16_t line,
   }
 }
 
+void overlay_window_update_line_border(struct overlay_window *ow, uint16_t line,
+				       char left, char right)
+{
+  unsigned w;
+  if (line >= ow->current_h || !(w = ow->current_w))
+    return;
+  uint16_t offs = ow->base + line*ow->lineoffs;
+  uint16_t ch;
+  if ((ch = left) == 0x20)
+    ch |= ow->background_color;
+  else
+    ch |= ow->border_color;
+  *(uint16_t*)&OVERLAY[offs] = ch;
+  if (w > 1) {
+    offs += 2*w-2;
+    if ((ch = right) == 0x20)
+      ch |= ow->background_color;
+    else
+      ch |= ow->border_color;
+    *(uint16_t*)&OVERLAY[offs] = ch;
+  }
+}
+
 void overlay_window_invert_line(struct overlay_window *ow, uint16_t line)
 {
   unsigned w;
@@ -93,6 +116,15 @@ void overlay_window_invert_line(struct overlay_window *ow, uint16_t line)
     OVERLAY[offs] = (color >> 4) | (color << 4);
     offs += 2;
   }
+}
+
+void overlay_window_toggle_cursor(struct overlay_window *ow)
+{
+  if (ow->cursor_x >= ow->current_w || ow->cursor_y >= ow->current_h)
+    return;
+  uint16_t offs = ow->base + ow->cursor_y*ow->lineoffs + ow->cursor_x*2;
+  uint8_t color = OVERLAY[offs];
+  OVERLAY[offs] = (color >> 4) | (color << 4);
 }
 
 void overlay_window_clear(struct overlay_window *ow)

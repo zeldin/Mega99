@@ -24,7 +24,10 @@ extern bool overlay_window_is_shown(struct overlay_window *ow);
 extern void overlay_window_set_shown(struct overlay_window *ow, bool shown);
 extern void overlay_window_clear_line(struct overlay_window *ow, uint16_t line,
 				      const char *pattern);
+extern void overlay_window_update_line_border(struct overlay_window *ow,
+					      uint16_t line, char left, char right);
 extern void overlay_window_invert_line(struct overlay_window *ow, uint16_t line);
+extern void overlay_window_toggle_cursor(struct overlay_window *ow);
 extern void overlay_window_clear(struct overlay_window *ow);
 extern void overlay_window_scroll(struct overlay_window *ow);
 extern void overlay_window_resize(struct overlay_window *ow,
