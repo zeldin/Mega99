@@ -42,10 +42,14 @@ static const char * const main_menu_entries[] = {
   "&Main menu",
   "=",
   "Load RPK",
+  "-",
   "Mount DSK1 disk image",
   "Mount DSK2 disk image",
   "Mount DSK3 disk image",
+  "-",
   "Open CS1 input file",
+  "Save CS1 recording",
+  "Save CS2 recording",
   "-",
   "Reset and exit",
   "Exit",
@@ -106,6 +110,16 @@ static void menu_open_func_tape(fatfs_filehandle_t *fh, const char *filename)
   tape_start(fh);
 }
 
+static void menu_text_input_func_save_cs1(const char *data, unsigned len)
+{
+  tape_save(0, data);
+}
+
+static void menu_text_input_func_save_cs2(const char *data, unsigned len)
+{
+  tape_save(1, data);
+}
+
 static void main_menu_select(unsigned entry)
 {
   extern void tape_check(void);
@@ -113,20 +127,26 @@ static void main_menu_select(unsigned entry)
   case 3:
     menu_open_fileselector("&Select RPK file to load", menu_open_func_rpk);
     break;
-  case 4:
   case 5:
   case 6:
+  case 7:
     menu_dsk_number = entry-4;
     menu_open_fileselector("&Select DSK file to open", menu_open_func_disk);
     break;
-  case 7:
+  case 9:
     menu_open_fileselector("&Select WAV or TAP file to open", menu_open_func_tape);
     break;
-  case 9:
+  case 10:
+    menu_text_input("&Enter filename for saving CS1 buffer", menu_text_input_func_save_cs1);
+    break;
+  case 11:
+    menu_text_input("&Enter filename for saving CS2 buffer", menu_text_input_func_save_cs2);
+    break;
+  case 13:
     reset_set_other(true);
     reset_set_other(false);
     /* FALLTHRU */
-  case 10:
+  case 14:
     menu_close();
     break;
   }
