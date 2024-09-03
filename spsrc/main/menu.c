@@ -51,6 +51,9 @@ static const char * const main_menu_entries[] = {
   "Save CS1 recording",
   "Save CS2 recording",
   "-",
+  "Load Mini Memory RAM",
+  "Save Mini Memory RAM",
+  "-",
   "Reset and exit",
   "Exit",
   NULL
@@ -120,6 +123,16 @@ static void menu_text_input_func_save_cs2(const char *data, unsigned len)
   tape_save(1, data);
 }
 
+static void menu_open_func_mm(fatfs_filehandle_t *fh, const char *filename)
+{
+  mm_load(filename, fh);
+}
+
+static void menu_text_input_func_save_mm(const char *data, unsigned len)
+{
+  mm_save(data);
+}
+
 static void main_menu_select(unsigned entry)
 {
   extern void tape_check(void);
@@ -143,10 +156,18 @@ static void main_menu_select(unsigned entry)
     menu_text_input("&Enter filename for saving CS2 buffer", menu_text_input_func_save_cs2);
     break;
   case 13:
+    menu_open_fileselector("&Select Mini Memory RAM image to open",
+			   menu_open_func_mm);
+    break;
+  case 14:
+    menu_text_input("&Enter filename for saving MM RAM",
+		    menu_text_input_func_save_mm);
+    break;
+  case 16:
     reset_set_other(true);
     reset_set_other(false);
     /* FALLTHRU */
-  case 14:
+  case 17:
     menu_close();
     break;
   }

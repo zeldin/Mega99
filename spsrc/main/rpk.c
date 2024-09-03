@@ -219,3 +219,35 @@ int load_rpk(const char *filename)
 {
   return load_rpk_fh(filename, NULL);
 }
+
+void mm_load(const char *filename, fatfs_filehandle_t *fh)
+{
+  int r;
+  if (!(*CARTROM_CTRL & 2u)) {
+    fprintf(stderr, "Mini Memory not inserted!\n");
+    return;
+  }
+  r = fatfs_read(fh, CARTROM+0x1000, 0x1000);
+  if (r < 0) {
+    fprintf(stderr, "%s\n", fatfs_strerror(-r));
+  } else
+    printf("Loaded %d bytes from %s\n", r, filename);
+}
+
+void mm_save(const char *filename)
+{
+  fatfs_filehandle_t fh, dirent_fh;
+  int r;
+  if (!(*CARTROM_CTRL & 2u)) {
+    fprintf(stderr, "Mini Memory not inserted!\n");
+    return;
+  }
+  if ((r = fatfs_open_or_create(filename, &fh, &dirent_fh)) < 0 ||
+      (r = fatfs_setsize(&fh, &dirent_fh, 0x1000)) < 0 ||
+      (r = fatfs_setpos(&fh, 0)) < 0 ||
+      (r = fatfs_write(&fh, CARTROM+0x1000, 0x1000)) < 0) {
+    fprintf(stderr, "%s\n", fatfs_strerror(-r));
+    return;
+  }
+  printf("Wrote %d bytes to %s\n", r, filename);
+}
