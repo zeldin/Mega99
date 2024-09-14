@@ -7,7 +7,8 @@ module tms9918_vdp(input             reset,
 		   output reg	     sync_v,
 		   output reg	     cburst,
 		   output reg [0:3]  color,
-		   output            extvideo,
+		   output reg	     color_en,
+		   output	     extvideo,
 
 		   // VDP RAM read port
 		   // -----------------
@@ -424,7 +425,8 @@ module tms9918_vdp(input             reset,
 	 pattern_color <= 8'h00;
 	 textpos <= 10'h000;
 	 new_sprite = 1'b0;
-	 
+	 color_en <= 1'b0;
+
       end else if(clk_en) begin
 
 	 sync_h <= (hpos >= HSYNC_START && hpos < LBLANKING1_START);
@@ -434,12 +436,15 @@ module tms9918_vdp(input             reset,
 	    // vertical blanking
 	    cburst <= 1'b0;
 	    color <= 4'h0;
+	    color_en <= 1'b0;
 	 end else begin
 	    cburst <= (hpos >= COLORBURST_START && hpos < LBLANKING2_START);
-	    if (hpos >= RBLANKING_START && hpos < LBORDER_START)
-	      // horizontal blanking
-	      color <= 4'h0;
-	    else if (vpos >= VACTIVE_START && vpos < BBORDER_START &&
+	    color_en <= 1'b1;
+	    if (hpos >= RBLANKING_START && hpos < LBORDER_START) begin
+	       // horizontal blanking
+	       color <= 4'h0;
+	       color_en <= 1'b0;
+	    end else if (vpos >= VACTIVE_START && vpos < BBORDER_START &&
 		     hpos >= HACTIVE_START && hpos < RBORDER_START &&
 		     blank == 1'b1)
 	      // main display

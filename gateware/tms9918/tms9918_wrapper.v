@@ -8,6 +8,7 @@ module tms9918_wrapper(input reset,
 		       output	    sync_v,
 		       output	    cburst,
 		       output [0:3] color,
+		       output       color_en,
 		       output	    extvideo,
 
 		       // CPU interface
@@ -64,7 +65,7 @@ module tms9918_wrapper(input reset,
 
    tms9918_vdp vdp(.reset(reset), .clk(clk), .clk_en(clk_en),
 		   .sync_h(sync_h), .sync_v(sync_v), .cburst(cburst),
-		   .color(color), .extvideo(extvideo),
+		   .color(color), .color_en(color_en), .extvideo(extvideo),
 		   .vdp_raddr(vaddr), .vdp_rdata(vdata), .vdp_read(vread),
 		   .reg_addr((cpuifc_regw_master? raddr : wb_adr_i[12:14])),
 		   .reg_wdata((cpuifc_regw_master? rwdata : wb_dat_i)),

@@ -24,6 +24,7 @@ module mainboard #(
 		 output			   vdp_vsync,
 		 output			   vdp_cburst,
 		 output [0:3]		   vdp_color,
+		 output			   vdp_color_en,
 		 output			   vdp_extvideo,
 
 		 input [0:(audio_bits-1)]  audio_in,
@@ -287,7 +288,7 @@ module mainboard #(
      vdp(.reset(reset|reset_9918), .clk(clk), .clk_en(vdp_clk_en),
          .clk_en_next(vdp_clk_en_next),
 	 .sync_h(vdp_hsync), .sync_v(vdp_vsync), .cburst(vdp_cburst),
-	 .color(vdp_color), .extvideo(vdp_extvideo),
+	 .color(vdp_color), .color_en(vdp_color_en), .extvideo(vdp_extvideo),
 	 .cd(q[0:7]), .cq(cd_vdp), .csr(vdp_csr), .csw(vdp_csw),
          .mode(a[14]), .int_pending(vdp_irq),
          .wb_adr_i(wb_adr_i[23 -: 15]), .wb_dat_i(wb_dat_i),

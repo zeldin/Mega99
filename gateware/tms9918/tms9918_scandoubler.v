@@ -5,26 +5,29 @@ module tms9918_scandoubler(input        clk,
 			   input	sync_h_in,
 			   input	cburst_in,
 			   input [0:3]	color_in,
+			   input	color_en_in,
 
 			   output	sync_h_out,
 			   output	cburst_out,
-			   output [0:3]	color_out);
+			   output [0:3]	color_out,
+			   output	color_en_out);
 
-   reg [0:5] buffer [0:1023];
+   reg [0:6] buffer [0:1023];
    reg [0:8] in_pos;
    reg [0:8] out_pos;
    reg [0:8] line_width;
    reg	     flip;
    
-   wire [0:5] stashed_pixel;
-   reg  [0:5] recalled_pixel;
+   wire [0:6] stashed_pixel;
+   reg  [0:6] recalled_pixel;
    reg	      last_sync_h;
 
-   assign stashed_pixel = { color_in, sync_h_in, cburst_in };
+   assign stashed_pixel = { color_in, sync_h_in, cburst_in, color_en_in };
    
    assign color_out = recalled_pixel[0:3];
    assign sync_h_out = recalled_pixel[4];
    assign cburst_out = recalled_pixel[5];
+   assign color_en_out = recalled_pixel[6];
 
    always @(posedge clk) begin
 

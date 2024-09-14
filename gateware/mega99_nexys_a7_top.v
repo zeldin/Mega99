@@ -77,6 +77,7 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
    wire	       vdp_vsync;
    wire	       vdp_cburst;
    wire [0:3]  vdp_color;
+   wire	       vdp_color_en;
 
    wire	       vga_hsync;
    wire [0:3]  vga_color;
@@ -210,7 +211,8 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
       .vdp_clk_en(vdp_clk_en), .vga_clk_en(vga_clk_en),
       .overlay_clk_en(overlay_clk_en), .clk_3mhz_en(clk_3mhz_en),
       .vdp_hsync(vdp_hsync), .vdp_vsync(vdp_vsync),
-      .vdp_cburst(vdp_cburst), .vdp_color(vdp_color), .vdp_extvideo(),
+      .vdp_cburst(vdp_cburst), .vdp_color(vdp_color),
+      .vdp_color_en(vdp_color_en), .vdp_extvideo(),
       .audio_in(audio_in), .audio_out(audio_out),
       .key_state(key_state), .alpha_state(alpha_state),
       .joy1({~JAhi[8], ~JAlo[3], ~JAlo[4], ~JAlo[2], ~JAlo[1]}),
@@ -229,9 +231,11 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
 		 .sync_h_in(vdp_hsync),
 		 .cburst_in(vdp_cburst),
 		 .color_in(vdp_color),
+		 .color_en_in(vdp_color_en),
 		 .sync_h_out(vga_hsync),
 		 .cburst_out(),
-		 .color_out(vga_color));
+		 .color_out(vga_color),
+		 .color_en_out());
 
    tms9918_color_to_rgb #(.red_bits(4), .green_bits(4), .blue_bits(4))
      vga_color_to_rgb(.color(overlay_color == 4'd0 ? vga_color : overlay_color),
