@@ -1,6 +1,10 @@
 struct mmio_regs_misc {
   uint32_t leds;
   uint32_t reset;
+  uint32_t led1_rgb;
+  uint32_t led2_rgb;
+  uint32_t led3_rgb;
+  uint32_t led4_rgb;
 };
 
 #define REGS_MISC (*(volatile struct mmio_regs_misc *)(void *)0xff000000)

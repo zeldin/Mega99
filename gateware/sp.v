@@ -25,6 +25,10 @@ module sp(input         clk,
 	  output	led_green,
 	  output	led_red,
 	  output [0:4]	sw_reset,
+	  output [0:23]	led1_rgb,
+	  output [0:23]	led2_rgb,
+	  output [0:23]	led3_rgb,
+	  output [0:23]	led4_rgb,
 	  input		overlay_clk_en,
 	  input		overlay_vsync,
 	  input		overlay_hsync,
@@ -50,6 +54,8 @@ module sp(input         clk,
 
 	  output	uart_txd,
 	  input		uart_rxd);
+
+   parameter keyboard_model = 0;
 
    wire [0:31] or1k_i_adr;
    wire	       or1k_i_stb;
@@ -187,26 +193,29 @@ module sp(input         clk,
 	    .xmem_dat_o(xmem_dat_o), .xmem_ack_i(xmem_ack_i),
 	    .xmem_dat_i(xmem_dat_i));
 
-   spmmio spregs(.clk(clk), .reset(reset),
-		 .adr_i(or1k_d_adr[8:31]),
-		 .stb_i(or1k_d_stb && or1k_d_adr[0:7] == 8'hff),
-		 .cyc_i(or1k_d_cyc), .sel_i(or1k_d_sel),
-		 .we_i(or1k_d_we), .dat_i(or1k_d_dato),
-		 .ack_o(mmio_ack), .dat_o(mmio_data),
-		 .led_red(led_red), .led_green(led_green),
-		 .sw_reset(sw_reset),
-		 .overlay_clk_en(overlay_clk_en),
-		 .overlay_vsync(overlay_vsync), .overlay_hsync(overlay_hsync),
-		 .overlay_color(overlay_color),
-		 .keypress(keypress), .keycode(keycode),
-		 .shift_state(shift_state),
-		 .keyboard_block(keyboard_block),
-		 .clk_3mhz_en(clk_3mhz_en),
-		 .tape_audio(tape_audio), .cs1_cntrl(cs1_cntrl),
-		 .cs2_cntrl(cs2_cntrl), .mag_out(mag_out),
-		 .sdcard_cs(sdcard_cs), .sdcard_cd(sdcard_cd),
-		 .sdcard_wp(sdcard_wp),.sdcard_sck(sdcard_sck),
-		 .sdcard_miso(sdcard_miso), .sdcard_mosi(sdcard_mosi),
-		 .uart_txd(uart_txd), .uart_rxd(uart_rxd));
+   spmmio #(.keyboard_model(keyboard_model))
+   spregs(.clk(clk), .reset(reset),
+	  .adr_i(or1k_d_adr[8:31]),
+	  .stb_i(or1k_d_stb && or1k_d_adr[0:7] == 8'hff),
+	  .cyc_i(or1k_d_cyc), .sel_i(or1k_d_sel),
+	  .we_i(or1k_d_we), .dat_i(or1k_d_dato),
+	  .ack_o(mmio_ack), .dat_o(mmio_data),
+	  .led_red(led_red), .led_green(led_green),
+	  .sw_reset(sw_reset),
+	  .led1_rgb(led1_rgb), .led2_rgb(led2_rgb),
+	  .led3_rgb(led3_rgb), .led4_rgb(led4_rgb),
+	  .overlay_clk_en(overlay_clk_en),
+	  .overlay_vsync(overlay_vsync), .overlay_hsync(overlay_hsync),
+	  .overlay_color(overlay_color),
+	  .keypress(keypress), .keycode(keycode),
+	  .shift_state(shift_state),
+	  .keyboard_block(keyboard_block),
+	  .clk_3mhz_en(clk_3mhz_en),
+	  .tape_audio(tape_audio), .cs1_cntrl(cs1_cntrl),
+	  .cs2_cntrl(cs2_cntrl), .mag_out(mag_out),
+	  .sdcard_cs(sdcard_cs), .sdcard_cd(sdcard_cd),
+	  .sdcard_wp(sdcard_wp),.sdcard_sck(sdcard_sck),
+	  .sdcard_miso(sdcard_miso), .sdcard_mosi(sdcard_mosi),
+	  .uart_txd(uart_txd), .uart_rxd(uart_rxd));
 
 endmodule // sp

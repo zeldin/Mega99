@@ -13,6 +13,10 @@ module spmmio(input             clk,
 	      output		led_red,
 	      output		led_green,
 	      output [0:4]	sw_reset,
+	      output [0:23]	led1_rgb,
+	      output [0:23]	led2_rgb,
+	      output [0:23]	led3_rgb,
+	      output [0:23]	led4_rgb,
 	      input		overlay_clk_en,
 	      input		overlay_vsync,
 	      input		overlay_hsync,
@@ -38,6 +42,8 @@ module spmmio(input             clk,
 
 	      output		uart_txd,
 	      input		uart_rxd);
+
+   parameter keyboard_model = 0;
 
    reg	       stb_misc;
    reg	       stb_sdcard;
@@ -98,7 +104,9 @@ module spmmio(input             clk,
 		    .sel(sel_i), .we(we_i), .d(dat_i), .q(dat_misc),
 
 		    .led_red(led_red), .led_green(led_green),
-		    .sw_reset(sw_reset));
+		    .sw_reset(sw_reset),
+		    .led1_rgb(led1_rgb), .led2_rgb(led2_rgb),
+		    .led3_rgb(led3_rgb), .led4_rgb(led4_rgb));
 
    spmmio_sdcard sdcard(.clk(clk), .reset(reset),
 			.adr(adr_i[21 -: 4]), .cs(cyc_i && stb_sdcard),
@@ -123,13 +131,14 @@ module spmmio(input             clk,
 			  .vsync(overlay_vsync), .hsync(overlay_hsync),
 			  .color(overlay_color));
 
-   spmmio_keyboard keyboard(.clk(clk), .reset(reset),
-			    .adr(adr_i[21 -: 3]), .cs(cyc_i && stb_kbd),
-			    .sel(sel_i), .we(we_i), .d(dat_i), .q(dat_kbd),
+   spmmio_keyboard #(.keyboard_model(keyboard_model))
+   keyboard(.clk(clk), .reset(reset),
+	    .adr(adr_i[21 -: 3]), .cs(cyc_i && stb_kbd),
+	    .sel(sel_i), .we(we_i), .d(dat_i), .q(dat_kbd),
 
-			    .keypress(keypress), .keycode(keycode),
-			    .shift_state(shift_state),
-			    .keyboard_block(keyboard_block));
+	    .keypress(keypress), .keycode(keycode),
+	    .shift_state(shift_state),
+	    .keyboard_block(keyboard_block));
 
    spmmio_tape tape(.clk(clk), .reset(reset), .clk_3mhz_en(clk_3mhz_en),
 		    .adr(adr_i[21 -: 14]), .cs(cyc_i && stb_tape),

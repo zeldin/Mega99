@@ -14,6 +14,7 @@ module spmmio_keyboard(input             clk,
 		       output reg	 keyboard_block);
 
    parameter fifo_depth = 8;
+   parameter keyboard_model = 0;
 
    wire [0:(fifo_depth-1)] entry_inuse;
    wire [0:10]		   input_data;
@@ -77,6 +78,7 @@ module spmmio_keyboard(input             clk,
       case (adr)
 	3'h0: begin
 	   q[0] <= fifo_valid;
+	   q[1:3] <= keyboard_model;
 	   q[4:7] <= fifo_shift_state;
 	   q[9:15] <= fifo_keycode;
 	end

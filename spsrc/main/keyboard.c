@@ -9,9 +9,10 @@
 #define SHIFT_STATE_ALPHA 0x200u
 #define SHIFT_STATE_SHIFT 0x100u
 
-#define KEYCODE_MASK 0x7fu
+#define KEYCODE_MASK      0x7fu
+#define KEYBOARD_MODEL(x) (((x)>>12)&7u)
 
-static const char keymap[0x80] = {
+static const char keymap_ps2[0x80] = {
 
   [0x16] = '1',
   [0x1E] = '2',
@@ -72,6 +73,68 @@ static const char keymap[0x80] = {
 
 };
 
+static const char keymap_mk1[0x80] = {
+
+  [0x38] = '1',
+  [0x3B] = '2',
+  [0x08] = '3',
+  [0x0B] = '4',
+  [0x10] = '5',
+  [0x13] = '6',
+  [0x18] = '7',
+  [0x1B] = '8',
+  [0x20] = '9',
+  [0x23] = '0',
+  [0x28] = '=',
+
+  [0x3E] = 'Q',
+  [0x09] = 'W',
+  [0x0E] = 'E',
+  [0x11] = 'R',
+  [0x16] = 'T',
+  [0x19] = 'Y',
+  [0x1E] = 'U',
+  [0x21] = 'I',
+  [0x26] = 'O',
+  [0x29] = 'P',
+  [0x2E] = '/',
+
+  [0x0A] = 'A',
+  [0x0D] = 'S',
+  [0x12] = 'D',
+  [0x15] = 'F',
+  [0x1A] = 'G',
+  [0x1D] = 'H',
+  [0x22] = 'J',
+  [0x25] = 'K',
+  [0x2A] = 'L',
+  [0x2D] = ';',
+  [0x4D] = '\n',
+
+  [0x0C] = 'Z',
+  [0x17] = 'X',
+  [0x14] = 'C',
+  [0x1F] = 'V',
+  [0x1C] = 'B',
+  [0x27] = 'N',
+  [0x24] = 'M',
+  [0x2F] = ',',
+  [0x2C] = '.',
+
+  [0x3C] = ' ',
+
+  [0x49] = '\x04', // Arrow up
+  [0x07] = '\x05', // Arrow down
+  [0x02] = '\x06', // Arrow right
+  [0x4A] = '\x07', // Arrow left
+  [0x4C] = '\b',   // Backspace
+  [0x3F] = '\x1b', // RUN/STOP
+  [0x47] = '\x1b', // Escape
+  [0x39] = '\x1e', // Enter menu
+  [0x43] = '\x1f', // Hide/reveal console
+
+};
+
 void keyboard_block(void)
 {
   REGS_KEYBOARD.block = 1;
@@ -90,6 +153,13 @@ void keyboard_task(void)
 
   if ((keycode & SHIFT_STATE_CTRL))
     return; // No handling of control characters, currently
+
+  const char *keymap;
+  switch (KEYBOARD_MODEL(keycode)) {
+  case 0: keymap = keymap_ps2; break;
+  case 1: keymap = keymap_mk1; break;
+  default: return;
+  }
 
   char key = keymap[keycode & KEYCODE_MASK];
   if (!key)
