@@ -155,7 +155,7 @@ SP_AR = or1k-elf-ar rc
 SP_CC = or1k-elf-gcc
 SP_CFLAGS = -std=c23 -ffunction-sections -fdata-sections \
 	-mcmov -msext -msfimm -mshftimm -mror -mrori -funsigned-char \
-	-I spsrc/common -DTICKS_PER_SEC=107386350u
+	-I spsrc/common -DTICKS_PER_SEC=108000000u
 
 SP_BOOT_CFLAGS = $(SP_CFLAGS) -Os -fno-move-loop-invariants \
 	-ffreestanding -finline-stringops -DBOOTCODE

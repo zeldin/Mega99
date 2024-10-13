@@ -3,7 +3,7 @@ set_property -dict {PACKAGE_PIN V13 IOSTANDARD LVCMOS33} [get_ports CLK100MHZ]
 
 create_clock -period 10.000 -name sys_clk_pin -waveform {0.000 5.000} -add [get_ports CLK100MHZ]
 
-create_generated_clock -name clk_sys [get_pins clkgen/mmcm_adv0/CLKOUT1]
+create_generated_clock -name clk_sys [get_pins clkgen/mmcm_adv0/CLKOUT2]
 create_generated_clock -name clk_pcm [get_pins clkgen/mmcm_adv1/CLKOUT0]
 
 # General purpose LEDs on mother board

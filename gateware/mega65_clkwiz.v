@@ -1,11 +1,10 @@
-module mega65_clkwiz(output clk_sys,        /* 107.38635 MHz */
+module mega65_clkwiz(output clk_sys,        /* 108 MHz */
 		     output clk_sys_phi90,  /* as above but 90° phase delay */
-		     output clk_hdmi,       /* 26.84659 MHz */
-		     output clk_hdmi_x5,    /* 134.23295 MHz */
+		     output clk_hdmi,       /* 27 MHz */
+		     output clk_hdmi_x5,    /* 135 MHz */
 		     output clk_pcm,        /* 12.288 MHz */
 		     output locked,
 		     output locked_pcm,
-		     output locked_hdmi,
 		     input  clk_in1);
 
    wire b_clk_in1;
@@ -13,41 +12,37 @@ module mega65_clkwiz(output clk_sys,        /* 107.38635 MHz */
    wire	u_clk_sys;
    wire	u_clk_sys_phi90;
    wire	u_clk_hdmi;
-   wire	s_clk_hdmi;
-   wire	u_clk_hdmi_x1;
    wire	u_clk_hdmi_x5;
-   wire	u_clk_hdmi_x10;
    wire	u_clk_pcm;
    wire	clk_fb_pcm;
-   wire	clk_fb_hdmi;
 
    IBUF ibuf_clk_in1(.I(clk_in1), .O(b_clk_in1));
 
 
-   /* 100 MHz -> 107.38635 MHz */
+   /* 100 MHz -> 108 MHz, 27 MHz, 135 MHz */
 
    MMCME2_ADV
      #(.BANDWIDTH            ("OPTIMIZED"),
        .CLKOUT4_CASCADE      ("FALSE"),
        .COMPENSATION         ("ZHOLD"),
        .STARTUP_WAIT         ("FALSE"),
-       .DIVCLK_DIVIDE        (2),
-       .CLKFBOUT_MULT_F      (23.625),
+       .DIVCLK_DIVIDE        (5),
+       .CLKFBOUT_MULT_F      (54.000),
        .CLKFBOUT_PHASE       (0.000),
        .CLKFBOUT_USE_FINE_PS ("FALSE"),
-       .CLKOUT0_DIVIDE_F     (5.500),
+       .CLKOUT0_DIVIDE_F     (8.000),
        .CLKOUT0_PHASE        (0.000),
        .CLKOUT0_DUTY_CYCLE   (0.500),
        .CLKOUT0_USE_FINE_PS  ("FALSE"),
-       .CLKOUT1_DIVIDE       (11),
+       .CLKOUT1_DIVIDE       (40),
        .CLKOUT1_PHASE        (0.000),
        .CLKOUT1_DUTY_CYCLE   (0.500),
        .CLKOUT1_USE_FINE_PS  ("FALSE"),
-       .CLKOUT2_DIVIDE       (44),
+       .CLKOUT2_DIVIDE       (10),
        .CLKOUT2_PHASE        (0.000),
        .CLKOUT2_DUTY_CYCLE   (0.500),
        .CLKOUT2_USE_FINE_PS  ("FALSE"),
-       .CLKOUT3_DIVIDE       (11),
+       .CLKOUT3_DIVIDE       (10),
        .CLKOUT3_PHASE        (135.000), /* 135 gives more slack than 90 */
        .CLKOUT3_DUTY_CYCLE   (0.500),
        .CLKOUT3_USE_FINE_PS  ("FALSE"),
@@ -55,11 +50,11 @@ module mega65_clkwiz(output clk_sys,        /* 107.38635 MHz */
    mmcm_adv0
      (.CLKFBOUT            (clk_fb),
       .CLKFBOUTB           (),
-      .CLKOUT0             (u_clk_hdmi_x10),
+      .CLKOUT0             (u_clk_hdmi_x5),
       .CLKOUT0B            (),
-      .CLKOUT1             (u_clk_sys),
+      .CLKOUT1             (u_clk_hdmi),
       .CLKOUT1B            (),
-      .CLKOUT2             (u_clk_hdmi),
+      .CLKOUT2             (u_clk_sys),
       .CLKOUT2B            (),
       .CLKOUT3             (u_clk_sys_phi90),
       .CLKOUT3B            (),
@@ -141,51 +136,9 @@ module mega65_clkwiz(output clk_sys,        /* 107.38635 MHz */
     .RST                 (1'b0));
 
 
-   /* 27 MHz -> 135 MHz */
-
-  PLLE2_ADV
-  #(.BANDWIDTH            ("OPTIMIZED"),
-    .COMPENSATION         ("ZHOLD"),
-    .STARTUP_WAIT         ("FALSE"),
-    .DIVCLK_DIVIDE        (1),
-    .CLKFBOUT_MULT        (30),
-    .CLKFBOUT_PHASE       (0.000),
-    .CLKOUT0_DIVIDE       (30),
-    .CLKOUT0_PHASE        (0.000),
-    .CLKOUT0_DUTY_CYCLE   (0.500),
-    .CLKOUT1_DIVIDE       (6),
-    .CLKOUT1_PHASE        (0.000),
-    .CLKOUT1_DUTY_CYCLE   (0.500),
-    .CLKIN1_PERIOD        (37.249))
-  plle2_adv_inst
-   (
-    .CLKFBOUT            (clk_fb_hdmi),
-    .CLKOUT0             (u_clk_hdmi_x1),
-    .CLKOUT1             (u_clk_hdmi_x5),
-    .CLKOUT2             (),
-    .CLKOUT3             (),
-    .CLKOUT4             (),
-    .CLKOUT5             (),
-    .CLKFBIN             (clk_fb_hdmi),
-    .CLKIN1              (s_clk_hdmi),
-    .CLKIN2              (1'b0),
-    .CLKINSEL            (1'b1),
-    .DADDR               (7'h0),
-    .DCLK                (1'b0),
-    .DEN                 (1'b0),
-    .DI                  (16'h0),
-    .DO                  (),
-    .DRDY                (),
-    .DWE                 (1'b0),
-    .LOCKED              (locked_hdmi),
-    .PWRDWN              (1'b0),
-    .RST                 (1'b0));
-
-
    BUFG bufg_clk_sys(.I(u_clk_sys), .O(clk_sys));
    BUFG bufg_clk_sys_phi90(.I(u_clk_sys_phi90), .O(clk_sys_phi90));
-   BUFG bufg_clk_hdmi(.I(u_clk_hdmi), .O(s_clk_hdmi));
-   BUFG bufg_clk_hdmi_x1(.I(u_clk_hdmi_x1), .O(clk_hdmi));
+   BUFG bufg_clk_hdmi_x1(.I(u_clk_hdmi), .O(clk_hdmi));
    BUFG bufg_clk_hdmi_x5(.I(u_clk_hdmi_x5), .O(clk_hdmi_x5));
    BUFG bufg_clk_pcm(.I(u_clk_pcm), .O(clk_pcm));
 
