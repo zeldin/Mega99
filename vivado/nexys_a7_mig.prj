@@ -41,10 +41,10 @@
 
   <Controller number="0">
     <MemoryDevice>DDR2_SDRAM/Components/MT47H64M16HR-25E</MemoryDevice>
-    <TimePeriod>3725</TimePeriod>
+    <TimePeriod>3704</TimePeriod>
     <VccAuxIO>1.8V</VccAuxIO>
     <PHYRatio>2:1</PHYRatio>
-    <InputClkFreq>214.765</InputClkFreq>
+    <InputClkFreq>215.982</InputClkFreq>
     <UIExtraClocks>0</UIExtraClocks>
     <MMCM_VCO>1200</MMCM_VCO>
     <MMCMClkOut0> 1.000</MMCMClkOut0>

@@ -202,7 +202,8 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
 			.sdcard_miso(SD_DAT[0]), .sdcard_mosi(SD_CMD),
 			.uart_txd(UART_TXD), .uart_rxd(UART_RXD));
 
-   mainboard #(.clk_multiplier(10), .generate_overlay_clk_en(1),
+   mainboard #(.vdp_clk_multiplier(10),  .cpu_clk_multiplier(36),
+	       .vsp_clk_multiplier(675), .generate_overlay_clk_en(1),
 	       .audio_bits(16))
    mb(.clk(clk), .ext_reset(~clk_locked), .sys_reset(reset),
       .reset_9900(reset_9900), .reset_9901(reset_9901),
