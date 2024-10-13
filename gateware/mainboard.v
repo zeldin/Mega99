@@ -1,6 +1,10 @@
 module mainboard #(
 		   // clk rate is this number times 10.738635 MHz
-		   parameter integer clk_multiplier = 1,
+		   parameter integer vdp_clk_multiplier = 1,
+		   // clk rate is this number times 3 MHz
+		   parameter integer cpu_clk_multiplier = 1,
+		   // clk rate is this number times 160 kHz
+		   parameter integer vsp_clk_multiplier = 1,
 		   // set to 1 to geneate overlay_clk_en
 		   parameter integer generate_overlay_clk_en = 0,
 		   // should be > 8 for full dynamic range
@@ -61,6 +65,7 @@ module mainboard #(
    wire	       reset;
    wire	       vdp_clk_en_next;
    wire	       cpu_clk_en;
+   wire	       sgc_clk_en;
    wire	       grom_clk_en;
    wire	       vsp_clk_en;
 
@@ -243,13 +248,15 @@ module mainboard #(
 	endcase // case (wb_adr_i[1 +: 3])
    end
 
-   clkgen #(.clk_multiplier(clk_multiplier),
+   clkgen #(.vdp_clk_multiplier(vdp_clk_multiplier),
+	    .cpu_clk_multiplier(cpu_clk_multiplier),
+	    .vsp_clk_multiplier(vsp_clk_multiplier),
 	    .generate_overlay_clk_en(generate_overlay_clk_en))
    cg(.ext_reset_in(ext_reset), .clk(clk), .cpu_turbo(cpu_turbo),
       .reset_out(reset),
       .vdp_clk_en(vdp_clk_en), .vdp_clk_en_next(vdp_clk_en_next),
       .vga_clk_en(vga_clk_en), .overlay_clk_en(overlay_clk_en),
-      .cpu_clk_en(cpu_clk_en), .clk_3mhz_en(clk_3mhz_en),
+      .sgc_clk_en(sgc_clk_en), .cpu_clk_en(cpu_clk_en), .clk_3mhz_en(clk_3mhz_en),
       .grom_clk_en(grom_clk_en), .vsp_clk_en(vsp_clk_en));
 
    address_decoder addr_dec(.memen(memen), .we(we), .dbin(dbin), .a(a),
@@ -299,7 +306,7 @@ module mainboard #(
 	 .debug_vdp_addr(debug_vdp_addr));
    
    tms9919_sgc #(.audio_bits(audio_bits))
-     sgc(.reset(reset|reset_9919), .clk(clk), .clk_en(clk_3mhz_en),
+     sgc(.reset(reset|reset_9919), .clk(clk), .clk_en(sgc_clk_en),
 	 .d(q[0:7]), .cs(sound_sel), .we(we), .ready(ready_sgc),
 	 .audioin(audio_mix_sat), .audioout(audio_out));
 

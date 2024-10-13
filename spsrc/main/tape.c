@@ -148,7 +148,7 @@ static int tape_check_format(void)
 	fprintf(stderr, "Invalid sample format\n");
 	return 0;
       }
-      REGS_TAPE.sample_rate = (3579545u + (nSamplesPerSec >> 1)) / nSamplesPerSec - 1u;
+      REGS_TAPE.sample_rate = (3000000u + (nSamplesPerSec >> 1)) / nSamplesPerSec - 1u;
       format = 1u;
       if (nChannels == 2u)
 	format |= FORMAT_STEREO;

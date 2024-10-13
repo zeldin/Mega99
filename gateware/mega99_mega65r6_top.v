@@ -266,7 +266,8 @@ module mega99_mega65r6_top(input        CLK100MHZ,
 		     .sdcard_miso(SD1_DAT[0]), .sdcard_mosi(SD1_CMD),
 		     .uart_txd(UART_TXD), .uart_rxd(UART_RXD));
 
-   mainboard #(.clk_multiplier(10), .generate_overlay_clk_en(1),
+   mainboard #(.vdp_clk_multiplier(10), .cpu_clk_multiplier(36),
+	       .vsp_clk_multiplier(675), .generate_overlay_clk_en(1),
 	       .audio_bits(16), .ENABLE_HDMI_TIMING_TWEAKS(1))
    mb(.clk(clk), .ext_reset(RESET_BTN | ~clk_locked), .sys_reset(reset),
       .reset_9900(reset_9900), .reset_9901(reset_9901),
