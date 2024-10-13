@@ -76,7 +76,7 @@ module fdc1771_mockdrive(input        clk,
 	 if (|byte_clk_cnt)
 	   byte_clk_cnt <= byte_clk_cnt - 8'd1;
 	 else begin
-	    byte_clk_cnt <= (dd_reg ? 8'd110 : 8'd224);
+	    byte_clk_cnt <= (dd_reg ? 8'd93 : 8'd186);
 	    byte_clk_reg <= mounted_reg;
 	 end
       end

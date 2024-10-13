@@ -183,7 +183,7 @@ module peb_fdc(input         clk,
 	end
 	if (kaclk & ~kaclk_prev) begin
 	   dvena <= 1'b1;
-	   ena_count <= 24'd9421362; // 2.632 s, from K=0.28, RT=200k, Cext=47u
+	   ena_count <= 24'd7896000; // 2.632 s, from K=0.28, RT=200k, Cext=47u
 	end
 	kaclk_prev <= kaclk;
      end // else: !if(reset)

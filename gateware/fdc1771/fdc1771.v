@@ -89,10 +89,10 @@ module fdc1771
 
    always @(cmd[1:0])
      case (cmd[1:0])
-       2'b00: step_delay_target = 17'd21476;
-       2'b01: step_delay_target = 17'd21476;
-       2'b10: step_delay_target = 17'd35794;
-       2'b11: step_delay_target = 17'd71590;
+       2'b00: step_delay_target = 17'd18000;
+       2'b01: step_delay_target = 17'd18000;
+       2'b10: step_delay_target = 17'd30000;
+       2'b11: step_delay_target = 17'd60000;
      endcase // case (cmd[1:0])
 
    always @(posedge clk) begin
