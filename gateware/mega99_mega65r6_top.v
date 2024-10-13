@@ -75,11 +75,13 @@ module mega99_mega65r6_top(input        CLK100MHZ,
 
    wire        clk;
    wire	       clk_hdmi;
-   wire	       clk_hdmi_x10;
+   wire	       clk_hdmi_x5;
    wire	       clk_pcm;
    wire	       locked_pcm;
+   wire	       locked_hdmi;
    wire	       clk_locked;
    wire	       reset;
+   reg [0:3]   hdmi_reset;
 
    wire [2:31] xmem_adr_o;
    wire [0:31] xmem_dat_o;
@@ -97,7 +99,7 @@ module mega99_mega65r6_top(input        CLK100MHZ,
    wire	       pcm_clken;
    wire [15:0] audio_pcm;
    reg	       pcm_acr;
-   reg [6:0]   pcm_acr_cnt;
+   reg [5:0]   pcm_acr_cnt;
 
    wire	       vdp_clk_en;
    wire	       vga_clk_en;
@@ -202,8 +204,9 @@ module mega99_mega65r6_top(input        CLK100MHZ,
    assign FB_FIRE_O = 1'b1;   
 
    mega65_clkwiz clkgen(.clk_sys(clk), .clk_sys_phi90(clk_phi90),
-			.clk_hdmi(clk_hdmi), .clk_hdmi_x10(clk_hdmi_x10),
+			.clk_hdmi(clk_hdmi), .clk_hdmi_x5(clk_hdmi_x5),
 			.clk_pcm(clk_pcm), .locked_pcm(locked_pcm),
+			.locked_hdmi(locked_hdmi),
 			.locked(clk_locked), .clk_in1(CLK100MHZ));
 
    hyperram_wrapper #(.CLK_HZ(107386350))
@@ -266,7 +269,7 @@ module mega99_mega65r6_top(input        CLK100MHZ,
 		     .uart_txd(UART_TXD), .uart_rxd(UART_RXD));
 
    mainboard #(.clk_multiplier(10), .generate_overlay_clk_en(1),
-	       .audio_bits(16))
+	       .audio_bits(16), .ENABLE_HDMI_TIMING_TWEAKS(1))
    mb(.clk(clk), .ext_reset(RESET_BTN | ~clk_locked), .sys_reset(reset),
       .reset_9900(reset_9900), .reset_9901(reset_9901),
       .reset_9918(reset_9918), .reset_9919(reset_9919),
@@ -309,38 +312,43 @@ module mega99_mega65r6_top(input        CLK100MHZ,
 		 .mclk(clk_pcm), .bclk(AUDIO_BCLK), .sdata(AUDIO_SDATA),
 		 .lrclk(AUDIO_LRCLK), .pcm_out(audio_pcm), .clken(pcm_clken));
 
-   // 88 samples (11264*2 MCLKs) takes the same time as 39375 pixel clks
    always @(posedge clk_pcm) begin
       pcm_acr <= 1'b0;
       if (pcm_clken) begin
-	 if (pcm_acr_cnt == 7'd87) begin
-	    pcm_acr_cnt <= 7'd0;
-	    pcm_acr <= 1'b1;
+	 if (pcm_acr_cnt == 6'd47) begin
+            pcm_acr <= 1'b1;
+            pcm_acr_cnt <= 6'd0;
 	 end else
-	   pcm_acr_cnt <= pcm_acr_cnt + 7'd1;
+	   pcm_acr_cnt <= pcm_acr_cnt + 6'd1;
       end
    end
+
+   always @(posedge clk_hdmi)
+     if (clk_locked && locked_hdmi)
+       hdmi_reset <= { hdmi_reset[1:3], 1'b1 };
+     else
+       hdmi_reset <= 4'b0000;
 
    vga_to_hdmi hdmi_encoder(.select_44100(1'b0), .dvi(1'b0),
 			    .vic(8'h00 /* custom */), .aspect(2'b01),
 			    .pix_rep(1'b0), .vs_pol(1'b1), .hs_pol(1'b1),
-			    .vga_rst(reset), .vga_clk(clk_hdmi),
-			    .vga_vs(vdp_vsync), .vga_hs(vga_hsync),
+			    .vga_rst(~hdmi_reset[0]), .vga_clk(clk_hdmi),
+			    .vga_vs(VGA_VS), .vga_hs(VGA_HS),
 			    .vga_de(vga_color_en), .vga_r(VGA_R),
 			    .vga_g(VGA_G), .vga_b(VGA_B),
 			    .pcm_rst(~locked_pcm), .pcm_clk(clk_pcm),
 			    .pcm_clken(pcm_clken),
 			    .pcm_l(audio_pcm), .pcm_r(audio_pcm),
-			    .pcm_acr(pcm_acr), .pcm_n(20'd11264),
-			    .pcm_cts(20'd39375), .tmds(tmds));
+			    .pcm_acr(pcm_acr), .pcm_n(20'd6144),
+			    .pcm_cts(20'd26847/*20'd27000*/), .tmds(tmds));
 
-   tmds_10to1ddr ser_tx0(.clk_x5(clk), .d(tmds[9:0]),
+   tmds_10to1ddr ser_tx0(.clk_x5(clk_hdmi_x5), .d(tmds[9:0]),
 			 .out_p(TX_P[0]), .out_n(TX_N[0]));
-   tmds_10to1ddr ser_tx1(.clk_x5(clk), .d(tmds[19:10]),
+   tmds_10to1ddr ser_tx1(.clk_x5(clk_hdmi_x5), .d(tmds[19:10]),
 			 .out_p(TX_P[1]), .out_n(TX_N[1]));
-   tmds_10to1ddr ser_tx2(.clk_x5(clk), .d(tmds[29:20]),
+   tmds_10to1ddr ser_tx2(.clk_x5(clk_hdmi_x5), .d(tmds[29:20]),
 			 .out_p(TX_P[2]), .out_n(TX_N[2]));
-   tmds_10to1ddr ser_txc(.clk_x5(clk), .d(10'b0000011111),
+   tmds_10to1ddr ser_txc(.clk_x5(clk_hdmi_x5), .d(10'b0000011111),
 			 .out_p(TXC_P), .out_n(TXC_N));
 
 endmodule // mega99_mega65r6_top

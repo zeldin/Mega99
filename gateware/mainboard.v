@@ -4,7 +4,9 @@ module mainboard #(
 		   // set to 1 to geneate overlay_clk_en
 		   parameter integer generate_overlay_clk_en = 0,
 		   // should be > 8 for full dynamic range
-		   parameter	     audio_bits = 16
+		   parameter	     audio_bits = 16,
+		   // set to 1 to adjust horizontal border timing for HDMI
+		   parameter	     ENABLE_HDMI_TIMING_TWEAKS = 0
 		)
                 (input                     clk,
 		 input			   ext_reset,
@@ -284,7 +286,7 @@ module mainboard #(
 		   .int_in(int_in), .p_in(p_in), .p_out(p_out), .p_dir(p_dir),
 		   .intreq(intreq), .ic());
 
-   tms9918_wrapper
+   tms9918_wrapper #(.ENABLE_HDMI_TIMING_TWEAKS(ENABLE_HDMI_TIMING_TWEAKS))
      vdp(.reset(reset|reset_9918), .clk(clk), .clk_en(vdp_clk_en),
          .clk_en_next(vdp_clk_en_next),
 	 .sync_h(vdp_hsync), .sync_v(vdp_vsync), .cburst(vdp_cburst),

@@ -32,6 +32,8 @@ module tms9918_wrapper(input reset,
 		       // Debug monitoring of CPU VDP address
 		       output [0:13] debug_vdp_addr);
 
+   parameter ENABLE_HDMI_TIMING_TWEAKS = 0;
+
    wire [0:13] vaddr;
    wire [0:7]  vdata;
    wire	       vread;
@@ -63,7 +65,8 @@ module tms9918_wrapper(input reset,
    
    assign debug_vdp_addr = cvaddr;
 
-   tms9918_vdp vdp(.reset(reset), .clk(clk), .clk_en(clk_en),
+   tms9918_vdp #(.ENABLE_HDMI_TIMING_TWEAKS(ENABLE_HDMI_TIMING_TWEAKS))
+               vdp(.reset(reset), .clk(clk), .clk_en(clk_en),
 		   .sync_h(sync_h), .sync_v(sync_v), .cburst(cburst),
 		   .color(color), .color_en(color_en), .extvideo(extvideo),
 		   .vdp_raddr(vaddr), .vdp_rdata(vdata), .vdp_read(vread),

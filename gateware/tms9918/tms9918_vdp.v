@@ -36,17 +36,18 @@ module tms9918_vdp(input             reset,
 		   output	     int_pending
 		   );
 
+   parameter ENABLE_HDMI_TIMING_TWEAKS = 0;
 
    // Screen display parameters, datasheet page 3-8 table 3-3
 
    localparam [0:8] HACTIVE = 256;
-   localparam [0:8] RBORDER = 15;
-   localparam [0:8] RBLANKING = 8;
+   localparam [0:8] RBORDER = 15 + (ENABLE_HDMI_TIMING_TWEAKS ? 2 : 0);
+   localparam [0:8] RBLANKING = 8 - (ENABLE_HDMI_TIMING_TWEAKS ? 2 : 0);
    localparam [0:8] HSYNC = 26;
    localparam [0:8] LBLANKING1 = 2;
    localparam [0:8] COLORBURST = 14;
    localparam [0:8] LBLANKING2 = 8;
-   localparam [0:8] LBORDER = 13;
+   localparam [0:8] LBORDER = 13 + (ENABLE_HDMI_TIMING_TWEAKS ? 2 : 0);
 
    localparam [0:8] VACTIVE = 192;
    localparam [0:8] BBORDER = 24;
