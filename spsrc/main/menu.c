@@ -143,7 +143,7 @@ static void main_menu_select(unsigned entry)
   case 5:
   case 6:
   case 7:
-    menu_dsk_number = entry-4;
+    menu_dsk_number = entry-5;
     menu_open_fileselector("&Select DSK file to open", menu_open_func_disk);
     break;
   case 9:
