@@ -158,11 +158,14 @@ module spmmio_tape(input             clk,
 	      rate_counter <= sample_rate;
 	      if (data_available) begin
 		 if (fmt_1bit) begin
-		    tape_audio[1] <= 1'b1;
+		    tape_audio[2] <= 1'b1;
 		    if (phase) begin
-		       if (audio_data[0])
-			 tape_audio[0] <= ~tape_audio[0];
+		       if (audio_data[0]) begin
+			  tape_audio[1] <= ~tape_audio[0];
+			  tape_audio[0] <= ~tape_audio[0];
+		       end
 		    end else begin
+		       tape_audio[1] <= ~tape_audio[0];
 		       tape_audio[0] <= ~tape_audio[0];
 		       audio_data <= { audio_data[1 +: 31], 1'b0 };
 		       if (data_cnt == 5'd31)
