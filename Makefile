@@ -115,6 +115,8 @@ VIVADO ?= ./vivado_wrapper
 
 CORETOOL ?= coretool
 
+CORE_VERSION = 1.0
+
 mega65r6: mega99_r6.cor
 
 nexys_a7-50t: proj/mega99_nexys_a7-50t.runs/impl_1/mega99_nexys_a7_top.bit
@@ -123,7 +125,7 @@ nexys_a7-100t: proj/mega99_nexys_a7-100t.runs/impl_1/mega99_nexys_a7_top.bit
 
 
 mega99_r6.cor : proj/mega99_mega65r6.runs/impl_1/mega99_mega65r6_top.bit
-	$(CORETOOL) -B $@ -F -t mega65r6 -b $< -n Mega99 -v 1.0
+	$(CORETOOL) -B $@ -F -t mega65r6 -b $< -n Mega99 -v $(CORE_VERSION)
 
 proj/mega99_mega65r6.runs/impl_1/mega99_mega65r6_top.bit : proj/mega99_mega65r6.xpr vivado/build.tcl $(COMMON_SOURCES) $(MOR1KX_SOURCES) $(MEGA65R6_SOURCES) $(BOOTHEX)
 	$(VIVADO) -mode batch -source vivado/build.tcl proj/mega99_mega65r6.xpr
