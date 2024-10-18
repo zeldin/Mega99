@@ -3,8 +3,8 @@
 #include "regs.h"
 #include "timer.h"
 
-static uint32_t overlay_console_error_auto_hide_time = S_TO_TICKS(10);
-static uint32_t overlay_console_normal_auto_hide_time = S_TO_TICKS(3);
+static uint32_t overlay_console_error_auto_hide_time = S_TO_TICKS(5);
+static uint32_t overlay_console_normal_auto_hide_time = S_TO_TICKS(2);
 
 static const uint8_t font_8x16[] = {
 #include "font_8x16.h"
