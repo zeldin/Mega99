@@ -117,6 +117,8 @@ CORETOOL ?= coretool
 
 CORE_VERSION = 1.0
 
+all : mega99sp.bin mega65r6
+
 mega65r6: mega99_r6.cor
 
 nexys_a7-50t: proj/mega99_nexys_a7-50t.runs/impl_1/mega99_nexys_a7_top.bit
