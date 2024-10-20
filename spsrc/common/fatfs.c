@@ -432,7 +432,7 @@ static int fatfs_search_dir(const char *filename,
 	  dirfh->filepos = ((blk-1-dirfh->start_cluster) << 9) + (entry << 5);
 	}
 #endif
-	return 0;
+	return p[11]&0x3f;
       }
       lfn_match = ~0;
     }
@@ -471,13 +471,38 @@ int fatfs_open_rootdir(fatfs_filehandle_t *fh)
   return 0;
 }
 
+int fatfs_openat(const char *filename, fatfs_filehandle_t *fh, fatfs_filehandle_t *dirfh)
+{
+  fatfs_filehandle_t dirfh_root;
+  int r;
+  if (!dirfh) {
+    dirfh = &dirfh_root;
+    if ((r = fatfs_open_rootdir(dirfh)) < 0)
+      return r;
+  }
+  if ((r = fatfs_search_dir(filename, fh, dirfh)) < 0)
+    return r;
+  if ((r & 24))
+    return -EISDIR;
+  return 0;
+}
+
 int fatfs_open(const char *filename, fatfs_filehandle_t *fh)
 {
-  fatfs_filehandle_t dirfh;
+  return fatfs_openat(filename, fh, NULL);
+}
+
+int fatfs_open_dir(const char *dirname, fatfs_filehandle_t *dirfh)
+{
+  fatfs_filehandle_t dirfh_root;
   int r;
-  if ((r = fatfs_open_rootdir(&dirfh)) < 0)
+  if ((r = fatfs_open_rootdir(&dirfh_root)) < 0)
     return r;
-  return fatfs_search_dir(filename, fh, &dirfh);
+  if ((r = fatfs_search_dir(dirname, dirfh, &dirfh_root)) < 0)
+    return r;
+  if (!(r & 16))
+    return -ENOTDIR;
+  return 0;
 }
 
 int fatfs_read(fatfs_filehandle_t *fh, void *p, uint32_t bytes)
@@ -928,6 +953,8 @@ int fatfs_open_or_create(const char *filename, fatfs_filehandle_t *fh,
   if ((r = fatfs_open_rootdir(dirent_fh)) < 0)
     return r;
   r = fatfs_search_dir(filename, fh, dirent_fh);
+  if (r >= 0)
+    r = ((r & 24)? -EISDIR : 0);
   if (r == -EFILENOTFOUND)
     r = fatfs_create_dir_entry(filename, fh, dirent_fh);
   return r;

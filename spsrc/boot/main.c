@@ -8,11 +8,33 @@
 #include "strerr.h"
 #include "mem.h"
 
+static int open_auxfile(const char *filename, fatfs_filehandle_t *fh)
+{
+  int r, r0;
+  sdcard_set_card_number(0);
+  for(;;) {
+    fatfs_filehandle_t dirfh;
+    if ((r = fatfs_open_dir("mega99", &dirfh)) >= 0 &&
+	(r = fatfs_openat(filename, fh, &dirfh)) != -EFILENOTFOUND)
+      return r;
+    if ((r = fatfs_open(filename, fh)) >= 0)
+      return r;
+    if (sdcard_num_cards() < 2 || sdcard_get_card_number())
+      break;
+    r0 = r;
+    sdcard_set_card_number(1);
+  }
+  if (r == -ENOCARD && sdcard_get_card_number())
+    return r0;
+  else
+    return r;
+}
+
 static int load_rom(const char *filename, uint8_t *ptr, uint32_t len)
 {
   display_printf("%s...", filename);
   fatfs_filehandle_t fh;
-  int r = fatfs_open(filename, &fh);
+  int r = open_auxfile(filename, &fh);
   if (r >= 0) {
     r = fatfs_read(&fh, ptr, (len? len : 0x00100000));
     if (r >= 0 && len && r < len) {

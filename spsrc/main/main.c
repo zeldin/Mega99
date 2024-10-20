@@ -4,6 +4,7 @@
 #include "regs.h"
 #include "uart.h"
 #include "display.h"
+#include "sdcard.h"
 #include "fatfs.h"
 #include "zipfile.h"
 #include "rpk.h"
@@ -14,10 +15,32 @@
 #include "keyboard.h"
 #include "reset.h"
 
-static int load_zipped_rom(const char *filename, const char *zipfilename,
-			   uint8_t *ptr, uint32_t len)
+static int open_auxfile(const char *filename, fatfs_filehandle_t *fh)
 {
-  int r = zipfile_open(zipfilename);
+  int r, r0;
+  sdcard_set_card_number(0);
+  for(;;) {
+    fatfs_filehandle_t dirfh;
+    if ((r = fatfs_open_dir("mega99", &dirfh)) >= 0 &&
+	(r = fatfs_openat(filename, fh, &dirfh)) != -EFILENOTFOUND)
+      return r;
+    if ((r = fatfs_open(filename, fh)) >= 0)
+      return r;
+    if (sdcard_num_cards() < 2 || sdcard_get_card_number())
+      break;
+    r0 = r;
+    sdcard_set_card_number(1);
+  }
+  if (r == -ENOCARD && sdcard_get_card_number())
+    return r0;
+  else
+    return r;
+}
+
+static int load_zipped_rom(const char *filename, const char *zipfilename,
+			   fatfs_filehandle_t *fh, uint8_t *ptr, uint32_t len)
+{
+  int r = zipfile_open_fh(fh);
   if (!r) {
     r = zipfile_open_entry(filename);
     if (!r) {
@@ -43,7 +66,7 @@ static int load_rom(const char *filename, const char *zipfilename,
   printf("%s...", filename);
   fflush(stdout);
   fatfs_filehandle_t fh;
-  int r = fatfs_open(filename, &fh);
+  int r = open_auxfile(filename, &fh);
   if (r >= 0) {
     r = fatfs_read(&fh, ptr, len);
     if (r >= 0 && r < len) {
@@ -51,11 +74,13 @@ static int load_rom(const char *filename, const char *zipfilename,
       return -1;
     }
   } else if (zipfilename) {
-    int t = load_zipped_rom(filename, zipfilename, ptr, len);
-    if (t) {
-      r = t;
-      if (r < 0)
-	return r;
+    if (open_auxfile(zipfilename, &fh) >= 0) {
+      int t = load_zipped_rom(filename, zipfilename, &fh, ptr, len);
+      if (t) {
+	r = t;
+	if (r < 0)
+	  return r;
+      }
     }
   }
   if (r < 0) {
