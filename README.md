@@ -37,6 +37,10 @@ processor, which handles ROM loading and the OSD menu.  It is possible to
 run Mega99 without `mega99sp.bin`, but then many features become unavailable,
 including all OSD functionality and the ability to load ROMs from zip files.
 
+ROMs, and `mega99sp.bin`, are searched for first on the external SD card,
+and then on the internal.  If there is a directory MEGA99 in the root
+of the SD card, it is searched before the root directory for the file.
+
 
 ## Peripherals
 
