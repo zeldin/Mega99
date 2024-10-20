@@ -13,6 +13,7 @@ module peb_fdc(input         clk,
 	       output	     cru_select,
 	       output	     ready,
 	       output	     led,
+	       output [1:3]  drive_activity,
 
 	       // ROM / FIFO / img regs access wishbone slave
 	       input [0:13]  wb_adr_i,
@@ -106,6 +107,7 @@ module peb_fdc(input         clk,
    reg sector_header_match;
 
    assign led = dskpgena;
+   assign drive_activity = { d1c, d2c, d3c };
 
    assign wdsel = dskpgena && memen && (a[0:11] == 12'h5ff);
    assign d1c = dsel1 & dvena;

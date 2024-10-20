@@ -28,7 +28,8 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
 			   input [8:8]	 JAhi,
 			   input [1:4]	 JBlo,
 			   input [8:8]	 JBhi,
-		     
+			   output [15:0] LED,
+
 			   inout [15:0]	 ddr2_dq,
 			   inout [1:0]	 ddr2_dqs_n,
 			   inout [1:0]	 ddr2_dqs_p,
@@ -101,6 +102,7 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
    wire	       cs1_cntrl;
    wire	       cs2_cntrl;
    wire	       mag_out;
+   wire [1:3]  drive_activity;
 
    wire [0:23] sp_adr_o;
    wire [0:7]  sp_dat_o;
@@ -131,6 +133,11 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
    assign SD_RESET = 1'b0;
    assign SD_DAT[3] = ~sdcard_cs;
 
+   assign LED[0] = 1'b0;
+   assign LED[1] = drive_activity[1];
+   assign LED[2] = drive_activity[2];
+   assign LED[3] = drive_activity[3];
+   assign LED[15:4] = 12'h000;
 
    nexys_a7_clkwiz clkgen(.clk_mem(clk_mem), .clk_sys(clk), .clk_ref(clk_ref),
 			  .locked(clk_locked), .clk_in1(CLK100MHZ));
@@ -189,6 +196,7 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
 			.sw_reset({reset_9900, reset_9901,
 				   reset_9918, reset_9919, reset_5200}),
 			.led1_rgb(), .led2_rgb(), .led3_rgb(), .led4_rgb(),
+			.drive_activity(drive_activity),
 			.overlay_clk_en(overlay_clk_en), .overlay_vsync(vdp_vsync),
 			.overlay_hsync(vga_hsync), .overlay_color(overlay_color),
 			.keypress(keypress), .keycode(keycode),
@@ -220,7 +228,7 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
       .joy1({~JAhi[8], ~JAlo[3], ~JAlo[4], ~JAlo[2], ~JAlo[1]}),
       .joy2({~JBhi[8], ~JBlo[3], ~JBlo[4], ~JBlo[2], ~JBlo[1]}),
       .cs1_cntrl(cs1_cntrl), .cs2_cntrl(cs2_cntrl),
-      .audio_gate(), .mag_out(mag_out),
+      .audio_gate(), .mag_out(mag_out), .drive_activity(drive_activity),
       .debug_pc(debug_pc), .debug_st(debug_st),
       .debug_wp(debug_wp), .debug_ir(debug_ir),
       .debug_vdp_addr(debug_vdp_addr), .debug_grom_addr(debug_grom_addr),

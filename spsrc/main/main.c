@@ -78,8 +78,6 @@ void main()
   overlay_init();
 
   REGS_MISC.leds = 1u;
-  REGS_MISC.led1_rgb = 0x00ff00;
-  REGS_MISC.led2_rgb = 0x00ff00;
 
   zipfile_init();
 
@@ -94,14 +92,17 @@ void main()
       load_rom("fdc_dsr.u27", "ti99_fdc.zip", FDCROM+4096, 4096) < 0) {
     fprintf(stderr, "ROM Loading failed!\n");
     REGS_MISC.leds = 2u;
-    REGS_MISC.led1_rgb = 0xff0000;
-    REGS_MISC.led2_rgb = 0xff0000;
     return;
   }
 
   reset_set_vdp(true);
   memset(VDPRAM, 0, 0x1000);
   reset_set_vdp(false);
+
+  // Use LED3/LED4 for drive activity
+  REGS_MISC.led3_rgb = 0x00ff00u;
+  REGS_MISC.led4_rgb = 0x00ff00u;
+  REGS_MISC.leds |= 0x00770000u;
 
   printf("Starting TMS9900\n");
   keyboard_unblock();

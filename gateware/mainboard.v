@@ -45,6 +45,7 @@ module mainboard #(
 		 output			   cs2_cntrl,
 		 output			   audio_gate,
 		 output			   mag_out,
+		 output [1:3]		   drive_activity,
 
 		 output [0:15]		   debug_pc,
 		 output [0:15]		   debug_st,
@@ -345,7 +346,7 @@ module mainboard #(
 		      .wb_ack_o(wb_ack_crom), .wb_cyc_i(wb_cyc_i));
 
    peb peb(.clk(clk), .clk_3mhz_en(clk_3mhz_en), .cpu_clk_en(cpu_clk_en),
-	   .reset(reset),
+	   .reset(reset), .drive_activity(drive_activity),
 	   .a({a, a15 & (cruout | memen)}), .d(q8), .q(d8_peb),
 	   .memen(memen8), .dbin(dbin), .we(we), .cruclk(cruclk),
 	   .cruin(cruin_peb), .ready(ready_peb),

@@ -147,6 +147,7 @@ module mega99_mega65r6_top(input        CLK100MHZ,
    wire	       cs1_cntrl;
    wire	       cs2_cntrl;
    wire	       mag_out;
+   wire [1:3]  drive_activity;
 
    wire [0:23] sp_adr_o;
    wire [0:7]  sp_dat_o;
@@ -252,6 +253,7 @@ module mega99_mega65r6_top(input        CLK100MHZ,
 				reset_9918, reset_9919, reset_5200}),
 		     .led1_rgb(led1_rgb), .led2_rgb(led2_rgb),
 		     .led3_rgb(led3_rgb), .led4_rgb(led4_rgb),
+		     .drive_activity(drive_activity),
 		     .overlay_clk_en(overlay_clk_en), .overlay_vsync(vdp_vsync),
 		     .overlay_hsync(vga_hsync), .overlay_color(overlay_color),
 		     .keypress(keypress), .keycode(keycode),
@@ -283,7 +285,7 @@ module mega99_mega65r6_top(input        CLK100MHZ,
       .joy1(~{FA_FIRE, FA_LEFT, FA_RIGHT, FA_DOWN, FA_UP}),
       .joy2(~{FB_FIRE, FB_LEFT, FB_RIGHT, FB_DOWN, FB_UP}),
       .cs1_cntrl(cs1_cntrl), .cs2_cntrl(cs2_cntrl),
-      .audio_gate(), .mag_out(mag_out),
+      .audio_gate(), .mag_out(mag_out), .drive_activity(drive_activity),
       .debug_pc(debug_pc), .debug_st(debug_st),
       .debug_wp(debug_wp), .debug_ir(debug_ir),
       .debug_vdp_addr(debug_vdp_addr), .debug_grom_addr(debug_grom_addr),

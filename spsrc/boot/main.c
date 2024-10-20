@@ -51,6 +51,8 @@ void main()
     REGS_MISC.reset = 0xff;
     memset(VDPRAM, 0, 0x1000);
     REGS_MISC.reset = 0x00; // Release CPU from reset
-  } else
+  } else {
       display_printf("ROM Loading failed!\n");
+      REGS_MISC.leds = 2u;
+  }
 }
