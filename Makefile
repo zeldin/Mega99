@@ -115,7 +115,7 @@ VIVADO ?= ./vivado_wrapper
 
 CORETOOL ?= coretool
 
-CORE_VERSION = 1.0
+CORE_VERSION = 1.1
 
 all : mega99sp.bin mega65r6
 
