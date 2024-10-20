@@ -28,7 +28,28 @@ const char *generic_strerror(int n, const char *prefix,
 {
   if (!messages || n < base || (n - base) >= cnt || !messages[n - base]) {
     static char buf[32];
-    snprintf(buf, sizeof(buf), "%s %d", prefix, n);
+    char *p2, *p = buf;
+    while (*prefix)
+      *p++ = *prefix++;
+    *p++ = ' ';
+    unsigned v;
+    if (n < 0) {
+      *p++ = '-';
+      v = -n;
+    } else
+      v = n;
+    p2 = p;
+    while (v >= 10) {
+      *p++ = '0'+ v%10;
+      v /= 10;
+    }
+    *p = '0'+v;
+    p[1] = 0;
+    while (p > p2) {
+      char t = *p;
+      *p-- = *p2;
+      *p2++ = t;
+    }
     return buf;
   }
   return messages[n - base];

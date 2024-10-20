@@ -38,7 +38,7 @@ module spmem(input         clk,
    wire xmem_d_access;
    reg	xmem_d_in_progress;
 
-   reg [0:31]  boot_mem[0:2047];
+   reg [0:31]  boot_mem[0:4095];
    reg [0:31]  boot_mem_data;
    reg	       boot_mem_i_ack;
    reg	       boot_mem_d_ack;
@@ -79,7 +79,7 @@ module spmem(input         clk,
 	xmem_d_in_progress <= 1'b0;
 
       if (boot_mem_i_access || boot_mem_d_access)
-	boot_mem_data <= boot_mem[boot_mem_i_access ? sp_i_adr[19:29] : sp_d_adr[19:29]];
+	boot_mem_data <= boot_mem[boot_mem_i_access ? sp_i_adr[18:29] : sp_d_adr[18:29]];
 
       if (reset || boot_mem_i_ack)
 	boot_mem_i_ack <= 1'b0;
@@ -95,13 +95,13 @@ module spmem(input         clk,
 	     (sp_d_we || !boot_mem_i_access)) begin
 	    if (sp_d_we) begin
 	       if (sp_d_sel[0])
-		 boot_mem[sp_d_adr[19:29]][0:7] <= sp_d_dato[0:7];
+		 boot_mem[sp_d_adr[18:29]][0:7] <= sp_d_dato[0:7];
 	       if (sp_d_sel[1])
-		 boot_mem[sp_d_adr[19:29]][8:15] <= sp_d_dato[8:15];
+		 boot_mem[sp_d_adr[18:29]][8:15] <= sp_d_dato[8:15];
 	       if (sp_d_sel[2])
-		 boot_mem[sp_d_adr[19:29]][16:23] <= sp_d_dato[16:23];
+		 boot_mem[sp_d_adr[18:29]][16:23] <= sp_d_dato[16:23];
 	       if (sp_d_sel[3])
-		 boot_mem[sp_d_adr[19:29]][24:31] <= sp_d_dato[24:31];
+		 boot_mem[sp_d_adr[18:29]][24:31] <= sp_d_dato[24:31];
 	    end
 	    boot_mem_d_ack <= 1'b1;
 	 end

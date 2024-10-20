@@ -163,7 +163,7 @@ SP_BOOT_CFLAGS = $(SP_CFLAGS) -Os -fno-move-loop-invariants \
 	-ffreestanding -finline-stringops -DBOOTCODE
 SP_BOOT_LDSCRIPT = spsrc/boot/main.lds
 SP_BOOT_LDFLAGS = -nostartfiles -nodefaultlibs -Wl,--no-warn-rwx-segments \
-	-Wl,--defsym,__stack=0x2000,-T,$(SP_BOOT_LDSCRIPT) \
+	-Wl,--defsym,__stack=0x4000,-T,$(SP_BOOT_LDSCRIPT) \
 	-Wl,--gc-sections,-eboot,-Map,$@.map
 
 SP_BOOT_SRCS  = boot/entry.S
@@ -172,6 +172,7 @@ SP_BOOT_SRCS += common/display.c
 SP_BOOT_SRCS += common/uart.c
 SP_BOOT_SRCS += common/sdcard.c
 SP_BOOT_SRCS += common/fatfs.c
+SP_BOOT_SRCS += common/strerr.c
 
 SP_MAIN_CFLAGS = $(SP_CFLAGS) -O2 -I spsrc/minizip-ng
 SP_MAIN_LDFLAGS = -Wl,--section-start=.vectors=0x40000000,-Ttext=0x40002000 \
@@ -184,7 +185,6 @@ SP_MAIN_SRCS += main/zipfile.c
 SP_MAIN_SRCS += main/rpk.c
 SP_MAIN_SRCS += main/tape.c
 SP_MAIN_SRCS += main/fdc.c
-SP_MAIN_SRCS += main/strerr.c
 SP_MAIN_SRCS += main/overlay.c
 SP_MAIN_SRCS += main/keyboard.c
 SP_MAIN_SRCS += main/menu.c
@@ -194,6 +194,7 @@ SP_MAIN_SRCS += common/uart.c
 SP_MAIN_SRCS += common/sdcard.c
 SP_MAIN_SRCS += common/fatfs.c
 SP_MAIN_SRCS += common/yxml.c
+SP_MAIN_SRCS += common/strerr.c
 
 SP_MZ_CFLAGS = -DMZ_ZIP_NO_MAIN -DMZ_ZIP_NO_CRYPTO -DMZ_ZIP_NO_ENCRYPTION \
 	-DMZ_ZIP_NO_COMPRESSION -DHAVE_ZLIB -I $(SP_ZLIB_BUILD)

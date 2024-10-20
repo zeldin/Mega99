@@ -5,6 +5,7 @@
 #include "uart.h"
 #include "regs.h"
 #include "fatfs.h"
+#include "strerr.h"
 #include "mem.h"
 
 static int load_rom(const char *filename, uint8_t *ptr, uint32_t len)
@@ -20,7 +21,7 @@ static int load_rom(const char *filename, uint8_t *ptr, uint32_t len)
     }
   }
   if (r < 0)
-    display_printf("%x\n", (uint32_t)r);
+    display_printf("%s\n", fatfs_strerror(-r));
   else
     display_printf("Loaded\n");
   return r;
