@@ -4,6 +4,7 @@
 #include "keyboard.h"
 #include "reset.h"
 #include "fatfs.h"
+#include "sdcard.h"
 #include "rpk.h"
 #include "fdc.h"
 #include "tape.h"
@@ -115,11 +116,13 @@ static void menu_open_func_tape(fatfs_filehandle_t *fh, const char *filename)
 
 static void menu_text_input_func_save_cs1(const char *data, unsigned len)
 {
+  sdcard_set_card_number(0);
   tape_save(0, data);
 }
 
 static void menu_text_input_func_save_cs2(const char *data, unsigned len)
 {
+  sdcard_set_card_number(0);
   tape_save(1, data);
 }
 
@@ -130,6 +133,7 @@ static void menu_open_func_mm(fatfs_filehandle_t *fh, const char *filename)
 
 static void menu_text_input_func_save_mm(const char *data, unsigned len)
 {
+  sdcard_set_card_number(0);
   mm_save(data);
 }
 
@@ -438,11 +442,16 @@ static void menu_open_fileselector(const char *title,
 				   void (*open_func)(fatfs_filehandle_t *fh,
 						     const char *filename))
 {
+  sdcard_set_card_number(0);
   fileselector_open_func = open_func;
   fileselector_menu_entries[0] = title;
   fileselector_menu_entries[1] = "-";
 
   int r = fileselector_menu_fill(true);
+  if (r == -ENOCARD && sdcard_num_cards() > 1) {
+    sdcard_set_card_number(1);
+    r = fileselector_menu_fill(true);
+  }
   if (r < 0) {
     fprintf(stderr, "%s\n", fatfs_strerror(-r));
   } else {
@@ -580,6 +589,19 @@ void menu_key(char key)
     case '\n':
       if (current_menu->select_func)
 	(*current_menu->select_func)(menu_window.cursor_y);
+      break;
+    case '.':
+      if (current_menu == &fileselector_menu && sdcard_num_cards() > 1) {
+	int r;
+	sdcard_set_card_number(sdcard_get_card_number() ^ 1);
+	r = fileselector_menu_fill(true);
+	if (r < 0) {
+	  fprintf(stderr, "%s\n", fatfs_strerror(-r));
+	  menu_close();
+	} else {
+	  menu_set(&fileselector_menu);
+	}
+      }
       break;
     }
   }

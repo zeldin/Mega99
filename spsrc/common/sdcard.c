@@ -252,3 +252,18 @@ bool sdcard_write_block(uint32_t blkid, const uint8_t *ptr)
   return result;
 }
 #endif
+
+unsigned sdcard_num_cards(void)
+{
+  return (REGS_SDCARD.ctrl >> 4) & 0xfu;
+}
+
+unsigned sdcard_get_card_number(void)
+{
+  return REGS_SDCARD.sd_select;
+}
+
+void sdcard_set_card_number(unsigned n)
+{
+  REGS_SDCARD.sd_select = n;
+}

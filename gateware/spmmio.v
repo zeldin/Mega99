@@ -34,6 +34,7 @@ module spmmio(input             clk,
 	      input		cs2_cntrl,
 	      input		mag_out,
 
+	      output		sdcard_select,
 	      output		sdcard_cs,
 	      input		sdcard_cd,
 	      input		sdcard_wp,
@@ -45,6 +46,7 @@ module spmmio(input             clk,
 	      input		uart_rxd);
 
    parameter keyboard_model = 0;
+   parameter num_sdcard = 1;
 
    reg	       stb_misc;
    reg	       stb_sdcard;
@@ -110,13 +112,14 @@ module spmmio(input             clk,
 		    .led3_rgb(led3_rgb), .led4_rgb(led4_rgb),
 		    .drive_activity(drive_activity));
 
-   spmmio_sdcard sdcard(.clk(clk), .reset(reset),
-			.adr(adr_i[21 -: 4]), .cs(cyc_i && stb_sdcard),
-			.sel(sel_i), .we(we_i), .d(dat_i), .q(dat_sdcard),
+   spmmio_sdcard #(.num_sdcard(num_sdcard))
+   sdcard(.clk(clk), .reset(reset),
+	  .adr(adr_i[21 -: 4]), .cs(cyc_i && stb_sdcard),
+	  .sel(sel_i), .we(we_i), .d(dat_i), .q(dat_sdcard),
 
-			.sdcard_cs(sdcard_cs), .sdcard_cd(sdcard_cd),
-			.sdcard_wp(sdcard_wp),.sdcard_sck(sdcard_sck),
-			.sdcard_miso(sdcard_miso), .sdcard_mosi(sdcard_mosi));
+	  .sdcard_select(sdcard_select), .sdcard_cs(sdcard_cs),
+	  .sdcard_cd(sdcard_cd), .sdcard_wp(sdcard_wp),.sdcard_sck(sdcard_sck),
+	  .sdcard_miso(sdcard_miso), .sdcard_mosi(sdcard_mosi));
 
    spmmio_uart uart(.clk(clk), .reset(reset),
 		    .adr(adr_i[21 -: 3]), .cs(cyc_i && stb_uart),

@@ -45,6 +45,12 @@ module mega99_mega65r6_top(input        CLK100MHZ,
 			   output	SD1_CMD,
 			   inout [3:0]	SD1_DAT,
 
+			   input	SD2_CD,
+			   input	SD2_WP,
+			   output	SD2_SCK,
+			   output	SD2_CMD,
+			   inout [3:0]	SD2_DAT,
+
 			   inout	KB_IO0,
 			   inout	KB_IO1,
 			   input	KB_IO2,
@@ -92,6 +98,9 @@ module mega99_mega65r6_top(input        CLK100MHZ,
    wire	       xmem_cyc_o;
 
    wire	       sdcard_cs;
+   wire	       sdcard_clk;
+   wire	       sdcard_mosi;
+   wire	       sdcard_select;
 
    wire [0:15] audio_in;
    wire [15:0] audio_out;
@@ -190,7 +199,12 @@ module mega99_mega65r6_top(input        CLK100MHZ,
    assign LED_R = ~led_red;
    assign LED_G = ~led_green;
 
-   assign SD1_DAT[3] = ~sdcard_cs;
+   assign SD1_DAT[3] = ~(sdcard_cs & ~sdcard_select);
+   assign SD1_SCK = sdcard_sck & ~sdcard_select;
+   assign SD1_CMD = sdcard_mosi & ~sdcard_select;
+   assign SD2_DAT[3] = ~(sdcard_cs & sdcard_select);
+   assign SD2_SCK = sdcard_sck & sdcard_select;
+   assign SD2_CMD = sdcard_mosi & sdcard_select;
 
    assign FA_DOWN_O = 1'b1;
    assign FA_UP_O = 1'b1;
@@ -234,7 +248,7 @@ module mega99_mega65r6_top(input        CLK100MHZ,
 			 .shift_state(shift_state),
 			 .keyboard_block(keyboard_block));
 
-   sp #(.keyboard_model(1))
+   sp #(.keyboard_model(1), .num_sdcard(2))
    service_processor(.clk(clk), .reset(reset),
 		     .wb_adr_o(sp_adr_o), .wb_dat_o(sp_dat_o),
 		     .wb_dat_i(sp_dat_i), .wb_we_o(sp_we_o),
@@ -263,9 +277,12 @@ module mega99_mega65r6_top(input        CLK100MHZ,
 		     .clk_3mhz_en(clk_3mhz_en), .tape_audio(audio_in),
 		     .cs1_cntrl(cs1_cntrl), .cs2_cntrl(cs2_cntrl),
 		     .mag_out(mag_out),
-		     .sdcard_cs(sdcard_cs), .sdcard_cd(~SD1_CD),
-		     .sdcard_wp(1'b0), .sdcard_sck(SD1_SCK),
-		     .sdcard_miso(SD1_DAT[0]), .sdcard_mosi(SD1_CMD),
+		     .sdcard_select(sdcard_select), .sdcard_cs(sdcard_cs),
+		     .sdcard_cd(~(sdcard_select ? SD2_CD : SD1_CD)),
+		     .sdcard_wp((sdcard_select? SD2_WP : 1'b0)),
+		     .sdcard_sck(sdcard_sck),
+		     .sdcard_miso((sdcard_select? SD2_DAT[0] : SD1_DAT[0])),
+		     .sdcard_mosi(sdcard_mosi),
 		     .uart_txd(UART_TXD), .uart_rxd(UART_RXD));
 
    mainboard #(.vdp_clk_multiplier(10), .cpu_clk_multiplier(36),

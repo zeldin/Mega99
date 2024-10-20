@@ -46,6 +46,7 @@ module sp(input         clk,
 	  input		cs2_cntrl,
 	  input		mag_out,
 
+	  output	sdcard_select,
 	  output	sdcard_cs,
 	  input		sdcard_cd,
 	  input		sdcard_wp,
@@ -57,6 +58,7 @@ module sp(input         clk,
 	  input		uart_rxd);
 
    parameter keyboard_model = 0;
+   parameter num_sdcard = 1;
 
    wire [0:31] or1k_i_adr;
    wire	       or1k_i_stb;
@@ -194,7 +196,7 @@ module sp(input         clk,
 	    .xmem_dat_o(xmem_dat_o), .xmem_ack_i(xmem_ack_i),
 	    .xmem_dat_i(xmem_dat_i));
 
-   spmmio #(.keyboard_model(keyboard_model))
+   spmmio #(.keyboard_model(keyboard_model), .num_sdcard(num_sdcard))
    spregs(.clk(clk), .reset(reset),
 	  .adr_i(or1k_d_adr[8:31]),
 	  .stb_i(or1k_d_stb && or1k_d_adr[0:7] == 8'hff),
@@ -215,9 +217,10 @@ module sp(input         clk,
 	  .clk_3mhz_en(clk_3mhz_en),
 	  .tape_audio(tape_audio), .cs1_cntrl(cs1_cntrl),
 	  .cs2_cntrl(cs2_cntrl), .mag_out(mag_out),
-	  .sdcard_cs(sdcard_cs), .sdcard_cd(sdcard_cd),
-	  .sdcard_wp(sdcard_wp),.sdcard_sck(sdcard_sck),
-	  .sdcard_miso(sdcard_miso), .sdcard_mosi(sdcard_mosi),
+	  .sdcard_select(sdcard_select), .sdcard_cs(sdcard_cs),
+	  .sdcard_cd(sdcard_cd), .sdcard_wp(sdcard_wp),
+	  .sdcard_sck(sdcard_sck), .sdcard_miso(sdcard_miso),
+	  .sdcard_mosi(sdcard_mosi),
 	  .uart_txd(uart_txd), .uart_rxd(uart_rxd));
 
 endmodule // sp

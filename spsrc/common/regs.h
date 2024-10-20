@@ -13,7 +13,7 @@ struct mmio_regs_sdcard {
   uint16_t ctrl;
   uint16_t cmd;
   uint8_t crc7;
-  uint8_t pad;
+  uint8_t sd_select;
   uint16_t crc16;
 };
 
