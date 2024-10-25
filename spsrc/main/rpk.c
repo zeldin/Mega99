@@ -103,6 +103,8 @@ static int parse_layout(int *socket_resource, unsigned *cart_mode)
 	      *cart_mode = 1u;
 	    else if (!strcmp(pcb_type, "minimem"))
 	      *cart_mode = 2u;
+	    else if (!strcmp(pcb_type, "mbx"))
+	      *cart_mode = 4u;
 	    else {
 	      fprintf(stderr, "%s pcb unsupported\n", pcb_type);
 	      return -1;
@@ -190,7 +192,7 @@ static int low_load_rpk(const char *filename, fatfs_filehandle_t *fh)
 	  break;
 	case ROM_SOCKET:
 	  p = CARTROM;
-	  size = 8192;
+	  size = 16384;
 	  break;
 	case ROM2_SOCKET:
 	  p = CARTROM+8192;
@@ -205,6 +207,8 @@ static int low_load_rpk(const char *filename, fatfs_filehandle_t *fh)
       }
       printf("Loaded\n");
     }
+  if (cart_mode & 4u)
+    memset(CARTROM+16384, 0, 1024);
   return 0;
 }
 
