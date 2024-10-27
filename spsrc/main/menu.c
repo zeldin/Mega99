@@ -64,12 +64,19 @@ static const char * fileselector_menu_entries[MAX_FILESELECTOR_ENTRIES];
 static char fileselector_menu_names[MAX_FILESELECTOR_FILES][MAX_FILESELECTOR_NAMELEN+1];
 static char textinput_buffer[256];
 
+static struct fileselector_savedir_s {
+  fatfs_filehandle_t dirfh;
+  unsigned card_number;
+} saved_rpk_dir, saved_dsk_dir, saved_tap_dir, saved_mm_dir,
+  *fileselector_saved_dir = NULL;
+
 static void main_menu_select(unsigned entry);
 static void fileselector_menu_select(unsigned entry);
 static void fileselector_menu_refill(void);
 static void menu_open_fileselector(const char *title,
 				   void (*open_func)(fatfs_filehandle_t *fh,
-						     const char *filename));
+						     const char *filename),
+				   struct fileselector_savedir_s *saved_dir);
 static void menu_text_input(const char *title,
 			    void (*input_func)(const char *data, unsigned len));
 
@@ -116,13 +123,11 @@ static void menu_open_func_tape(fatfs_filehandle_t *fh, const char *filename)
 
 static void menu_text_input_func_save_cs1(const char *data, unsigned len)
 {
-  sdcard_set_card_number(0);
   tape_save(0, data);
 }
 
 static void menu_text_input_func_save_cs2(const char *data, unsigned len)
 {
-  sdcard_set_card_number(0);
   tape_save(1, data);
 }
 
@@ -133,7 +138,6 @@ static void menu_open_func_mm(fatfs_filehandle_t *fh, const char *filename)
 
 static void menu_text_input_func_save_mm(const char *data, unsigned len)
 {
-  sdcard_set_card_number(0);
   mm_save(data);
 }
 
@@ -142,16 +146,19 @@ static void main_menu_select(unsigned entry)
   extern void tape_check(void);
   switch(entry) {
   case 3:
-    menu_open_fileselector("&Select RPK file to load", menu_open_func_rpk);
+    menu_open_fileselector("&Select RPK file to load", menu_open_func_rpk,
+			   &saved_rpk_dir);
     break;
   case 5:
   case 6:
   case 7:
     menu_dsk_number = entry-5;
-    menu_open_fileselector("&Select DSK file to open", menu_open_func_disk);
+    menu_open_fileselector("&Select DSK file to open", menu_open_func_disk,
+			   &saved_dsk_dir);
     break;
   case 9:
-    menu_open_fileselector("&Select WAV or TAP file to open", menu_open_func_tape);
+    menu_open_fileselector("&Select WAV or TAP file to open", menu_open_func_tape,
+			   &saved_tap_dir);
     break;
   case 10:
     menu_text_input("&Enter filename for saving CS1 buffer", menu_text_input_func_save_cs1);
@@ -161,7 +168,7 @@ static void main_menu_select(unsigned entry)
     break;
   case 13:
     menu_open_fileselector("&Select Mini Memory RAM image to open",
-			   menu_open_func_mm);
+			   menu_open_func_mm, &saved_mm_dir);
     break;
   case 14:
     menu_text_input("&Enter filename for saving MM RAM",
@@ -387,6 +394,10 @@ static int fileselector_menu_fill(bool root)
   if (root &&
       (r = fatfs_open_rootdir(&fileselector_dir)) < 0)
     return r;
+  if (fileselector_saved_dir) {
+    fileselector_saved_dir->card_number = sdcard_get_card_number()+1;
+    fileselector_saved_dir->dirfh = fileselector_dir;
+  }
   while((r = fatfs_read_directory(&fileselector_dir, &fileselector_file[fileselector_cnt],
 				  (p = fileselector_menu_names[fileselector_cnt])+1,
 				  MAX_FILESELECTOR_NAMELEN)) > 0) {
@@ -440,16 +451,27 @@ static void fileselector_menu_select(unsigned entry)
 
 static void menu_open_fileselector(const char *title,
 				   void (*open_func)(fatfs_filehandle_t *fh,
-						     const char *filename))
+						     const char *filename),
+				   struct fileselector_savedir_s *saved_dir)
 {
-  sdcard_set_card_number(0);
   fileselector_open_func = open_func;
   fileselector_menu_entries[0] = title;
   fileselector_menu_entries[1] = "-";
 
-  int r = fileselector_menu_fill(true);
+  int r = -ECARDCHANGED;
+  if (saved_dir != NULL) {
+    fileselector_saved_dir = saved_dir;
+    if (saved_dir->card_number) {
+      sdcard_set_card_number(saved_dir->card_number-1);
+      fileselector_dir = saved_dir->dirfh;
+      r = fileselector_menu_fill(false);
+    }
+  } else
+    fileselector_saved_dir = NULL;
+  if (r == -ECARDCHANGED)
+    r = fileselector_menu_fill(true);
   if (r == -ENOCARD && sdcard_num_cards() > 1) {
-    sdcard_set_card_number(1);
+    sdcard_set_card_number(sdcard_get_card_number()? 0 : 1);
     r = fileselector_menu_fill(true);
   }
   if (r < 0) {

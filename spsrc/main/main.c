@@ -120,6 +120,7 @@ void main()
     return;
   }
 
+  sdcard_set_card_number(0);
   reset_set_vdp(true);
   memset(VDPRAM, 0, 0x1000);
   reset_set_vdp(false);
