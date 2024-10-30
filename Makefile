@@ -99,6 +99,23 @@ MEGA65R6_SOURCES += $(GATEWARE)/hdmi/types_pkg.vhdl
 MEGA65R6_SOURCES += vivado/mega99_mega65r6.xdc
 
 
+MEGA65R3_SOURCES  = $(GATEWARE)/mega99_mega65r3_top.v
+MEGA65R3_SOURCES += $(GATEWARE)/mega65_clkwiz.v
+MEGA65R3_SOURCES += $(GATEWARE)/hyperram_wrapper.v
+MEGA65R3_SOURCES += $(GATEWARE)/hyperram.v
+MEGA65R3_SOURCES += $(GATEWARE)/artix7_hyperphy.v
+MEGA65R3_SOURCES += $(GATEWARE)/keyboard_mk1.v
+MEGA65R3_SOURCES += $(GATEWARE)/kbdmk1com.v
+MEGA65R3_SOURCES += $(GATEWARE)/ak4432_audio.v
+MEGA65R3_SOURCES += $(GATEWARE)/sigmadelta.v
+MEGA65R3_SOURCES += $(GATEWARE)/tmds_10to1ddr.v
+MEGA65R3_SOURCES += $(GATEWARE)/hdmi/vga_to_hdmi.vhdl
+MEGA65R3_SOURCES += $(GATEWARE)/hdmi/hdmi_tx_encoder.vhdl
+MEGA65R3_SOURCES += $(GATEWARE)/hdmi/types_pkg.vhdl
+
+MEGA65R3_SOURCES += vivado/mega99_mega65r3.xdc
+
+
 NEXYS_A7_SOURCES  = $(GATEWARE)/mega99_nexys_a7_top.v
 NEXYS_A7_SOURCES += $(GATEWARE)/nexys_a7_clkwiz.v
 NEXYS_A7_SOURCES += $(GATEWARE)/nexys_a7_mig_wrapper.v
@@ -121,6 +138,8 @@ all : mega99sp.bin mega65r6
 
 mega65r6: mega99_r6.cor
 
+mega65r3: mega99_r3.cor
+
 nexys_a7-50t: proj/mega99_nexys_a7-50t.runs/impl_1/mega99_nexys_a7_top.bit
 
 nexys_a7-100t: proj/mega99_nexys_a7-100t.runs/impl_1/mega99_nexys_a7_top.bit
@@ -129,13 +148,22 @@ nexys_a7-100t: proj/mega99_nexys_a7-100t.runs/impl_1/mega99_nexys_a7_top.bit
 mega99_r6.cor : proj/mega99_mega65r6.runs/impl_1/mega99_mega65r6_top.bit
 	$(CORETOOL) -B $@ -F -t mega65r6 -b $< -n Mega99 -v $(CORE_VERSION)
 
+mega99_r3.cor : proj/mega99_mega65r3.runs/impl_1/mega99_mega65r3_top.bit
+	$(CORETOOL) -B $@ -F -t mega65r3 -b $< -n Mega99 -v $(CORE_VERSION)
+
 proj/mega99_mega65r6.runs/impl_1/mega99_mega65r6_top.bit : proj/mega99_mega65r6.xpr vivado/build.tcl $(COMMON_SOURCES) $(MOR1KX_SOURCES) $(MEGA65R6_SOURCES) $(BOOTHEX)
 	$(VIVADO) -mode batch -source vivado/build.tcl proj/mega99_mega65r6.xpr
+
+proj/mega99_mega65r3.runs/impl_1/mega99_mega65r3_top.bit : proj/mega99_mega65r3.xpr vivado/build.tcl $(COMMON_SOURCES) $(MOR1KX_SOURCES) $(MEGA65R3_SOURCES) $(BOOTHEX)
+	$(VIVADO) -mode batch -source vivado/build.tcl proj/mega99_mega65r3.xpr
 
 proj/mega99_mega65r6.xpr : vivado/mega99_mega65r6.tcl | $(BOOTHEX)
 	@rm -rf proj/mega99_mega65r6.*
 	$(VIVADO) -mode batch -source vivado/mega99_mega65r6.tcl
 
+proj/mega99_mega65r3.xpr : vivado/mega99_mega65r3.tcl | $(BOOTHEX)
+	@rm -rf proj/mega99_mega65r3.*
+	$(VIVADO) -mode batch -source vivado/mega99_mega65r3.tcl
 
 
 proj/mega99_nexys_a7%.runs/impl_1/mega99_nexys_a7_top.bit : proj/mega99_nexys_a7%.xpr vivado/build.tcl $(COMMON_SOURCES) $(MOR1KX_SOURCES) $(NEXYS_A7_SOURCES) $(BOOTHEX)
