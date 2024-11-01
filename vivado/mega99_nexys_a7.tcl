@@ -18,6 +18,7 @@ proc checkRequiredFiles { origin_dir} {
  "[file normalize "$origin_dir/gateware/spmmio_overlay.v"]"\
  "[file normalize "$origin_dir/gateware/spmmio_keyboard.v"]"\
  "[file normalize "$origin_dir/gateware/spmmio_tape.v"]"\
+ "[file normalize "$origin_dir/gateware/icap_wrapper.v"]"\
  "[file normalize "$origin_dir/gateware/qspi_controller.v"]"\
  "[file normalize "$origin_dir/or1k_boot_code.hex"]"\
  "[file normalize "$origin_dir/gateware/mainboard.v"]"\
@@ -231,6 +232,7 @@ set files [list \
  [file normalize "${origin_dir}/gateware/spmmio_overlay.v"] \
  [file normalize "${origin_dir}/gateware/spmmio_keyboard.v"] \
  [file normalize "${origin_dir}/gateware/spmmio_tape.v"] \
+ [file normalize "${origin_dir}/gateware/icap_wrapper.v"] \
  [file normalize "${origin_dir}/gateware/qspi_controller.v"] \
  [file normalize "${origin_dir}/or1k_boot_code.hex"] \
  [file normalize "${origin_dir}/gateware/mainboard.v"] \

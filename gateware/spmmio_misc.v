@@ -32,6 +32,11 @@ module spmmio_misc(input             clk,
    wire [0:23] status_led_rgb;
    wire [0:3]  rgb_enable_flags;
 
+   reg [0:4]   icap_reg = 5'b00111;
+   wire [0:31] icap_value;
+   wire	       icap_busy;
+   reg	       icap_trigger;
+
    assign status_led_rgb = { {8{led_red}}, {8{led_green}}, {8{1'b0}} };
 
    assign rgb_enable_flags = { 1'b1, drive_activity };
@@ -66,34 +71,50 @@ module spmmio_misc(input             clk,
 	4'h3: q[8:31] <= led2_rgb_value;
 	4'h4: q[8:31] <= led3_rgb_value;
 	4'h5: q[8:31] <= led4_rgb_value;
+	4'h6: q <= icap_value;
+	4'h7: begin
+	   q[0] <= icap_busy;
+	   q[27:31] <= icap_reg;
+	end
 	default: ;
       endcase // case (adr)
    end
 
-   always @(posedge clk)
-     if (reset) begin
-	led_red <= 1'b0;
-	led_green <= 1'b0;
-	led1_rgb_enable <= 4'b0000;
-	led2_rgb_enable <= 4'b0000;
-	led3_rgb_enable <= 4'b0000;
-	led4_rgb_enable <= 4'b0000;
-	sw_reset <= 5'b11111;
-     end else if (cs && we && sel[3])
-       case (adr)
-	 4'h0: begin
-	    led1_rgb_enable <= d[0:3];
-	    led2_rgb_enable <= d[4:7];
-	    led3_rgb_enable <= d[8:11];
-	    led4_rgb_enable <= d[12:15];
-	    led_red <= d[30];
-	    led_green <= d[31];
-	 end
-	 4'h1: sw_reset <= d[24:28];
-	 4'h2: led1_rgb_value <= d[8:31];
-	 4'h3: led2_rgb_value <= d[8:31];
-	 4'h4: led3_rgb_value <= d[8:31];
-	 4'h5: led4_rgb_value <= d[8:31];
-       endcase // case (adr)
+   always @(posedge clk) begin
+
+      icap_trigger <= 1'b0;
+
+      if (reset) begin
+	 led_red <= 1'b0;
+	 led_green <= 1'b0;
+	 led1_rgb_enable <= 4'b0000;
+	 led2_rgb_enable <= 4'b0000;
+	 led3_rgb_enable <= 4'b0000;
+	 led4_rgb_enable <= 4'b0000;
+	 sw_reset <= 5'b11111;
+      end else if (cs && we && sel[3])
+	case (adr)
+	  4'h0: begin
+	     led1_rgb_enable <= d[0:3];
+	     led2_rgb_enable <= d[4:7];
+	     led3_rgb_enable <= d[8:11];
+	     led4_rgb_enable <= d[12:15];
+	     led_red <= d[30];
+	     led_green <= d[31];
+	  end
+	  4'h1: sw_reset <= d[24:28];
+	  4'h2: led1_rgb_value <= d[8:31];
+	  4'h3: led2_rgb_value <= d[8:31];
+	  4'h4: led3_rgb_value <= d[8:31];
+	  4'h5: led4_rgb_value <= d[8:31];
+	  4'h7: begin
+	     icap_reg <= d[27:31];
+	     icap_trigger <= 1'b1;
+	  end
+	endcase // case (adr)
+   end
+
+   icap_wrapper icap(.clk(clk), .reg_num(icap_reg), .reg_value(icap_value),
+		       .trigger_read(icap_trigger), .busy(icap_busy));
 
 endmodule // spmmio_misc
