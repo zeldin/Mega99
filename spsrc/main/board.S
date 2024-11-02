@@ -5,7 +5,7 @@
 	.global _or1k_board_uart_base
 
 _or1k_board_mem_base:	.long	0x40000000
-_or1k_board_mem_size:	.long	0x04000000
+_or1k_board_mem_size:	.long	0x00400000
 _or1k_board_clk_freq:	.long	TICKS_PER_SEC
 _or1k_board_uart_base:	.long	0x0
 
