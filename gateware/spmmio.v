@@ -24,9 +24,12 @@ module spmmio(input             clk,
 	      output [0:3]	overlay_color,
 
 	      input		keypress,
+	      input		keypress_isup,
 	      input [0:6]	keycode,
 	      input [0:3]	shift_state,
 	      output		keyboard_block,
+	      output [0:47]	synth_key_state,
+	      output		synth_keys_enabled,
 
 	      input		clk_3mhz_en,
 	      output [0:15]	tape_audio,
@@ -141,9 +144,11 @@ module spmmio(input             clk,
 	    .adr(adr_i[21 -: 3]), .cs(cyc_i && stb_kbd),
 	    .sel(sel_i), .we(we_i), .d(dat_i), .q(dat_kbd),
 
-	    .keypress(keypress), .keycode(keycode),
+	    .keypress(keypress), .isup(keypress_isup), .keycode(keycode),
 	    .shift_state(shift_state),
-	    .keyboard_block(keyboard_block));
+	    .keyboard_block(keyboard_block),
+	    .synth_key_state(synth_key_state),
+	    .synth_keys_enabled(synth_keys_enabled));
 
    spmmio_tape tape(.clk(clk), .reset(reset), .clk_3mhz_en(clk_3mhz_en),
 		    .adr(adr_i[21 -: 14]), .cs(cyc_i && stb_tape),

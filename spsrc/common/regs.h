@@ -54,6 +54,9 @@ struct mmio_regs_keyboard {
   uint16_t keycode;
   uint16_t pad;
   uint8_t block;
+  uint8_t pad2;
+  uint16_t synth_key_high;
+  uint32_t synth_key_low;
 };
 
 #define REGS_KEYBOARD (*(volatile struct mmio_regs_keyboard *)(void *)0xff040000)

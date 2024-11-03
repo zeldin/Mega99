@@ -40,6 +40,8 @@ module mainboard #(
 		 input			   alpha_state,
 		 input [0:4]		   joy1,
 		 input [0:4]		   joy2,
+		 input [0:47]		   synth_key_state,
+		 input			   synth_keys_enabled,
 
 		 output			   cs1_cntrl,
 		 output			   cs2_cntrl,
@@ -273,10 +275,12 @@ module mainboard #(
 		   .memen8(memen8), .ready(ready), .a15(a15),
 		   .d8(d8), .q8(q8), .d(d_mpx), .q(q));
 
-   keymatrix matrix(.p_out(p_out[2:5]),
+   keymatrix matrix(.clk(clk), .p_out(p_out[2:5]),
 		    .int_in(int_in[3:6]), .p_in(p_in[12:15]),
 		    .key_state(key_state), .alpha_state(alpha_state),
-		    .joy1(joy1), .joy2(joy2));
+		    .joy1(joy1), .joy2(joy2),
+		    .synth_key_state(synth_key_state),
+		    .synth_keys_enabled(synth_keys_enabled));
 
    tms9900_cpu cpu(.reset(reset|reset_9900), .clk(clk), .clk_en(cpu_clk_en),
 		   .memen_out(memen), .we(we), .iaq(iaq), .ready_in(ready),

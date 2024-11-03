@@ -9,6 +9,7 @@ module keyboard_mk1(input             clk,
 		    output	      turbo_state,
 
 		    output reg	      keypress,
+		    output reg        isup,
 		    output reg [0:6]  keycode,
 		    output reg [0:3]  shift_state,
 		    input	      keyboard_block);
@@ -29,6 +30,7 @@ module keyboard_mk1(input             clk,
 	turbo_lock <= 1'b0;
 	turbo_pulse <= 1'b0;
 	keypress <= 1'b0;
+	isup <= 1'b0;
 	keycode <= 7'd0;
 	shift_state <= 4'b0000;
 	pressed_state <= 80'd0;
@@ -36,6 +38,7 @@ module keyboard_mk1(input             clk,
 	shift <= 2'b00;
      end else if (trigger) begin
 	keypress <= 1'b0;
+	isup <= ~pressed;
 	case (scancode)
 	  7'h0f: shift_state[3] <= pressed;
 	  7'h34: shift_state[2] <= pressed;
@@ -57,8 +60,12 @@ module keyboard_mk1(input             clk,
 	      keypress <= 1'b1;
 	      repeat_dly <= (pressed_state[0] ? 10'd255 : 10'd1023);
 	   end
-	end else if (repeat_enable && keycode == scancode) // if (pressed)
-	  repeat_enable <= 1'b0;
+	end else begin // if (pressed)
+	   if (pressed_state[0])
+	     keypress <= 1'b1;
+	   if (repeat_enable && keycode == scancode)
+	     repeat_enable <= 1'b0;
+	end
 	pressed_state <= { pressed_state[1:79], pressed };
 
 	if (!(pressed && keyboard_block)) begin

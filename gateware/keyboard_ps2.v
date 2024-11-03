@@ -8,6 +8,7 @@ module keyboard_ps2(input             clk,
 		    output reg	      turbo_state,
 
 		    output	      keypress,
+		    output            isup,
 		    output [0:6]      keycode,
 		    output reg [0:3]  shift_state,
 		    input	      keyboard_block);
@@ -16,7 +17,8 @@ module keyboard_ps2(input             clk,
    reg	     upflag;
    reg [0:1] shift;
 
-   assign keypress = &pending[0:1];
+   assign keypress = pending[0];
+   assign isup = ~pending[1];
    assign keycode = pending[2:8];
 
    always @(posedge clk)

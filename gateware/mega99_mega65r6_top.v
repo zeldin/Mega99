@@ -156,9 +156,12 @@ module mega99_mega65r6_top(input        CLK100MHZ,
    wire [0:47] key_state;
    wire	       alpha_state;
    wire	       keypress;
+   wire	       keypress_isup;
    wire [0:6]  keycode;
    wire [0:3]  shift_state;
    wire	       keyboard_block;
+   wire [0:47] synth_key_state;
+   wire	       synth_keys_enabled;
 
    wire	       cs1_cntrl;
    wire	       cs2_cntrl;
@@ -256,8 +259,8 @@ module mega99_mega65r6_top(input        CLK100MHZ,
 			 .pressed(kbd_keypress),
 			 .key_state(key_state), .alpha_state(alpha_state),
 			 .turbo_state(cpu_turbo),
-			 .keypress(keypress), .keycode(keycode),
-			 .shift_state(shift_state),
+			 .keypress(keypress), .isup(keypress_isup),
+			 .keycode(keycode), .shift_state(shift_state),
 			 .keyboard_block(keyboard_block));
 
    sp #(.keyboard_model(1), .num_sdcard(2))
@@ -282,10 +285,13 @@ module mega99_mega65r6_top(input        CLK100MHZ,
 		     .drive_activity(drive_activity),
 		     .overlay_clk_en(overlay_clk_en), .overlay_vsync(vdp_vsync),
 		     .overlay_hsync(vga_hsync), .overlay_color(overlay_color),
-		     .keypress(keypress), .keycode(keycode),
+		     .keypress(keypress), .keypress_isup(keypress_isup),
+		     .keycode(keycode),
 		     .shift_state({shift_state[0:1], alpha_state,
 				   (|shift_state[2:3])}),
 		     .keyboard_block(keyboard_block),
+		     .synth_key_state(synth_key_state),
+		     .synth_keys_enabled(synth_keys_enabled),
 		     .clk_3mhz_en(clk_3mhz_en), .tape_audio(audio_in),
 		     .cs1_cntrl(cs1_cntrl), .cs2_cntrl(cs2_cntrl),
 		     .mag_out(mag_out),
@@ -315,6 +321,8 @@ module mega99_mega65r6_top(input        CLK100MHZ,
       .key_state(key_state), .alpha_state(alpha_state),
       .joy1(~{FA_FIRE, FA_LEFT, FA_RIGHT, FA_DOWN, FA_UP}),
       .joy2(~{FB_FIRE, FB_LEFT, FB_RIGHT, FB_DOWN, FB_UP}),
+      .synth_key_state(synth_key_state),
+      .synth_keys_enabled(synth_keys_enabled),
       .cs1_cntrl(cs1_cntrl), .cs2_cntrl(cs2_cntrl),
       .audio_gate(), .mag_out(mag_out), .drive_activity(drive_activity),
       .debug_pc(debug_pc), .debug_st(debug_st),
