@@ -136,6 +136,8 @@ CORETOOL ?= coretool
 
 CORE_VERSION = 1.2
 
+EMBEDDED_FILES = mega99sp.bin
+
 all : mega99sp.bin mega65r6
 
 mega65r6: mega99_r6.cor
@@ -147,11 +149,14 @@ nexys_a7-50t: proj/mega99_nexys_a7-50t.runs/impl_1/mega99_nexys_a7_top.bit
 nexys_a7-100t: proj/mega99_nexys_a7-100t.runs/impl_1/mega99_nexys_a7_top.bit
 
 
-mega99_r6.cor : proj/mega99_mega65r6.runs/impl_1/mega99_mega65r6_top.bit
-	$(CORETOOL) -B $@ -F -t mega65r6 -b $< -n Mega99 -v $(CORE_VERSION)
+%.keep_wbstar.bit : %.bit
+	$(PYTHON) fix_bitstream.py $< $@
 
-mega99_r3.cor : proj/mega99_mega65r3.runs/impl_1/mega99_mega65r3_top.bit
-	$(CORETOOL) -B $@ -F -t mega65r3 -b $< -n Mega99 -v $(CORE_VERSION)
+mega99_r6.cor : proj/mega99_mega65r6.runs/impl_1/mega99_mega65r6_top.keep_wbstar.bit $(EMBEDDED_FILES)
+	$(CORETOOL) -B $@ -F -t mega65r6 -b $< -n Mega99 -v $(CORE_VERSION) --add-files $(EMBEDDED_FILES)
+
+mega99_r3.cor : proj/mega99_mega65r3.runs/impl_1/mega99_mega65r3_top.keep_wbstar.bit $(EMBEDDED_FILES)
+	$(CORETOOL) -B $@ -F -t mega65r3 -b $< -n Mega99 -v $(CORE_VERSION) --add-files $(EMBEDDED_FILES)
 
 proj/mega99_mega65r6.runs/impl_1/mega99_mega65r6_top.bit : proj/mega99_mega65r6.xpr vivado/build.tcl $(COMMON_SOURCES) $(MOR1KX_SOURCES) $(MEGA65R6_SOURCES) $(BOOTHEX)
 	$(VIVADO) -mode batch -source vivado/build.tcl proj/mega99_mega65r6.xpr
