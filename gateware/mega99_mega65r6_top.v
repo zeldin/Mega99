@@ -51,6 +51,9 @@ module mega99_mega65r6_top(input        CLK100MHZ,
 			   output	SD2_CMD,
 			   inout [3:0]	SD2_DAT,
 
+			   inout [3:0]	SPI_DQ,
+			   output       SPI_CS,
+
 			   inout	KB_IO0,
 			   inout	KB_IO1,
 			   input	KB_IO2,
@@ -101,6 +104,10 @@ module mega99_mega65r6_top(input        CLK100MHZ,
    wire	       sdcard_clk;
    wire	       sdcard_mosi;
    wire	       sdcard_select;
+
+   wire [3:0]  qspi_out;
+   wire [3:0]  qspi_oe;
+   wire	       qspi_sck;
 
    wire [0:15] audio_in;
    wire [15:0] audio_out;
@@ -206,6 +213,11 @@ module mega99_mega65r6_top(input        CLK100MHZ,
    assign SD2_SCK = sdcard_sck & sdcard_select;
    assign SD2_CMD = sdcard_mosi & sdcard_select;
 
+   assign SPI_DQ[0] = (qspi_oe[0] ? qspi_out[0] : 1'bz);
+   assign SPI_DQ[1] = (qspi_oe[1] ? qspi_out[1] : 1'bz);
+   assign SPI_DQ[2] = (qspi_oe[2] ? qspi_out[2] : 1'bz);
+   assign SPI_DQ[3] = (qspi_oe[3] ? qspi_out[3] : 1'bz);
+
    assign FA_DOWN_O = 1'b1;
    assign FA_UP_O = 1'b1;
    assign FA_LEFT_O = 1'b1;
@@ -283,7 +295,9 @@ module mega99_mega65r6_top(input        CLK100MHZ,
 		     .sdcard_sck(sdcard_sck),
 		     .sdcard_miso((sdcard_select? SD2_DAT[0] : SD1_DAT[0])),
 		     .sdcard_mosi(sdcard_mosi),
-		     .uart_txd(UART_TXD), .uart_rxd(UART_RXD));
+		     .uart_txd(UART_TXD), .uart_rxd(UART_RXD),
+		     .qspi_in(SPI_DQ), .qspi_out(qspi_out), .qspi_oe(qspi_oe),
+		     .qspi_csn(SPI_CS), .qspi_sck(qspi_sck));
 
    mainboard #(.vdp_clk_multiplier(10), .cpu_clk_multiplier(36),
 	       .vsp_clk_multiplier(675), .generate_overlay_clk_en(1),
@@ -368,5 +382,11 @@ module mega99_mega65r6_top(input        CLK100MHZ,
 			 .out_p(TX_P[2]), .out_n(TX_N[2]));
    tmds_10to1ddr ser_txc(.clk_x5(clk_hdmi_x5), .d(10'b0000011111),
 			 .out_p(TXC_P), .out_n(TXC_N));
+
+   STARTUPE2 startup(.CFGCLK(), .CFGMCLK(), .CLK(1'b0), .EOS(),
+		     .GSR(1'b0), .GTS(1'b0), .KEYCLEARB(1'b0),
+		     .PACK(1'b0), .PREQ(),
+		     .USRCCLKO(qspi_sck), .USRCCLKTS(1'b0),
+		     .USRDONEO(1'b1), .USRDONETS(1'b1));
 
 endmodule // mega99_mega65r6_top

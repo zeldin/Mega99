@@ -55,7 +55,13 @@ module sp(input         clk,
 	  output	sdcard_mosi,
 
 	  output	uart_txd,
-	  input		uart_rxd);
+	  input		uart_rxd,
+
+	  input [3:0]	qspi_in,
+	  output [3:0]	qspi_out,
+	  output [3:0]	qspi_oe,
+	  output	qspi_csn,
+	  output	qspi_sck);
 
    parameter keyboard_model = 0;
    parameter num_sdcard = 1;
@@ -94,6 +100,9 @@ module sp(input         clk,
    wire [0:31]  mmio_data;
    wire		mmio_ack;
 
+   wire [0:31]  qspi_data;
+   wire		qspi_ack;
+
    reg [0:1]   db_subaddr;
    reg [0:31]  db_shiftreg;
    reg	       d_wb_ack;
@@ -104,9 +113,11 @@ module sp(input         clk,
    assign or1k_i_rty = 1'b0;
    
    assign or1k_d_err = 1'b0;
-   assign or1k_d_ack = mem_ack | d_wb_ack | mmio_ack;
+   assign or1k_d_ack = mem_ack | d_wb_ack | mmio_ack | qspi_ack;
    assign or1k_d_dati = (or1k_d_adr[0] ?
-			 (or1k_d_adr[1] ? mmio_data : db_shiftreg) : mem_data);
+			 (or1k_d_adr[1] ?
+			  (or1k_d_adr[2] ? mmio_data : qspi_data)
+			  : db_shiftreg) : mem_data);
    assign or1k_d_rty = 1'b0;
 
    assign wb_adr_o = { or1k_d_adr[8:29], db_subaddr };
@@ -222,5 +233,14 @@ module sp(input         clk,
 	  .sdcard_sck(sdcard_sck), .sdcard_miso(sdcard_miso),
 	  .sdcard_mosi(sdcard_mosi),
 	  .uart_txd(uart_txd), .uart_rxd(uart_rxd));
+
+   qspi_controller qspi(.clk(clk), .reset(reset),
+			.adr_i(or1k_d_adr[4:31]),
+			.stb_i(or1k_d_stb && or1k_d_adr[0:3] == 4'hc),
+			.cyc_i(or1k_d_cyc), .sel_i(or1k_d_sel),
+			.we_i(or1k_d_we), .dat_i(or1k_d_dato),
+			.ack_o(qspi_ack), .dat_o(qspi_data),
+			.dq_in(qspi_in), .dq_out(qspi_out),
+			.dq_oe(qspi_oe), .csn(qspi_csn), .sck(qspi_sck));
 
 endmodule // sp

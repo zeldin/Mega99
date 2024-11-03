@@ -50,6 +50,7 @@ COMMON_SOURCES += $(GATEWARE)/spmmio_uart.v
 COMMON_SOURCES += $(GATEWARE)/spmmio_overlay.v
 COMMON_SOURCES += $(GATEWARE)/spmmio_keyboard.v
 COMMON_SOURCES += $(GATEWARE)/spmmio_tape.v
+COMMON_SOURCES += $(GATEWARE)/qspi_controller.v
 
 MOR1KX_SOURCES  = $(MOR1KXPATH)/mor1kx-defines.v
 MOR1KX_SOURCES += $(MOR1KXPATH)/mor1kx-sprs.v

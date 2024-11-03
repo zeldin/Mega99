@@ -15,6 +15,9 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
 			   output	 SD_CMD,
 			   inout [3:0]	 SD_DAT,
 
+			   inout [3:0]	 QSPI_DQ,
+			   output        QSPI_CSN,
+
 			   input	 PS2_CLK,
 			   input	 PS2_DATA,
 
@@ -61,6 +64,10 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
    wire	       xmem_cyc_o;
 
    wire	       sdcard_cs;
+
+   wire [3:0]  qspi_out;
+   wire [3:0]  qspi_oe;
+   wire	       qspi_sck;
 
    wire [7:0]  kbd_scancode;
    wire	       kbd_trigger;
@@ -132,6 +139,11 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
 
    assign SD_RESET = 1'b0;
    assign SD_DAT[3] = ~sdcard_cs;
+
+   assign QSPI_DQ[0] = (qspi_oe[0] ? qspi_out[0] : 1'bz);
+   assign QSPI_DQ[1] = (qspi_oe[1] ? qspi_out[1] : 1'bz);
+   assign QSPI_DQ[2] = (qspi_oe[2] ? qspi_out[2] : 1'bz);
+   assign QSPI_DQ[3] = (qspi_oe[3] ? qspi_out[3] : 1'bz);
 
    assign LED[0] = 1'b0;
    assign LED[1] = drive_activity[1];
@@ -209,7 +221,10 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
 			.sdcard_cs(sdcard_cs), .sdcard_cd(~SD_CD),
 			.sdcard_wp(1'b0), .sdcard_sck(SD_SCK),
 			.sdcard_miso(SD_DAT[0]), .sdcard_mosi(SD_CMD),
-			.uart_txd(UART_TXD), .uart_rxd(UART_RXD));
+			.uart_txd(UART_TXD), .uart_rxd(UART_RXD),
+			.qspi_in(QSPI_DQ), .qspi_out(qspi_out),
+			.qspi_oe(qspi_oe), .qspi_csn(QSPI_CSN),
+			.qspi_sck(qspi_sck));
 
    mainboard #(.vdp_clk_multiplier(10),  .cpu_clk_multiplier(36),
 	       .vsp_clk_multiplier(675), .generate_overlay_clk_en(1),
@@ -250,5 +265,11 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
    tms9918_color_to_rgb #(.red_bits(4), .green_bits(4), .blue_bits(4))
      vga_color_to_rgb(.color(overlay_color == 4'd0 ? vga_color : overlay_color),
 		      .red(VGA_R), .green(VGA_G), .blue(VGA_B));
+
+   STARTUPE2 startup(.CFGCLK(), .CFGMCLK(), .CLK(1'b0), .EOS(),
+		     .GSR(1'b0), .GTS(1'b0), .KEYCLEARB(1'b0),
+		     .PACK(1'b0), .PREQ(),
+		     .USRCCLKO(qspi_sck), .USRCCLKTS(1'b0),
+		     .USRDONEO(1'b1), .USRDONETS(1'b1));
 
 endmodule // mega99_nexys_a7_top

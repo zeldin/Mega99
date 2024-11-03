@@ -1,3 +1,5 @@
+#define QSPI ((uint8_t *)(void *)0xc0000000)
+
 #define VDPRAM ((uint8_t *)(void *)0x80000000)
 #define VDPREG (VDPRAM+0x4000)
 
