@@ -185,7 +185,7 @@ proj/mega99_nexys_a7-100t.xpr : vivado/mega99_nexys_a7.tcl | $(BOOTHEX)
 	$(VIVADO) -mode batch -source vivado/mega99_nexys_a7.tcl -tclargs --project_name mega99_nexys_a7-100t --part xc7a100tcsg324-1
 
 
-TOOLCHAIN_DIR = build/toolchain
+TOOLCHAIN_DIR = $(CURDIR)/build/toolchain
 TCSTAMP = $(TOOLCHAIN_DIR)/.stamp
 export PATH := $(TOOLCHAIN_DIR)/bin:${PATH}
 
