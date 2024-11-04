@@ -442,6 +442,7 @@ catch {
 # Suppress inconsequential warnings
 set_msg_config -suppress -id {Synth 8-3917} -string {SD_RESET}
 set_msg_config -suppress -id {Synth 8-3917} -string {AUD_SD}
+set_msg_config -id {Synth 8-3917} -string {{.*LED\[.*\].*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{.*Port wb_adr_i\[.\] in module cartridge_rom.*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{Port grclk_en in module groms}} -suppress
 set_msg_config -id {Synth 8-7129} -string {{.*Port grom_set\[.\] in module groms.*}} -regexp -suppress
@@ -461,6 +462,11 @@ set_msg_config -id {Synth 8-7129} -string {{Port dbin in module peb}} -suppress
 set_msg_config -id {Synth 8-7129} -string {{Port clk_3mhz_en in module peb}} -suppress
 set_msg_config -id {Synth 8-7129} -string {{.*Port wb_adr_i\[.\] in module peb.*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{Port reset in module peb_ram32k}} -suppress
+set_msg_config -id {Synth 8-7129} -string {{.*Port dat_i\[.*\] in module qspi_controller.*}} -regexp -suppress
+set_msg_config -id {Synth 8-7129} -string {{.*Port sel_i\[.\] in module qspi_controller.*}} -regexp -suppress
+set_msg_config -id {Synth 8-7129} -string {{Port adr_i[26] in module qspi_controller}} -suppress
+set_msg_config -id {Synth 8-7129} -string {{Port adr_i[27] in module qspi_controller}} -suppress
+set_msg_config -id {Synth 8-4446} -new_severity "INFO"
 
 
 # Suppress mor1kx and mig warnings
