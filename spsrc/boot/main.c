@@ -7,6 +7,7 @@
 #include "fatfs.h"
 #include "strerr.h"
 #include "mem.h"
+#include "embedfile.h"
 
 static int open_auxfile(const char *filename, fatfs_filehandle_t *fh)
 {
@@ -33,6 +34,15 @@ static int open_auxfile(const char *filename, fatfs_filehandle_t *fh)
 static int load_rom(const char *filename, uint8_t *ptr, uint32_t len)
 {
   display_printf("%s...", filename);
+  uint32_t eflen;
+  const void *ef = embedfile_find(filename, &eflen);
+  if (ef) {
+    if (len && eflen > len)
+      eflen = len;
+    display_printf("Embedded\n");
+    memcpy(ptr, ef, eflen);
+    return eflen;
+  }
   fatfs_filehandle_t fh;
   int r = open_auxfile(filename, &fh);
   if (r >= 0) {

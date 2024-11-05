@@ -1,6 +1,7 @@
 #ifdef BOOTCODE
 #define memset __builtin_memset
 #define memcpy __builtin_memcpy
+#define memcmp __builtin_memcmp
 #undef __INT32_TYPE__
 #define __INT32_TYPE__ int
 #undef __UINT32_TYPE__

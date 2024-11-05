@@ -14,6 +14,7 @@
 #include "overlay.h"
 #include "keyboard.h"
 #include "reset.h"
+#include "embedfile.h"
 
 static int open_auxfile(const char *filename, fatfs_filehandle_t *fh)
 {
@@ -65,6 +66,15 @@ static int load_rom(const char *filename, const char *zipfilename,
 {
   printf("%s...", filename);
   fflush(stdout);
+  uint32_t eflen;
+  const void *ef = embedfile_find(filename, &eflen);
+  if (ef) {
+    if (eflen > len)
+      eflen = len;
+    printf("Embedded\n");
+    memcpy(ptr, ef, eflen);
+    return eflen;
+  }
   fatfs_filehandle_t fh;
   int r = open_auxfile(filename, &fh);
   if (r >= 0) {

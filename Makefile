@@ -210,6 +210,7 @@ SP_BOOT_SRCS += common/uart.c
 SP_BOOT_SRCS += common/sdcard.c
 SP_BOOT_SRCS += common/fatfs.c
 SP_BOOT_SRCS += common/strerr.c
+SP_BOOT_SRCS += common/embedfile.c
 
 SP_MAIN_CFLAGS = $(SP_CFLAGS) -O2 -I spsrc/minizip-ng
 SP_MAIN_LDFLAGS = -Wl,--section-start=.vectors=0x40000000,-Ttext=0x40002000 \
@@ -232,6 +233,7 @@ SP_MAIN_SRCS += common/sdcard.c
 SP_MAIN_SRCS += common/fatfs.c
 SP_MAIN_SRCS += common/yxml.c
 SP_MAIN_SRCS += common/strerr.c
+SP_MAIN_SRCS += common/embedfile.c
 
 SP_MZ_CFLAGS = -DMZ_ZIP_NO_MAIN -DMZ_ZIP_NO_CRYPTO -DMZ_ZIP_NO_ENCRYPTION \
 	-DMZ_ZIP_NO_COMPRESSION -DHAVE_ZLIB -I $(SP_ZLIB_BUILD)
