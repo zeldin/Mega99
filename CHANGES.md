@@ -23,3 +23,14 @@ v1.2 (2024-10-27)
 
 * Last visited directory in each file selector is remembered
 
+
+
+v1.3 (2024-11-05)
+=================
+
+* Supports MEGA65 R3(A)
+
+* Embeds mega99sp.bin in the core file
+
+* TAB on the keyboard enables pseudkeys mode, which remaps
+  keys according to the symbols on the keycaps
