@@ -393,6 +393,9 @@ void keyboard_unblock(void)
 static void toggle_pseudokeys(void)
 {
   if (pseudokey_mode) {
+    REGS_KEYBOARD.synth_key_low = 0;
+    REGS_KEYBOARD.synth_key_high = 0;
+    pseudokey_active = 0;
     if (pseudokey_mode == 1)
       REGS_KEYBOARD.block = 0;
     pseudokey_mode = 0;
@@ -529,7 +532,8 @@ void keyboard_task(void)
     key = apply_shiftstate(key, keycode);
 
   if (pseudokey_mode == 1 ||
-      (key >= 4 && key <= 7 && !REGS_KEYBOARD.block))
+      (key >= 4 && key <= 7 && !REGS_KEYBOARD.block &&
+       !(keycode & SHIFT_STATE_FCTN)))
     key = do_pseudokey(key, keycode, true);
   else if (pseudokey_mode)
     key = do_pseudokey(key, keycode, false);

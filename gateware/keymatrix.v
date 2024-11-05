@@ -22,7 +22,10 @@ module keymatrix(input clk,
    reg	       old_column0;
 
    assign key_state_int = ( synth_keys_active ?
-			    ( synth_keys_valid ? synth_key_state : 48'd0 )
+			    ( synth_keys_valid ? synth_key_state :
+			      ( !synth_keys_enabled ? 48'd0 :
+				{ synth_key_state[0] & synth_key_state[4],
+				  3'b000, synth_key_state[4:6], 41'd0 } ) )
 			    : key_state );
 
    assign alpha = ~p_out[5];
@@ -34,10 +37,11 @@ module keymatrix(input clk,
    always @(posedge clk) begin
       if (!synth_keys_enabled)
 	synth_keys_valid <= 1'b0;
-      if (column0 && !old_column0) begin
-	 synth_keys_active <= synth_keys_enabled;
-	 synth_keys_valid <= synth_keys_enabled;
-      end
+      if (column0)
+	synth_keys_active <= synth_keys_enabled;
+      if (column0 && !old_column0 &&
+	  synth_keys_active && synth_keys_enabled)
+	synth_keys_valid <= 1'b1;
       old_column0 <= column0;
    end
 

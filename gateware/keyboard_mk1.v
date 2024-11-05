@@ -61,8 +61,11 @@ module keyboard_mk1(input             clk,
 	      repeat_dly <= (pressed_state[0] ? 10'd255 : 10'd1023);
 	   end
 	end else begin // if (pressed)
-	   if (pressed_state[0])
-	     keypress <= 1'b1;
+	   if (pressed_state[0]) begin
+	      keycode <= scancode;
+	      keypress <= 1'b1;
+	      repeat_enable <= 1'b0;
+	   end
 	   if (repeat_enable && keycode == scancode)
 	     repeat_enable <= 1'b0;
 	end
