@@ -1,7 +1,7 @@
 # Mega99
 
-The Mega99 is a TI-99/4A core for the MEGA65 computer.  Currently only
-r6 boards are supported.
+The Mega99 is a TI-99/4A core for the MEGA65 computer.  Currently r3
+and r6 boards are supported.
 
 The core is written from scratch specifically with the MEGA65 as its
 target.  It tries to match the timing of the original TI-99/4A as
@@ -31,15 +31,9 @@ correct file names of the ROM images and the respective zip files.
 | fdc_dsr.u26      | ti99_fdc.zip    | FDC DSR ROM  |
 | fdc_dsr.u27      | ti99_fdc.zip    | FDC DSR ROM  |
 
-In addition to these ROM images, the file `mega99sp.bin` should
-also be placed on the SD card.  This is the main program for the service
-processor, which handles ROM loading and the OSD menu.  It is possible to
-run Mega99 without `mega99sp.bin`, but then many features become unavailable,
-including all OSD functionality and the ability to load ROMs from zip files.
-
-ROMs, and `mega99sp.bin`, are searched for first on the external SD card,
-and then on the internal.  If there is a directory MEGA99 in the root
-of the SD card, it is searched before the root directory for the file.
+ROMs are searched for first on the external SD card, and then on the
+internal.  If there is a directory MEGA99 in the root of the SD card,
+it is searched before the root directory for the file.
 
 
 ## Peripherals
@@ -67,8 +61,25 @@ by the following table:
 | HELP        |              | Toggle console messages  |
 | NO SCROLL   |              | Toggle turbo on/off      |
 | CAPS LOCK   |              | Hold for temporary turbo |
+| TAB         |              | Toggle pseudokeys mode   |
 
 The OSD menus can be navigated with the arrow keys and RETURN.
+
+Pressing TAB enables pseudokeys mode, in which keys are remapped
+according to the symbols on the keycaps of the MEGA65.  Thus for
+example SHIFT+2 gets remapped to FCTN+P in order to generate the "
+character.  FCTN in combination with an alphanumeric key or + can
+still be used as normal in this mode.  FCTN (MEGA) in combination with
+non-alphanumeric keys is remapped to generate the ASCII symbol on the
+front of the keycap if any, e.g. MEGA together with the comma key
+gives ~.
+
+Pseudokeys mode can not handle multiple keys pressed at once, and
+is not recommended for games.  To leave pseudokeys mode, press TAB
+again.
+
+The cursor keys are remapped to FCTN+E/S/D/X both when pseudokeys
+are enabled and when they are disabled.
 
 
 ### Joysticks
@@ -82,8 +93,8 @@ connectors.
 
 Cartridges are loaded from RPK files as used by MAME.  To insert a
 cartridge, open the main menu and select "Load RPK", then choose the
-RPK file to load.  Supported cartridge layouts are "standard", "paged"
-and "minimem".
+RPK file to load.  Supported cartridge layouts are "standard", "paged",
+"mbx" and "minimem".
 
 
 ### Disk drive
@@ -145,11 +156,26 @@ then the RAM memory file.
 The speech synthesizer is included and functional.
 
 
+### 32K RAM expansion
+
+The 32K RAM expansion is included and always enabled.
+
+
 # Running on Nexys A7
 
 The core can also be used on a Nexys A7 or Nexys 4 DDR board.
 Use the `mega99_nexys_a7_50t.bit` bitstream for Nexys A7 50T and
 `mega99_nexys_a7_100t.bit` for Nexys A7 100T or Nexys 4 DDR.
+
+
+### SD card
+
+In addition to the ROM images, the file `mega99sp.bin` should also be
+placed on the SD card when using the Nexys board.  This is the main
+program for the service processor, which handles ROM loading and the
+OSD menu.  It is possible to run Mega99 without `mega99sp.bin`, but
+then many features become unavailable, including all OSD functionality
+and the ability to load ROMs from zip files.
 
 
 ### Keyboard
@@ -165,6 +191,9 @@ The following mappings are specific to the USB keyboard:
 | ESC       |              | Leave menu              |
 | SysRq     |              | Toggle console messages |
 | Num Lock  |              | Toggle turbo on/off     |
+
+Pseudokeys mode is not available on the Nexys board, but the cursor
+keys can still be used as pseudokeys.
 
 
 ### Joysticks
