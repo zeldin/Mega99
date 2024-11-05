@@ -479,9 +479,12 @@ static char do_pseudokey(char key, uint16_t keycode, bool send)
   else
     key_low |= (0x80000000u >> (remapped-16));
   if (send) {
-    REGS_KEYBOARD.synth_key_low = key_low;
-    REGS_KEYBOARD.synth_key_high = key_high;
-    pseudokey_active = keycode | KEY_RELEASE;
+    keycode |= KEY_RELEASE;
+    if (pseudokey_active != (uint8_t)keycode) {
+      REGS_KEYBOARD.synth_key_low = key_low;
+      REGS_KEYBOARD.synth_key_high = key_high;
+      pseudokey_active = keycode;
+    }
   }
   keycode &= ~(SHIFT_STATE_FCTN | SHIFT_STATE_SHIFT);
   if ((key_high & TIMOD_FCTN))
