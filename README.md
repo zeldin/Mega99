@@ -58,7 +58,7 @@ by the following table:
 | . >         | . >          |                          |
 | ←           |              | Enter top level menu     |
 | RUN / STOP  |              | Leave menu               |
-| HELP        |              | Toggle console messages  |
+| ALT         |              | Toggle console messages  |
 | NO SCROLL   |              | Toggle turbo on/off      |
 | CAPS LOCK   |              | Hold for temporary turbo |
 | TAB         |              | Toggle pseudokeys mode   |
@@ -78,8 +78,27 @@ Pseudokeys mode can not handle multiple keys pressed at once, and
 is not recommended for games.  To leave pseudokeys mode, press TAB
 again.
 
-The cursor keys are remapped to FCTN+E/S/D/X both when pseudokeys
-are enabled and when they are disabled.
+The following mapping of non-printing keys is done in pseudokeys
+mode:
+
+| MEGA65 key  | TI-99/4A key    |
+| ----------- | --------------- |
+| DEL         | FCTN-1 (DEL)    |
+| INST        | FCTN-2 (INS)    |
+| CLR         | FCTN-3 (ERASE)  |
+| STOP        | FCTN-4 (CLEAR)  |
+| HOME        | FCTN-5 (BEGIN)  |
+| RUN         | FCTN-6 (PROC'D) |
+| HELP        | FCTN-7 (AID)    |
+| RESTORE     | FCTN-8 (REDO)   |
+| ESC         | FCTN-9 (BACK)   |
+| CRSR ↑      | FCTN-E (up)     |
+| CRSR ←      | FCTN-S (left)   |
+| CRSR →      | FCTN-D (right)  |
+| CRSR ↓      | FCTN-X (down)   |
+
+The cursor keys and HELP key are remapped according to the table
+above both when pseudokeys are enabled and when they are disabled.
 
 
 ### Joysticks

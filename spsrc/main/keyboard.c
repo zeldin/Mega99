@@ -129,6 +129,7 @@ static const char keymap_mk1[0x80] = {
 
   [0x3C] = ' ',
 
+  [0x43] = '\x03', // HELP
   [0x49] = '\x04', // Arrow up
   [0x07] = '\x05', // Arrow down
   [0x02] = '\x06', // Arrow right
@@ -138,11 +139,14 @@ static const char keymap_mk1[0x80] = {
   [0x3F] = '\x1b', // RUN/STOP
   [0x47] = '\x1b', // Escape
   [0x39] = '\x1e', // Enter menu
-  [0x43] = '\x1f', // Hide/reveal console
+  [0x42] = '\x1f', // Hide/reveal console
 
 };
 
 static const char keymap_mk1_pseudo[0x80] = {
+
+  [0x3F] = TIKEY_4 | PSEUDO_FCTN,
+  [0x47] = TIKEY_9 | PSEUDO_FCTN,
 
   [0x38] = TIKEY_1,
   [0x3B] = TIKEY_2,
@@ -157,7 +161,7 @@ static const char keymap_mk1_pseudo[0x80] = {
   [0x28] = (TIKEY_Equals + 48) | PSEUDO_SHIFT,
   [0x2B] = TIKEY_Slash | PSEUDO_SHIFT,
   [0x30] = TIKEY_Z | PSEUDO_FCTN,
-  [0x33] = TIKEY_9 | PSEUDO_FCTN,
+  [0x33] = TIKEY_5 | PSEUDO_FCTN,
   [0x4C] = TIKEY_1 | PSEUDO_FCTN,
 
   [0x3E] = TIKEY_Q,
@@ -173,6 +177,7 @@ static const char keymap_mk1_pseudo[0x80] = {
   [0x2E] = TIKEY_2 | PSEUDO_SHIFT,
   [0x31] = TIKEY_8 | PSEUDO_SHIFT,
   [0x36] = TIKEY_6 | PSEUDO_SHIFT,
+  [0x4B] = TIKEY_8 | PSEUDO_FCTN,
 
   [0x0A] = TIKEY_A,
   [0x0D] = TIKEY_S,
@@ -204,6 +209,8 @@ static const char keymap_mk1_pseudo[0x80] = {
 };
 
 static const char keymap_mk1_pseudo_shift[0x80] = {
+
+  [0x3F] = TIKEY_6 | PSEUDO_FCTN,
 
   [0x38] = TIKEY_1 | PSEUDO_SHIFT,
   [0x3B] = TIKEY_P | PSEUDO_FCTN,
@@ -450,10 +457,11 @@ static char do_pseudokey(char key, uint16_t keycode, bool send)
   unsigned remapped = 0;
   if ((keycode & SHIFT_STATE_CTRL))
     key_high |= TIMOD_CTRL;
-  if (key >= 4 && key <= 7) {
-    static const uint8_t arrow_keys[] = { TIKEY_E, TIKEY_X, TIKEY_D, TIKEY_S };
+  if (key >= 3 && key <= 7) {
+    static const uint8_t arrow_keys[] =
+      { TIKEY_7, TIKEY_E, TIKEY_X, TIKEY_D, TIKEY_S };
     key_high |= TIMOD_FCTN;
-    remapped = arrow_keys[key-4];
+    remapped = arrow_keys[key-3];
   } else {
     const char *keymap = NULL;
     if (KEYBOARD_MODEL(keycode) == 1) {
@@ -532,7 +540,7 @@ void keyboard_task(void)
     key = apply_shiftstate(key, keycode);
 
   if (pseudokey_mode == 1 ||
-      (key >= 4 && key <= 7 && !REGS_KEYBOARD.block &&
+      (key >= 3 && key <= 7 && !REGS_KEYBOARD.block &&
        !(keycode & SHIFT_STATE_FCTN)))
     key = do_pseudokey(key, keycode, true);
   else {
