@@ -535,8 +535,11 @@ void keyboard_task(void)
       (key >= 4 && key <= 7 && !REGS_KEYBOARD.block &&
        !(keycode & SHIFT_STATE_FCTN)))
     key = do_pseudokey(key, keycode, true);
-  else if (pseudokey_mode)
-    key = do_pseudokey(key, keycode, false);
+  else {
+    if (pseudokey_mode)
+      key = do_pseudokey(key, keycode, false);
+    pseudokey_active = keycode | KEY_RELEASE;
+  }
 
   if (!key)
     return;
