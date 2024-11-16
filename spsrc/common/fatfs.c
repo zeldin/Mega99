@@ -19,8 +19,8 @@ typedef enum {
   OP_WRITE
 } fatfs_op_t;
 
-static sdcard_type_t current_card_type = SDCARD_REMOVED;
-static uint32_t current_card_id = 0;
+static sdcard_type_t current_card_type[2] = { SDCARD_REMOVED, SDCARD_REMOVED };
+static uint32_t current_card_id[2] = { 0, 1 };
 static uint32_t fatfs_fat_start, fatfs_data_start, fatfs_root_dir_start;
 static uint8_t fatfs_cluster_shift, fatfs_blocks_per_cluster;
 static uint16_t fatfs_root_dir_entries;
@@ -128,33 +128,56 @@ static int fatfs_check_fs(uint32_t card_id);
 
 static int fatfs_check_card(uint32_t card_id, fatfs_op_t op)
 {
+  static unsigned last_cn;
+  unsigned cn;
+  if (op == OP_INIT)
+    cn = sdcard_get_card_number() & 1;
+  else
+    sdcard_set_card_number(cn = card_id & 1);
   uint32_t status = sdcard_status();
   if ((status & (SDCARD_STATUS_CHANGED | SDCARD_STATUS_PRESENT)) !=
       SDCARD_STATUS_PRESENT)
-    current_card_type = SDCARD_REMOVED;
+    current_card_type[cn] = SDCARD_REMOVED;
   if (op != OP_INIT) {
-    if (current_card_type <= SDCARD_INVALID || current_card_id != card_id)
+    if (current_card_type[cn] <= SDCARD_INVALID ||
+	current_card_id[cn] != card_id)
       return -ECARDCHANGED;
     if (op == OP_WRITE && (status & SDCARD_STATUS_WRITEPROT))
       return -EREADONLYFS;
+    if (cn != last_cn) {
+      last_cn = cn;
+      int r = fatfs_check_fs(card_id);
+      if (r < 0) {
+	current_card_type[cn] = SDCARD_INVALID;
+	return r;
+      }
+    }
     return 0;
   }
   if (!(status & SDCARD_STATUS_PRESENT))
     return -ENOCARD;
-  if (current_card_type == SDCARD_REMOVED) {
+  if (current_card_type[cn] == SDCARD_REMOVED) {
     /* New card */
-    if ((current_card_type = sdcard_activate()) > SDCARD_INVALID) {
-      int r = fatfs_check_fs(++current_card_id);
+    last_cn = cn;
+    if ((current_card_type[cn] = sdcard_activate()) > SDCARD_INVALID) {
+      int r = fatfs_check_fs(current_card_id[cn] += 2);
       if (r < 0) {
-	current_card_type = SDCARD_INVALID;
-	--current_card_id;
+	current_card_type[cn] = SDCARD_INVALID;
+	current_card_id[cn] -= 2;
 	return r;
       }
     }
+  } else if (current_card_type[cn] != SDCARD_INVALID && cn != last_cn) {
+    last_cn = cn;
+    int r = fatfs_check_fs(current_card_id[cn]);
+    if (r < 0) {
+      current_card_type[cn] = SDCARD_INVALID;
+      return r;
+    }
   }
-  if (current_card_type == SDCARD_REMOVED)
+  if (current_card_type[cn] == SDCARD_REMOVED)
     return -ENOCARD;
-  else if (current_card_type == SDCARD_INVALID)
+  else if (current_card_type[cn] == SDCARD_INVALID)
     return -EBADCARD;
   else
     return 0;
@@ -167,7 +190,7 @@ static uint32_t fatfs_cluster_block_id(uint32_t cluster, uint32_t sub)
 
 static int fatfs_block_read(uint32_t blkid, uint8_t *ptr, uint32_t card_id)
 {
-  if (current_card_type < SDCARD_SDHC)
+  if (current_card_type[card_id & 1] < SDCARD_SDHC)
     blkid <<= 9;
   unsigned retries;
   for (retries = 0; retries < 5; retries ++) {
@@ -350,11 +373,13 @@ static int fatfs_search_dir(const char *filename,
   uint8_t lfn_key = fatfs_compute_lfn_key(filename);
   uint8_t buf[512];
   const uint8_t *p;
+  int r = fatfs_check_card(card_id, OP_READ);
+  if (r < 0)
+    return r;
   for (;;) {
     if (!dirfh->current_cluster && !rde)
       break;
     if (!entry) {
-      int r;
       p = buf;
       if (dirfh->current_cluster)
 	r = fatfs_cluster_block_read(blk, cnr++, buf, card_id);
@@ -458,7 +483,7 @@ int fatfs_open_rootdir(fatfs_filehandle_t *fh)
   int r;
   if ((r = fatfs_check_card(0, OP_INIT)) < 0)
     return r;
-  fh->card_id = current_card_id;
+  fh->card_id = current_card_id[sdcard_get_card_number() & 1];
   fh->start_cluster = fatfs_root_dir_start;
   if (fatfs_fat32) {
     fh->size = 0;
@@ -569,7 +594,7 @@ int fatfs_read(fatfs_filehandle_t *fh, void *p, uint32_t bytes)
 
 static int fatfs_block_write(uint32_t blkid, const uint8_t *ptr, uint32_t card_id)
 {
-  if (current_card_type < SDCARD_SDHC)
+  if (current_card_type[card_id & 1] < SDCARD_SDHC)
     blkid <<= 9;
   unsigned retries;
   for (retries = 0; retries < 5; retries ++) {
@@ -955,8 +980,11 @@ int fatfs_open_or_create(const char *filename, fatfs_filehandle_t *fh,
   r = fatfs_search_dir(filename, fh, dirent_fh);
   if (r >= 0)
     r = ((r & 24)? -EISDIR : 0);
-  if (r == -EFILENOTFOUND)
-    r = fatfs_create_dir_entry(filename, fh, dirent_fh);
+  if (r == -EFILENOTFOUND) {
+    r = fatfs_check_card(dirent_fh->card_id, OP_WRITE);
+    if (r >= 0)
+      r = fatfs_create_dir_entry(filename, fh, dirent_fh);
+  }
   return r;
 }
 
@@ -1122,6 +1150,10 @@ int fatfs_read_directory(fatfs_filehandle_t *fh, fatfs_filehandle_t *entry,
   uint32_t cluster = fh->current_cluster;
   uint16_t lfn_match = ~0;
   int entry_type = 0;
+  int r = fatfs_check_card(fh->card_id, OP_READ);
+  if (r < 0)
+    return r;
+
   if (!namebuf)
     namebuf_len = 0;
   for (;;) {
@@ -1130,7 +1162,6 @@ int fatfs_read_directory(fatfs_filehandle_t *fh, fatfs_filehandle_t *entry,
     if (!cluster && pos >= fh->size)
       break;
     if (!p) {
-      int r;
       if (cluster) {
 	uint32_t sub = (pos >> 9) & (fatfs_blocks_per_cluster-1);
 	r = fatfs_cluster_block_read(cluster, sub, buf, fh->card_id);
@@ -1228,10 +1259,13 @@ int fatfs_setsize(fatfs_filehandle_t *fh, fatfs_filehandle_t *dirent_fh,
 		  uint32_t newsize)
 {
   uint8_t buf[512];
-  int r;
   uint32_t cluster = fh->start_cluster;
   uint32_t nblk = newsize >> 9;
   bool new_alloc = false;
+  int r = fatfs_check_card(fh->card_id, OP_WRITE);
+  if (r < 0)
+    return r;
+
   if ((newsize & 0x1ff))
     nblk ++;
   if (!newsize) {

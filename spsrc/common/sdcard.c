@@ -21,17 +21,21 @@
 
 uint32_t sdcard_status(void)
 {
+  unsigned cardnum = REGS_SDCARD.sd_select & 0xfu;
   uint32_t ctrl = REGS_SDCARD.ctrl;
-  if ((ctrl & 0xcu)) {
+  uint32_t mask = 0xcu;
+  if (!cardnum)
+    mask <<= 4;
+  if ((ctrl & mask)) {
     /* Inserted or removed, wait for bounce to settle */
     uint32_t time0 = timer_read();
     uint32_t time_last = time0;
     for (;;) {
       uint32_t t = timer_read();
-      if ((ctrl & 0xcu))
-	REGS_SDCARD.ctrl = ctrl | 0xcu;
+      if ((ctrl & mask))
+	REGS_SDCARD.ctrl = ctrl | mask;
       ctrl = REGS_SDCARD.ctrl;
-      if ((ctrl & 0xcu)) {
+      if ((ctrl & mask)) {
 	time_last = t;
 	if ((t - time0) >= TIMEOUT_DEBOUNCE) {
 	  // The card failed to debounce, just report card extracted
@@ -42,8 +46,10 @@ uint32_t sdcard_status(void)
 	// Debounce complete
 	break;
     }
-    ctrl |= SDCARD_STATUS_CHANGED;
+    ctrl |= mask;
   }
+  if (!cardnum)
+    ctrl >>= 4;
   if (!(ctrl & SDCARD_STATUS_PRESENT))
     // Mask WP if no card inserted
     ctrl &= ~SDCARD_STATUS_WRITEPROT;
@@ -255,12 +261,12 @@ bool sdcard_write_block(uint32_t blkid, const uint8_t *ptr)
 
 unsigned sdcard_num_cards(void)
 {
-  return (REGS_SDCARD.ctrl >> 4) & 0xfu;
+  return (REGS_SDCARD.sd_select >> 4) & 0xfu;
 }
 
 unsigned sdcard_get_card_number(void)
 {
-  return REGS_SDCARD.sd_select;
+  return REGS_SDCARD.sd_select & 0xfu;
 }
 
 void sdcard_set_card_number(unsigned n)

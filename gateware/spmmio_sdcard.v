@@ -10,8 +10,8 @@ module spmmio_sdcard(input             clk,
 
 		     output reg        sdcard_select,
 		     output reg	       sdcard_cs,
-		     input	       sdcard_cd,
-		     input	       sdcard_wp,
+		     input [0:1]       sdcard_cd,
+		     input [0:1]       sdcard_wp,
 		     output reg	       sdcard_sck,
 		     input	       sdcard_miso,
 		     output	       sdcard_mosi);
@@ -21,13 +21,13 @@ module spmmio_sdcard(input             clk,
    wire crc7_x;
    wire crc16_x;
 
-   reg cd_sync0;
-   reg cd_sync1;
-   reg cd_sync2;
-   reg wp_sync;
+   reg [0:1] cd_sync0;
+   reg [0:1] cd_sync1;
+   reg [0:1] cd_sync2;
+   reg [0:1] wp_sync;
    reg miso_sync;
-   reg inserted;
-   reg removed;
+   reg [0:1] inserted;
+   reg [0:1] removed;
    reg busy;
    reg wait_r;
    reg [0:7] sr_in;
@@ -48,11 +48,14 @@ module spmmio_sdcard(input             clk,
       case (adr)
 	4'h0: begin
 	   q[0:7] <= divider;
-	   q[8:11] <= num_sdcard;
-	   q[12] <= inserted;
-	   q[13] <= removed;
-	   q[14] <= wp_sync;
-	   q[15] <= cd_sync2;
+	   q[8] <= inserted[0];
+	   q[9] <= removed[0];
+	   q[10] <= wp_sync[0];
+	   q[11] <= cd_sync2[0];
+	   q[12] <= inserted[1];
+	   q[13] <= removed[1];
+	   q[14] <= wp_sync[1];
+	   q[15] <= cd_sync2[1];
 	   q[19] <= sdcard_cs;
 	   q[22] <= wait_r;
 	   q[23] <= busy;
@@ -60,6 +63,7 @@ module spmmio_sdcard(input             clk,
 	end
 	4'h1: begin
 	   q[0:7] <= { crc7, 1'b1 };
+	   q[8:11] <= num_sdcard;
 	   q[15] <= sdcard_select;
 	   q[16:31] <= crc16;
 	end
@@ -75,8 +79,8 @@ module spmmio_sdcard(input             clk,
       miso_sync <= sdcard_miso;
 
       if (reset) begin
-	 inserted <= 1'b0;
-	 removed <= 1'b0;
+	 inserted <= 2'b00;
+	 removed <= 2'b00;
 	 busy <= 1'b0;
 	 wait_r <= 1'b0;
 	 sdcard_select <= 1'b0;
@@ -91,10 +95,14 @@ module spmmio_sdcard(input             clk,
 	 crc16 <= 16'h0000;
 	 crc16_is_mosi <= 1'b0;
       end else begin
-	 if (cd_sync1 && !cd_sync2)
-	   inserted <= 1'b1;
-	 else if (cd_sync2 && !cd_sync1)
-	   removed <= 1'b1;
+	 if (cd_sync1[0] && !cd_sync2[0])
+	   inserted[0] <= 1'b1;
+	 else if (cd_sync2[0] && !cd_sync1[0])
+	   removed[0] <= 1'b1;
+	 if (cd_sync1[1] && !cd_sync2[1])
+	   inserted[1] <= 1'b1;
+	 else if (cd_sync2[1] && !cd_sync1[1])
+	   removed[1] <= 1'b1;
 
 	 if (busy) begin
 	    if (cyclecnt == divider) begin
@@ -128,15 +136,16 @@ module spmmio_sdcard(input             clk,
 	 if (cs && we && sel[1])
 	   case (adr)
 	     4'h0: begin
+		if (d[8])
+		  inserted[0] <= 1'b0;
+		if (d[9])
+		  removed[0] <= 1'b0;
 		if (d[12])
-		  inserted <= 1'b0;
+		  inserted[1] <= 1'b0;
 		if (d[13])
-		  removed <= 1'b0;
+		  removed[1] <= 1'b0;
 	     end
-	     4'h1: if (num_sdcard > 1 && sdcard_select != d[15]) begin
-		sdcard_select <= d[15];
-		removed <= 1'b1;
-	     end
+	     4'h1: if (num_sdcard > 1) sdcard_select <= d[15];
 	   endcase // case (adr)
 	 
 	 if (cs && we && sel[2])

@@ -64,11 +64,8 @@ static const char * fileselector_menu_entries[MAX_FILESELECTOR_ENTRIES];
 static char fileselector_menu_names[MAX_FILESELECTOR_FILES][MAX_FILESELECTOR_NAMELEN+1];
 static char textinput_buffer[256];
 
-static struct fileselector_savedir_s {
-  fatfs_filehandle_t dirfh;
-  unsigned card_number;
-} saved_rpk_dir, saved_dsk_dir, saved_tap_dir, saved_mm_dir,
-  *fileselector_saved_dir = NULL;
+static fatfs_filehandle_t saved_rpk_dir, saved_dsk_dir,
+  saved_tap_dir, saved_mm_dir, *fileselector_saved_dir = NULL;
 
 static void main_menu_select(unsigned entry);
 static void fileselector_menu_select(unsigned entry);
@@ -76,7 +73,7 @@ static void fileselector_menu_refill(void);
 static void menu_open_fileselector(const char *title,
 				   void (*open_func)(fatfs_filehandle_t *fh,
 						     const char *filename),
-				   struct fileselector_savedir_s *saved_dir);
+				   fatfs_filehandle_t *saved_dir);
 static void menu_text_input(const char *title,
 			    void (*input_func)(const char *data, unsigned len));
 
@@ -394,10 +391,8 @@ static int fileselector_menu_fill(bool root)
   if (root &&
       (r = fatfs_open_rootdir(&fileselector_dir)) < 0)
     return r;
-  if (fileselector_saved_dir) {
-    fileselector_saved_dir->card_number = sdcard_get_card_number()+1;
-    fileselector_saved_dir->dirfh = fileselector_dir;
-  }
+  if (fileselector_saved_dir)
+    *fileselector_saved_dir = fileselector_dir;
   while((r = fatfs_read_directory(&fileselector_dir, &fileselector_file[fileselector_cnt],
 				  (p = fileselector_menu_names[fileselector_cnt])+1,
 				  MAX_FILESELECTOR_NAMELEN)) > 0) {
@@ -452,7 +447,7 @@ static void fileselector_menu_select(unsigned entry)
 static void menu_open_fileselector(const char *title,
 				   void (*open_func)(fatfs_filehandle_t *fh,
 						     const char *filename),
-				   struct fileselector_savedir_s *saved_dir)
+				   fatfs_filehandle_t *saved_dir)
 {
   fileselector_open_func = open_func;
   fileselector_menu_entries[0] = title;
@@ -461,9 +456,8 @@ static void menu_open_fileselector(const char *title,
   int r = -ECARDCHANGED;
   if (saved_dir != NULL) {
     fileselector_saved_dir = saved_dir;
-    if (saved_dir->card_number) {
-      sdcard_set_card_number(saved_dir->card_number-1);
-      fileselector_dir = saved_dir->dirfh;
+    if (saved_dir->start_cluster) {
+      fileselector_dir = *saved_dir;
       r = fileselector_menu_fill(false);
     }
   } else
