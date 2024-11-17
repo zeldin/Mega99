@@ -977,6 +977,8 @@ int fatfs_open_or_create(const char *filename, fatfs_filehandle_t *fh,
   int r;
   if ((r = fatfs_open_rootdir(dirent_fh)) < 0)
     return r;
+  if (!*filename)
+    return -EISDIR;
   r = fatfs_search_dir(filename, fh, dirent_fh);
   if (r >= 0)
     r = ((r & 24)? -EISDIR : 0);

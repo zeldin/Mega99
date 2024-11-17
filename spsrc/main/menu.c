@@ -75,7 +75,8 @@ static void menu_open_fileselector(const char *title,
 						     const char *filename),
 				   fatfs_filehandle_t *saved_dir);
 static void menu_text_input(const char *title,
-			    void (*input_func)(const char *data, unsigned len));
+			    void (*input_func)(const char *data, unsigned len),
+			    bool (*filter_func)(char key));
 
 static const struct menu_page main_menu = {
   main_menu_entries,
@@ -101,7 +102,26 @@ static void (*fileselector_open_func)(fatfs_filehandle_t *fh, const char *filena
 static unsigned fileselector_cnt;
 static unsigned menu_dsk_number;
 static void (*textinput_func)(const char *data, unsigned len) = NULL;
+static bool (*textinput_filter)(char key) = NULL;
 static unsigned textinput_cnt, textinput_offs;
+
+static bool filename_filter(char key)
+{
+  switch (key) {
+    /* Characters not allowed in VFAT filenames */
+  case '*':
+  case '"':
+  case '/':
+  case '\\':
+  case '<':
+  case '>':
+  case ':':
+  case '|':
+  case '?':
+    return false;
+  }
+  return true;
+}
 
 static void menu_open_func_rpk(fatfs_filehandle_t *fh, const char *filename)
 {
@@ -158,10 +178,12 @@ static void main_menu_select(unsigned entry)
 			   &saved_tap_dir);
     break;
   case 10:
-    menu_text_input("&Enter filename for saving CS1 buffer", menu_text_input_func_save_cs1);
+    menu_text_input("&Enter filename for saving CS1 buffer",
+		    menu_text_input_func_save_cs1, filename_filter);
     break;
   case 11:
-    menu_text_input("&Enter filename for saving CS2 buffer", menu_text_input_func_save_cs2);
+    menu_text_input("&Enter filename for saving CS2 buffer",
+		    menu_text_input_func_save_cs2, filename_filter);
     break;
   case 13:
     menu_open_fileselector("&Select Mini Memory RAM image to open",
@@ -169,7 +191,7 @@ static void main_menu_select(unsigned entry)
     break;
   case 14:
     menu_text_input("&Enter filename for saving MM RAM",
-		    menu_text_input_func_save_mm);
+		    menu_text_input_func_save_mm, filename_filter);
     break;
   case 16:
     reset_set_other(true);
@@ -477,9 +499,11 @@ static void menu_open_fileselector(const char *title,
 }
 
 static void menu_text_input(const char *title,
-			    void (*input_func)(const char *data, unsigned len))
+			    void (*input_func)(const char *data, unsigned len),
+			    bool (*filter_func)(char key))
 {
   textinput_func = input_func;
+  textinput_filter = filter_func;
   textinput_cnt = 0;
   textinput_offs = 0;
   menu_textinput_draw(&menu_window, title);
@@ -500,6 +524,7 @@ void menu_close(void)
     return;
   if (textinput_func) {
     textinput_func = NULL;
+    textinput_filter = NULL;
     menu_set(current_menu);
   } else if (current_menu->parent)
     menu_set(current_menu->parent);
@@ -555,11 +580,15 @@ static void menu_textinput_key(struct overlay_window *ow, char key)
       }
       break;
     case '\n':
+      while (textinput_cnt > 0 && textinput_buffer[textinput_cnt-1] == ' ')
+	--textinput_cnt;
       textinput_buffer[textinput_cnt] = 0;
       textinput_func(textinput_buffer, textinput_cnt);
       menu_close();
     }
-  else if(key >= 127 && key < 160)
+  else if (key >= 127 && key < 160)
+    ;
+  else if (textinput_filter && !textinput_filter(key))
     ;
   else if (textinput_cnt < sizeof(textinput_buffer)-1) {
     overlay_window_putchar(ow, key);
