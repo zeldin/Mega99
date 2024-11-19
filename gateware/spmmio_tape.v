@@ -32,7 +32,7 @@ module spmmio_tape(input             clk,
    reg	      fmt_1bit;
    reg [0:10] sample_rate;
    reg [0:10] rate_counter;
-   reg [13:0] head, tail; // Using big-endian bit numbering for head triggers a Vivado bug...
+   reg [0:13] head, tail;
    reg	      data_available;
    reg	      data_fetched;
    reg [0:31] memory_reg;
@@ -212,10 +212,10 @@ module spmmio_tape(input             clk,
 	data_fetched <= 1'b0;
 	if (playing && !data_available && !data_fetched &&
 	    head != tail) begin
-	   memory_reg <= { memory0[head[0 +: memaddr_bits]],
-			   memory1[head[0 +: memaddr_bits]],
-			   memory2[head[0 +: memaddr_bits]],
-			   memory3[head[0 +: memaddr_bits]] };
+	   memory_reg <= { memory0[head[13 -: memaddr_bits]],
+			   memory1[head[13 -: memaddr_bits]],
+			   memory2[head[13 -: memaddr_bits]],
+			   memory3[head[13 -: memaddr_bits]] };
 	   data_fetched <= 1'b1;
 	   head <= head + 14'd1;
 	end
@@ -234,7 +234,7 @@ module spmmio_tape(input             clk,
 	if (cs && adr[0] == 1'b1 && we) begin
 	   if (sel[0])
 	     case (adr[11:13])
-	       3'h1: head[6 +: 8] <= d[0 +: 8];
+	       3'h1: head[0 +: 8] <= d[0 +: 8];
 	     endcase // case (adr[11:13])
 	   if (sel[1])
 	     case (adr[11:13])
@@ -244,17 +244,17 @@ module spmmio_tape(input             clk,
 		  fmt_16bit <= d[14];
 		  playing <= d[15];
 	       end
-	       3'h1: head[0 +: 6] <= d[8 +: 6];
+	       3'h1: head[8 +: 6] <= d[8 +: 6];
 	     endcase // case (adr[11:13])
 	   if (sel[2])
 	     case (adr[11:13])
 	       3'h0: sample_rate[0 +: 3] <= d[23 -: 3];
-	       3'h1: tail[6 +: 8] <= d[16 +: 8];
+	       3'h1: tail[0 +: 8] <= d[16 +: 8];
 	     endcase // case (adr[11:13])
 	   if (sel[3])
 	     case (adr[11:13])
 	       3'h0: sample_rate[3 +: 8] <= d[24 +: 8];
-	       3'h1: tail[0 +: 6] <= d[24 +: 6];
+	       3'h1: tail[8 +: 6] <= d[24 +: 6];
 	     endcase // case (adr[11:13])
 	end
 
