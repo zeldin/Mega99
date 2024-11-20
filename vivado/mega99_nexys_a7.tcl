@@ -461,6 +461,7 @@ set_msg_config -id {Synth 8-7129} -string {{.*Port d\[.*\] in module spmmio_sdca
 set_msg_config -id {Synth 8-7129} -string {{.*Port sel\[.\] in module spmmio_misc.*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{.*Port d\[.*\] in module spmmio_misc.*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{.*Port adr\[.\] in module spmmio_tape.*}} -regexp -suppress
+set_msg_config -id {Synth 8-7129} -string {{Port adr_i[22] in module spmmio}} -suppress
 set_msg_config -id {Synth 8-7129} -string {{Port dbin in module peb}} -suppress
 set_msg_config -id {Synth 8-7129} -string {{Port clk_3mhz_en in module peb}} -suppress
 set_msg_config -id {Synth 8-7129} -string {{.*Port wb_adr_i\[.\] in module peb.*}} -regexp -suppress
