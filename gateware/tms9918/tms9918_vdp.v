@@ -51,10 +51,10 @@ module tms9918_vdp(input             reset,
 
    localparam [0:8] VACTIVE = 192;
    localparam [0:8] BBORDER = 24;
-   localparam [0:8] BBLANKING = 3;
+   localparam [0:8] BBLANKING = 3 + (ENABLE_HDMI_TIMING_TWEAKS ? 3 : 0);
    localparam [0:8] VSYNC = 3;
    localparam [0:8] TBLANKING = 13;
-   localparam [0:8] TBORDER = 27;
+   localparam [0:8] TBORDER = 27 - (ENABLE_HDMI_TIMING_TWEAKS ? 3 : 0);
 
    // Internal parameters
 

@@ -68,12 +68,14 @@ By setting the parameter ENABLE_HDMI_TIMING_TWEAKS to 1, the TMS9918
 video timing is tweaked slightly to help with this situation.  What
 it does is to add 2 more pixels of horizontal border on each side,
 and remove 2 pixels of blanking on the right side, making each line
-2 pixels longer in total.  Combined with increasing the oscillator
-frequency to 10.8 MHz, the native timing becomes:
+2 pixels longer in total.  It also reduces the size of the top border
+by 3 lines (adding 3 more lines of bottom blanking instead), making
+it the same size as the bottom border.  Combined with increasing the
+oscillator frequency to 10.8 MHz, the native timing becomes:
 
 - Pixel clock: 5.4 MHz
 - Horizontal:  288 active pixels, 344 total pixels, 15.697674 kHz sweep
-- Vertical:    243 active lines,  262 total lines,  59.914788 Hz sweep
+- Vertical:    240 active lines,  262 total lines,  59.914788 Hz sweep
 
 While the pixel clock rate has been increased by 0.6%, the sweep rates
 have been decreased by only 0.013% (130 ppm), so software is unlikely
@@ -87,7 +89,7 @@ becomes:
 
 - Pixel Clock:  27.0 MHz
 - Horizontal:   720 active pixels, 860 total pixels, 31.395348 kHz sweep
-- Verical:      486 active lines,  524 total lines,  59.914788 Hz sweep
+- Verical:      480 active lines,  524 total lines,  59.914788 Hz sweep
 
 This is good enough that most HDMI displays will accept it.
 
