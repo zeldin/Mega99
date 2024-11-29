@@ -33,6 +33,7 @@ module spmmio_tape(input             clk,
    reg [0:10] sample_rate;
    reg [0:10] rate_counter;
    reg [0:13] head, tail;
+   reg [0:1]  subtail;
    reg	      data_available;
    reg	      data_fetched;
    reg [0:31] memory_reg;
@@ -139,6 +140,7 @@ module spmmio_tape(input             clk,
 	rate_counter <= 11'd0;
 	head <= 14'd0;
 	tail <= 14'd0;
+	subtail <= 2'd0;
 	data_available <= 1'b0;
 	data_fetched <= 1'b0;
 	phase <= 1'b0;
@@ -254,7 +256,10 @@ module spmmio_tape(input             clk,
 	   if (sel[3])
 	     case (adr[11:13])
 	       3'h0: sample_rate[3 +: 8] <= d[24 +: 8];
-	       3'h1: tail[8 +: 6] <= d[24 +: 6];
+	       3'h1: begin
+		  tail[8 +: 6] <= d[24 +: 6];
+		  subtail <= d[30 +: 2];
+	       end
 	     endcase // case (adr[11:13])
 	end
 
@@ -332,6 +337,7 @@ module spmmio_tape(input             clk,
 	3'h1: begin
 	   q[0 +: 14] <= head;
 	   q[16 +: 14] <= tail;
+	   q[30 +: 2] <= subtail;
 	end
 	3'h2: begin
 	   q[0 +: 16] <= memsize;
