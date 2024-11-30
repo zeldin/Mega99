@@ -12,6 +12,20 @@ struct mmio_regs_misc {
 
 #define REGS_MISC (*(volatile struct mmio_regs_misc *)(void *)0xff000000)
 
+#define REGS_MISC_LEDS_RED   UINT32_C(0x02)
+#define REGS_MISC_LEDS_GREEN UINT32_C(0x01)
+
+#define REGS_MISC_ENABLE_RAM32K UINT16_C(0x80)
+#define REGS_MISC_ENABLE_FDC    UINT16_C(0x40)
+#define REGS_MISC_ENABLE_VSP    UINT16_C(0x20)
+#define REGS_MISC_ENABLE_1KSP   UINT16_C(0x10)
+
+#define REGS_MISC_RESET_CPU UINT16_C(0x80)
+#define REGS_MISC_RESET_PSI UINT16_C(0x40)
+#define REGS_MISC_RESET_VDP UINT16_C(0x20)
+#define REGS_MISC_RESET_SGC UINT16_C(0x10)
+#define REGS_MISC_RESET_VSP UINT16_C(0x08)
+
 struct mmio_regs_sdcard {
   uint16_t ctrl;
   uint16_t cmd;
@@ -32,6 +46,9 @@ struct mmio_regs_uart {
 };
 
 #define REGS_UART (*(volatile struct mmio_regs_uart *)(void *)0xff020000)
+
+#define REGS_UART_STATUS_RXVALID UINT8_C(2)
+#define REGS_UART_STATUS_TXREADY UINT8_C(1)
 
 struct mmio_regs_overlay {
   struct {

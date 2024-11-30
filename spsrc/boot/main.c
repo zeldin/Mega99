@@ -61,14 +61,14 @@ static int load_rom(const char *filename, uint8_t *ptr, uint32_t len)
 
 void main()
 {
-  REGS_MISC.reset = 0xff;
-  REGS_MISC.reset = 0xdf; // Release VDP from reset
+  REGS_MISC.reset = ~0;
+  REGS_MISC.reset = ~REGS_MISC_RESET_VDP; // Release VDP from reset
 
   timer_init();
   uart_init();
   display_init();
 
-  REGS_MISC.leds = 1u;
+  REGS_MISC.leds = REGS_MISC_LEDS_GREEN;
 
   /* Run main binary if it exists */
   if (load_rom("mega99sp.bin", (void *)0x40000000, 0) > 0)
@@ -80,11 +80,11 @@ void main()
       load_rom("994a_grom0.u500", GROM(0), 6144) >= 0 &&
       load_rom("994a_grom1.u501", GROM(1), 6144) >= 0 &&
       load_rom("994a_grom2.u502", GROM(2), 6144) >= 0) {
-    REGS_MISC.reset = 0xff;
+    REGS_MISC.reset = ~0;
     memset(VDPRAM, 0, 0x1000);
-    REGS_MISC.reset = 0x00; // Release CPU from reset
+    REGS_MISC.reset = 0; // Release CPU from reset
   } else {
       display_printf("ROM Loading failed!\n");
-      REGS_MISC.leds = 2u;
+      REGS_MISC.leds = REGS_MISC_LEDS_RED;
   }
 }

@@ -25,7 +25,7 @@ void *__deregister_frame_info(__attribute__((unused)) const void *p)
 void exception_handler()
 {
   unsigned i;
-  REGS_MISC.leds = 2u;
+  REGS_MISC.leds = REGS_MISC_LEDS_RED;
   fprintf(stderr, "Unhandled exception at %p, system halted\n",
 	  (void *)or1k_mfspr(OR1K_SPR_SYS_EPCR_ADDR(0)));
   for(;;)

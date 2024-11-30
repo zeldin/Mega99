@@ -18,10 +18,10 @@ static void reset_change(uint16_t mask, uint16_t value)
 
 void reset_set_vdp(bool assert)
 {
-  reset_change(UINT16_C(0x20), (assert? ~UINT16_C(0) : UINT16_C(0)));
+  reset_change(REGS_MISC_RESET_VDP, (assert? UINT16_C(0) : UINT16_C(0)));
 }
 
 void reset_set_other(bool assert)
 {
-  reset_change(UINT16_C(0xdf), (assert? ~UINT16_C(0) : UINT16_C(0)));
+  reset_change(~REGS_MISC_RESET_VDP, (assert? ~UINT16_C(0) : UINT16_C(0)));
 }

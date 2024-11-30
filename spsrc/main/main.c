@@ -112,7 +112,7 @@ void main()
   display_init();
   overlay_init();
 
-  REGS_MISC.leds = 1u;
+  REGS_MISC.leds = REGS_MISC_LEDS_GREEN;
 
   zipfile_init();
 
@@ -126,7 +126,7 @@ void main()
       load_rom("fdc_dsr.u26", "ti99_fdc.zip", FDCROM, 4096) < 0 ||
       load_rom("fdc_dsr.u27", "ti99_fdc.zip", FDCROM+4096, 4096) < 0) {
     fprintf(stderr, "ROM Loading failed!\n");
-    REGS_MISC.leds = 2u;
+    REGS_MISC.leds = REGS_MISC_LEDS_RED;
     return;
   }
 
@@ -141,7 +141,8 @@ void main()
   REGS_MISC.leds |= 0x00770000u;
 
   // enable 32K RAM, FDC, and speech
-  REGS_MISC.enable = 0xe0u;
+  REGS_MISC.enable =
+    REGS_MISC_ENABLE_RAM32K | REGS_MISC_ENABLE_FDC | REGS_MISC_ENABLE_VSP;
 
   printf("Starting TMS9900\n");
   keyboard_unblock();

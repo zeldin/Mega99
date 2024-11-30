@@ -11,7 +11,7 @@
 
 bool uart_check_read(void)
 {
-  return REGS_UART.status & 2u;
+  return REGS_UART.status & REGS_UART_STATUS_RXVALID;
 }
 
 uint8_t uart_read(void)
@@ -21,7 +21,7 @@ uint8_t uart_read(void)
 
 void uart_write(uint8_t b)
 {
-  while (!(REGS_UART.status & 1u))
+  while (!(REGS_UART.status & REGS_UART_STATUS_TXREADY))
     ;
   REGS_UART.tx_data = b;
 }
