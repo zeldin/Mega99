@@ -138,7 +138,9 @@ CORE_VERSION = 1.3
 
 EMBEDDED_FILES = mega99sp.bin
 
-all : mega99sp.bin mega65r6
+default : mega99sp.bin mega65r6
+
+all : mega99sp.bin mega65r6 mega65r3 nexys_a7-50t nexys_a7-100t
 
 mega65r6: mega99_r6.cor
 
