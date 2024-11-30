@@ -172,6 +172,10 @@ module mega99_mega65r3_top(input        CLK100MHZ,
    wire	       reset_9918;
    wire	       reset_9919;
    wire	       reset_5200;
+   wire	       enable_ram32k;
+   wire	       enable_fdc;
+   wire	       enable_vsp;
+   wire	       enable_1kscratch;
 
    wire	       tp_valid;
    wire [0:31] tp_pc;
@@ -261,6 +265,8 @@ module mega99_mega65r3_top(input        CLK100MHZ,
 		     .led_green(led_green), .led_red(led_red),
 		     .sw_reset({reset_9900, reset_9901,
 				reset_9918, reset_9919, reset_5200}),
+		     .sw_enable({enable_ram32k, enable_fdc,
+				 enable_vsp, enable_1kscratch}),
 		     .led1_rgb(led1_rgb), .led2_rgb(led2_rgb),
 		     .led3_rgb(led3_rgb), .led4_rgb(led4_rgb),
 		     .drive_activity(drive_activity),
@@ -294,6 +300,8 @@ module mega99_mega65r3_top(input        CLK100MHZ,
       .reset_5200(reset_5200), .cpu_turbo(cpu_turbo),
       .vdp_clk_en(vdp_clk_en), .vga_clk_en(vga_clk_en),
       .overlay_clk_en(overlay_clk_en), .clk_3mhz_en(clk_3mhz_en),
+      .enable_ram32k(enable_ram32k), .enable_fdc(enable_fdc),
+      .enable_vsp(enable_vsp), .enable_1kscratch(enable_1kscratch),
       .vdp_hsync(vdp_hsync), .vdp_vsync(vdp_vsync),
       .vdp_cburst(vdp_cburst), .vdp_color(vdp_color),
       .vdp_color_en(vdp_color_en), .vdp_extvideo(),

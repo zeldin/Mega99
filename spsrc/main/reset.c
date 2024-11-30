@@ -3,9 +3,9 @@
 #include "regs.h"
 #include "timer.h"
 
-static void reset_change(uint32_t mask, uint32_t value)
+static void reset_change(uint16_t mask, uint16_t value)
 {
-  uint32_t old_reset = REGS_MISC.reset;
+  uint16_t old_reset = REGS_MISC.reset;
   value = (value & mask) | (old_reset & ~mask);
   if (value != old_reset) {
     uint32_t t, t0 = timer_read();
@@ -18,10 +18,10 @@ static void reset_change(uint32_t mask, uint32_t value)
 
 void reset_set_vdp(bool assert)
 {
-  reset_change(UINT32_C(0x20), (assert? ~UINT32_C(0) : UINT32_C(0)));
+  reset_change(UINT16_C(0x20), (assert? ~UINT16_C(0) : UINT16_C(0)));
 }
 
 void reset_set_other(bool assert)
 {
-  reset_change(UINT32_C(0xdf), (assert? ~UINT32_C(0) : UINT32_C(0)));
+  reset_change(UINT16_C(0xdf), (assert? ~UINT16_C(0) : UINT16_C(0)));
 }

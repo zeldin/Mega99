@@ -3,6 +3,8 @@ module peb(input            clk,
 	   input	    cpu_clk_en,
 	   input	    reset,
 	   output [1:3]	    drive_activity,
+	   input	    enable_ram32k,
+	   input	    enable_fdc,
 
 	   input [0:15]	    a,
 	   input [0:7]	    d,
@@ -58,11 +60,12 @@ module peb(input            clk,
       endcase // case (wb_adr_i[0 +: 3])
    end
 
-   peb_ram32k ram32k(.clk(clk), .reset(reset),
+   peb_ram32k ram32k(.clk(clk), .reset(reset), .enable(enable_ram32k),
 		     .a(a), .d(d), .q(q_ram32k), .q_select(q_select_ram32k),
 		     .memen(memen), .we(we), .ready(ready_ram32k));
 
    peb_fdc fdc(.clk(clk), .clk_3mhz_en(cpu_clk_en), .reset(reset),
+	       .enable(enable_fdc),
 	       .a(a), .d(d), .q(q_fdc), .q_select(q_select_fdc),
 	       .memen(memen), .we(we), .cruclk(cruclk), .cruin(cruin_fdc),
 	       .cru_select(cru_select_fdc), .ready(ready_fdc), .led(),

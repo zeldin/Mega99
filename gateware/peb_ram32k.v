@@ -1,5 +1,6 @@
 module peb_ram32k(input            clk,
 		  input		   reset,
+		  input		   enable,
 
 		  input [0:15]	   a,
 		  input [0:7]	   d,
@@ -11,7 +12,7 @@ module peb_ram32k(input            clk,
 
    wire [14:0] addr;
 
-   assign q_select = (a[0:1] == 2'b11 || a[1:2] == 2'b01);
+   assign q_select = enable && (a[0:1] == 2'b11 || a[1:2] == 2'b01);
    assign ready = 1'b1;
 
    assign addr = { a[1], a[0]&a[2], a[3:15] };

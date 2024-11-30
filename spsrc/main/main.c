@@ -140,6 +140,9 @@ void main()
   REGS_MISC.led4_rgb = 0x00ff00u;
   REGS_MISC.leds |= 0x00770000u;
 
+  // enable 32K RAM, FDC, and speech
+  REGS_MISC.enable = 0xe0u;
+
   printf("Starting TMS9900\n");
   keyboard_unblock();
   keyboard_flush();

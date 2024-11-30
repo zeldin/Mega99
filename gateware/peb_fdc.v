@@ -1,6 +1,7 @@
 module peb_fdc(input         clk,
 	       input	     clk_3mhz_en,
 	       input	     reset,
+	       input	     enable,
 
 	       input [0:15]  a,
 	       input [0:7]   d,
@@ -115,7 +116,7 @@ module peb_fdc(input         clk,
    assign d3c = dsel3 & dvena;
 
    assign q_select = dskpgena && (a[0:2] == 3'b010);
-   assign cru_select = (a[0:7] == 8'h11);
+   assign cru_select = enable && (a[0:7] == 8'h11);
    assign dsr_select = q_select && memen && !we;
 
    assign q = (a[0:11] == 12'h5ff ? ~ddb : dsr_rom_data);
@@ -150,7 +151,7 @@ module peb_fdc(input         clk,
 
    /* u23 */
    always @(posedge clk)
-     if (reset) begin
+     if (reset || !enable) begin
 	dskpgena <= 1'b0;
 	kaclk <= 1'b0;
 	waiten <= 1'b0;

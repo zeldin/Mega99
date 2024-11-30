@@ -25,6 +25,10 @@ module mainboard #(
 		 output			   vga_clk_en,
 		 output			   overlay_clk_en,
 		 output			   clk_3mhz_en,
+		 input			   enable_ram32k,
+		 input			   enable_fdc,
+		 input			   enable_vsp,
+		 input			   enable_1kscratch,
 
 		 output			   vdp_hsync,
 		 output			   vdp_vsync,
@@ -194,7 +198,7 @@ module mainboard #(
       d_mpx_lo_valid <= dbin && !(romen | (mb & ramblk));
       d8_grom_valid <= dbin && gs;
       d8_crom_valid <= dbin && romg;
-      d8_vsp_valid <= dbin && sbe;
+      d8_vsp_valid <= enable_vsp && dbin && sbe;
       d8_peb_valid <= dbin && (mbe || memex);
    end
 
@@ -317,7 +321,8 @@ module mainboard #(
 
    tms5200_wrapper #(.audio_bits(audio_bits), .vsm_size(32768))
      vsp(.reset(reset|reset_5200), .clk(clk), .clk_en(vsp_clk_en),
-	 .dd(q8), .dq(d8_vsp), .rs(sbe && !a[5]), .ws(sbe && a[5]),
+	 .dd(q8), .dq(d8_vsp),
+	 .rs(enable_vsp && sbe && !a[5]), .ws(enable_vsp && sbe && a[5]),
 	 .rdy(ready_vsp), .int(), .audioout(audio_vsp),
 	 .wb_adr_i(wb_adr_i[23 -: 18]), .wb_dat_i(wb_dat_i),
 	 .wb_dat_o(wb_dat_sprom), .wb_we_i(wb_we_i),
@@ -330,8 +335,8 @@ module mainboard #(
 		   .wb_sel_i(wb_sel_i), .wb_stb_i(wb_stb_rom),
 		   .wb_ack_o(wb_ack_rom), .wb_cyc_i(wb_cyc_i));
 
-   scratchpad_ram ram(.clk(clk), .cs(mb && ramblk), .we(we),
-		      .a(a), .d(q), .q(d_sp));
+   scratchpad_ram ram(.clk(clk), .enable_1k(enable_1kscratch),
+		      .cs(mb && ramblk), .we(we), .a(a), .d(q), .q(d_sp));
 
    groms grom(.clk(clk), .grclk_en(grom_clk_en), .m(dbin), .gs(gs),
 	      .mo(a[14]), .d(q8), .q(d8_grom), .gready(ready_grom),
@@ -351,6 +356,7 @@ module mainboard #(
 
    peb peb(.clk(clk), .clk_3mhz_en(clk_3mhz_en), .cpu_clk_en(cpu_clk_en),
 	   .reset(reset), .drive_activity(drive_activity),
+	   .enable_ram32k(enable_ram32k), .enable_fdc(enable_fdc),
 	   .a({a, a15 & (cruout | memen)}), .d(q8), .q(d8_peb),
 	   .memen(memen8), .dbin(dbin), .we(we), .cruclk(cruclk),
 	   .cruin(cruin_peb), .ready(ready_peb),

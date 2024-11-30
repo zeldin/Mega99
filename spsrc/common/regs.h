@@ -1,6 +1,7 @@
 struct mmio_regs_misc {
   uint32_t leds;
-  uint32_t reset;
+  uint16_t enable;
+  uint16_t reset;
   uint32_t led1_rgb;
   uint32_t led2_rgb;
   uint32_t led3_rgb;
