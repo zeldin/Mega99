@@ -426,6 +426,8 @@ set_msg_config -id {Synth 8-7129} -string {{.*Port a\[.\] in module scratchpad_r
 set_msg_config -id {Synth 8-7129} -string {{.*Port a\[.\] in module console_rom.*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{.*Port wb_adr_i\[.\] in module console_rom.*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{.*Port a\[.*\] in module address_decoder.*}} -regexp -suppress
+set_msg_config -id {Synth 8-7129} -string {{.*Port sp_i_adr\[3.\] in module spmem.*}} -regexp -suppress
+set_msg_config -id {Synth 8-7129} -string {{.*Port sp_i_sel\[.\] in module spmem.*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{.*Port sel\[.\] in module spmmio_keyboard.*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{.*Port d\[.*\] in module spmmio_keyboard.*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{.*Port sel\[.\] in module spmmio_uart.*}} -regexp -suppress
@@ -434,6 +436,8 @@ set_msg_config -id {Synth 8-7129} -string {{.*Port d\[.*\] in module spmmio_sdca
 set_msg_config -id {Synth 8-7129} -string {{.*Port sel\[.\] in module spmmio_misc.*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{.*Port d\[.*\] in module spmmio_misc.*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{.*Port adr\[.\] in module spmmio_tape.*}} -regexp -suppress
+set_msg_config -id {Synth 8-7129} -string {{Port adr_i[22] in module spmmio}} -suppress
+set_msg_config -id {Synth 8-7129} -string {{Port adr_i[23] in module spmmio}} -suppress
 set_msg_config -id {Synth 8-7129} -string {{Port dbin in module peb}} -suppress
 set_msg_config -id {Synth 8-7129} -string {{Port clk_3mhz_en in module peb}} -suppress
 set_msg_config -id {Synth 8-7129} -string {{.*Port wb_adr_i\[.\] in module peb.*}} -regexp -suppress
