@@ -9,19 +9,24 @@
 #include "fdc.h"
 #include "tape.h"
 #include "strerr.h"
+#include "regs.h"
 
 #define MAX_FILESELECTOR_FILES 1000
 #define MAX_FILESELECTOR_NAMELEN 40
-#define MAX_FILESELECTOR_ENTRIES 16 /* Matches height of menu */
+#define MAX_FILESELECTOR_ENTRIES 20 /* Matches height of menu */
 
 #define FILETYPE_FILE  0x10
 #define FILETYPE_DIR   0x11
 #define FILETYPE_LABEL 0x12
+#define MINOR_TITLE    0x13
+
+#define MT "\x13"
 
 static const uint16_t menu_altcolor[] = {
   WINDOW_COLOR(15, 4),
   WINDOW_COLOR(5, 4),
   WINDOW_COLOR(13, 4),
+  WINDOW_COLOR(14, 4),
 };
 
 struct menu_scroll_control {
@@ -55,8 +60,31 @@ static const char * const main_menu_entries[] = {
   "Load Mini Memory RAM",
   "Save Mini Memory RAM",
   "-",
+  "Settings",
+  "-",
   "Reset and exit",
   "Exit",
+  NULL
+};
+
+static char settings_menu_entry_32k[] = "\x0c Enabled  \x0d Disabled";
+static char settings_menu_entry_fdc[] = "\x0c Enabled  \x0d Disabled";
+static char settings_menu_entry_vsp[] = "\x0c Enabled  \x0d Disabled";
+static char settings_menu_entry_scratchpad[] = "\x0c 256 bytes  \x0d 1K";
+
+static const char * const settings_menu_entries[] = {
+  "&Settings",
+  "=",
+  MT "32K RAM expansion",
+  settings_menu_entry_32k,
+  MT "Floppy controller",
+  settings_menu_entry_fdc,
+  MT "Speech synthesizer",
+  settings_menu_entry_vsp,
+  MT "Scratchpad RAM size",
+  settings_menu_entry_scratchpad,
+  "-",
+  "Back to main menu",
   NULL
 };
 
@@ -67,7 +95,11 @@ static char textinput_buffer[256];
 static fatfs_filehandle_t saved_rpk_dir, saved_dsk_dir,
   saved_tap_dir, saved_mm_dir, *fileselector_saved_dir = NULL;
 
+static void menu_set(const struct menu_page *page);
+static void menu_redraw(void);
 static void main_menu_select(unsigned entry);
+static void settings_menu_select(unsigned entry);
+static void settings_menu_update(void);
 static void fileselector_menu_select(unsigned entry);
 static void fileselector_menu_refill(void);
 static void menu_open_fileselector(const char *title,
@@ -82,6 +114,12 @@ static const struct menu_page main_menu = {
   main_menu_entries,
   main_menu_select,
   NULL
+};
+
+static const struct menu_page settings_menu = {
+  settings_menu_entries,
+  settings_menu_select,
+  &main_menu
 };
 
 static struct menu_scroll_control fileselector_scroll_control = {
@@ -160,7 +198,6 @@ static void menu_text_input_func_save_mm(const char *data, unsigned len)
 
 static void main_menu_select(unsigned entry)
 {
-  extern void tape_check(void);
   switch(entry) {
   case 3:
     menu_open_fileselector("&Select RPK file to load", menu_open_func_rpk,
@@ -194,13 +231,68 @@ static void main_menu_select(unsigned entry)
 		    menu_text_input_func_save_mm, filename_filter);
     break;
   case 16:
+    settings_menu_update();
+    menu_set(&settings_menu);
+    break;
+  case 18:
     reset_set_other(true);
     reset_set_other(false);
     /* FALLTHRU */
-  case 17:
+  case 19:
     menu_close();
     break;
   }
+}
+
+static void settings_menu_select(unsigned entry)
+{
+  switch(entry) {
+  case 4:
+    REGS_MISC.enable ^= REGS_MISC_ENABLE_RAM32K;
+    settings_menu_update();
+    break;
+  case 6:
+    REGS_MISC.enable ^= REGS_MISC_ENABLE_FDC;
+    settings_menu_update();
+    break;
+  case 8:
+    REGS_MISC.enable ^= REGS_MISC_ENABLE_VSP;
+    settings_menu_update();
+    break;
+  case 10:
+    REGS_MISC.enable ^= REGS_MISC_ENABLE_1KSP;
+    settings_menu_update();
+    break;
+  case 12:
+    menu_close();
+    break;
+  }
+}
+
+static void update_settings_line(char *line, uint16_t first)
+{
+  while (*line) {
+    if (*line == 0xc || *line == 0xd) {
+      *line = (first ? 0xc : 0xd);
+      first = !first;
+    }
+    line++;
+  }
+}
+
+static void settings_menu_update(void)
+{
+  uint16_t enabled = REGS_MISC.enable;
+  update_settings_line(settings_menu_entry_32k,
+		       enabled & REGS_MISC_ENABLE_RAM32K);
+  update_settings_line(settings_menu_entry_fdc,
+		       enabled & REGS_MISC_ENABLE_FDC);
+  update_settings_line(settings_menu_entry_vsp,
+		       enabled & REGS_MISC_ENABLE_VSP);
+  update_settings_line(settings_menu_entry_scratchpad,
+		       (~enabled) & REGS_MISC_ENABLE_1KSP);
+  if (current_menu == &settings_menu)
+    menu_redraw();
 }
 
 static void menu_draw(struct overlay_window *ow, const char * const * items,
@@ -382,7 +474,8 @@ static void menu_move(struct overlay_window *ow, const char * const * items,
     if (y < 1 || !items[y-1] || y+1 >= ow->current_h)
       return;
     if (items[y-1][0] && items[y-1][1] &&
-	items[y-1][0] != '&' && items[y-1][0] != FILETYPE_LABEL)
+	items[y-1][0] != '&' && items[y-1][0] != FILETYPE_LABEL &&
+	items[y-1][0] != MINOR_TITLE)
       break;
   }
   if (ow->cursor_y)
@@ -395,6 +488,13 @@ static void menu_set(const struct menu_page *page)
   current_menu = page;
   menu_draw(&menu_window, page->entries, page->scroll_control);
   menu_move(&menu_window, page->entries, 1, page->scroll_control);
+}
+
+static void menu_redraw(void)
+{
+  int y = menu_window.cursor_y;
+  menu_draw(&menu_window, current_menu->entries, current_menu->scroll_control);
+  menu_move(&menu_window, current_menu->entries, y, current_menu->scroll_control);
 }
 
 static void fileselector_menu_refill(void)
