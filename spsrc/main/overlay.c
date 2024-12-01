@@ -387,8 +387,8 @@ void overlay_task(void)
 void overlay_init(void)
 {
   REGS_OVERLAY.control = 0;
-  REGS_OVERLAY.xadj = 55;
-  REGS_OVERLAY.yadj = 65;
+  REGS_OVERLAY.xadj = 58;
+  REGS_OVERLAY.yadj = 59;
 
   memcpy(OVERLAY, font_8x16, sizeof(font_8x16));
 
