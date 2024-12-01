@@ -37,8 +37,8 @@ module peb(input            clk,
    wire [0:7] wb_dat_fdc;
    wire	      wb_ack_fdc;
 
-   assign q = (q_select_fdc ? q_fdc : 8'hff) &
-	      (q_select_ram32k ? q_ram32k : 8'hff);
+   assign q = (q_select_fdc ? q_fdc : 8'h00) |
+	      (q_select_ram32k ? q_ram32k : 8'h00);
    assign cruin = (cru_select_fdc ? cruin_fdc : 1'b0);
    assign ready = ready_fdc & ready_ram32k;
 

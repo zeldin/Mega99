@@ -171,17 +171,17 @@ module mainboard #(
    assign audio_gate = p_out[8];
    assign mag_out = p_out[9];
 
-   assign d = 16'hffff &
-	      (d_rom_valid ?    d_rom                  : 16'hffff) &
-	      (d_sp_valid ?     d_sp                   : 16'hffff) &
-	      (d_vdp_valid ?    { cd_vdp, 8'hff }      : 16'hffff) &
-	      (d_mpx_hi_valid ? { d_mpx[0:7], 8'hff }  : 16'hffff) &
-	      (d_mpx_lo_valid ? { 8'hff, d_mpx[8:15] } : 16'hffff);
-   assign d8 = 8'hff &
-	       (d8_grom_valid ? d8_grom : 8'hff) &
-	       (d8_crom_valid ? d8_crom : 8'hff) &
-	       (d8_vsp_valid ? d8_vsp : 8'hff) &
-	       (d8_peb_valid ? d8_peb : 8'hff);
+   assign d = 16'h0000 |
+	      (d_rom_valid ?    d_rom                  : 16'h0000) |
+	      (d_sp_valid ?     d_sp                   : 16'h0000) |
+	      (d_vdp_valid ?    { cd_vdp, 8'h00 }      : 16'h0000) |
+	      (d_mpx_hi_valid ? { d_mpx[0:7], 8'h00 }  : 16'h0000) |
+	      (d_mpx_lo_valid ? { 8'h00, d_mpx[8:15] } : 16'h0000);
+   assign d8 = 8'h00 |
+	       (d8_grom_valid ? d8_grom : 8'h00) |
+	       (d8_crom_valid ? d8_crom : 8'h00) |
+	       (d8_vsp_valid ? d8_vsp : 8'h00) |
+	       (d8_peb_valid ? d8_peb : 8'h00);
    assign sysrdy = (ready_grom | ~gs) & ready_sgc & ready_vsp & ready_peb;
 
    assign audio_mix = {audio_in[0], audio_in} + {audio_vsp[0], audio_vsp};
