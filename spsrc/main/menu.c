@@ -71,6 +71,7 @@ static char settings_menu_entry_32k[] = "\x0c Enabled  \x0d Disabled";
 static char settings_menu_entry_fdc[] = "\x0c Enabled  \x0d Disabled";
 static char settings_menu_entry_vsp[] = "\x0c Enabled  \x0d Disabled";
 static char settings_menu_entry_scratchpad[] = "\x0c 256 bytes  \x0d 1K";
+static char settings_menu_entry_joysticks[] = "\x0c Normal  \x0d Swapped";
 
 static const char * const settings_menu_entries[] = {
   "&Settings",
@@ -83,6 +84,8 @@ static const char * const settings_menu_entries[] = {
   settings_menu_entry_vsp,
   MT "Scratchpad RAM size",
   settings_menu_entry_scratchpad,
+  MT "Joysticks",
+  settings_menu_entry_joysticks,
   "-",
   "Back to main menu",
   NULL
@@ -264,6 +267,10 @@ static void settings_menu_select(unsigned entry)
     settings_menu_update();
     break;
   case 12:
+    REGS_MISC.enable ^= REGS_MISC_ENABLE_JOYSWP;
+    settings_menu_update();
+    break;
+  case 14:
     menu_close();
     break;
   }
@@ -291,6 +298,8 @@ static void settings_menu_update(void)
 		       enabled & REGS_MISC_ENABLE_VSP);
   update_settings_line(settings_menu_entry_scratchpad,
 		       (~enabled) & REGS_MISC_ENABLE_1KSP);
+  update_settings_line(settings_menu_entry_joysticks,
+		       (~enabled) & REGS_MISC_ENABLE_JOYSWP);
   if (current_menu == &settings_menu)
     menu_redraw();
 }

@@ -29,6 +29,7 @@ module mainboard #(
 		 input			   enable_fdc,
 		 input			   enable_vsp,
 		 input			   enable_1kscratch,
+		 input                     swap_joysticks,
 
 		 output			   vdp_hsync,
 		 output			   vdp_vsync,
@@ -282,7 +283,8 @@ module mainboard #(
    keymatrix matrix(.clk(clk), .p_out(p_out[2:5]),
 		    .int_in(int_in[3:6]), .p_in(p_in[12:15]),
 		    .key_state(key_state), .alpha_state(alpha_state),
-		    .joy1(joy1), .joy2(joy2),
+		    .joy1(swap_joysticks ? joy2 : joy1),
+		    .joy2(swap_joysticks ? joy1 : joy2),
 		    .synth_key_state(synth_key_state),
 		    .synth_keys_enabled(synth_keys_enabled));
 
