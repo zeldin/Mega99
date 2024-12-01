@@ -34,3 +34,22 @@ v1.3 (2024-11-05)
 
 * TAB on the keyboard enables pseudkeys mode, which remaps
   keys according to the symbols on the keycaps
+
+
+
+v1.4 (2024-12-01)
+=================
+
+* New updated pseudo-key mapping for non-printing keys
+
+* Console hotkey moved from HELP to ALT, to allow HELP to work
+  as AID (FCTN-7)
+
+* It is now possible to retain last visited directory for different
+  fileselectors on different SDcards (internal or external)
+
+* HDMI timing tweaked to have 480 active lines instead of 486
+
+* Peripherals can now be disabled from the new Settings menu
+
+* Joystick 1 and 2 can be swapped from the Settings menu
