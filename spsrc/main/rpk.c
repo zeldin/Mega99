@@ -183,12 +183,13 @@ static int low_load_rpk(const char *filename, fatfs_filehandle_t *fh)
       fflush(stdout);
       r = zipfile_open_entry(fn);
       if (!r) {
+	static uint8_t grom_staging[8192*5];
 	void *p;
 	unsigned size;
 	switch(i) {
 	case GROM_SOCKET:
-	  p = GROM(3);
-	  size = 8192*5;
+	  p = grom_staging;
+	  size = sizeof(grom_staging);
 	  break;
 	case ROM_SOCKET:
 	  p = CARTROM;
@@ -200,6 +201,8 @@ static int low_load_rpk(const char *filename, fatfs_filehandle_t *fh)
 	  break;
 	}
 	r = zipfile_read(p, size);
+	if (r > 0 && p == grom_staging)
+	  memcpy(GROM(3), grom_staging, r);
       }
       if (r < 0) {
 	fprintf(stderr, "%s\n", zipfile_strerror(r));
