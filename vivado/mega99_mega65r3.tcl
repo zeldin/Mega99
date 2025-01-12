@@ -9,6 +9,7 @@ proc checkRequiredFiles { origin_dir} {
  "[file normalize "$origin_dir/gateware/artix7_hyperphy.v"]"\
  "[file normalize "$origin_dir/gateware/keyboard_mk1.v"]"\
  "[file normalize "$origin_dir/gateware/kbdmk1com.v"]"\
+ "[file normalize "$origin_dir/gateware/max10_reset_button.v"]"\
  "[file normalize "$origin_dir/gateware/ak4432_audio.v"]"\
  "[file normalize "$origin_dir/gateware/sigmadelta.v"]"\
  "[file normalize "$origin_dir/gateware/tmds_10to1ddr.v"]" \
@@ -228,6 +229,7 @@ set files [list \
  [file normalize "${origin_dir}/gateware/artix7_hyperphy.v"] \
  [file normalize "${origin_dir}/gateware/keyboard_mk1.v"] \
  [file normalize "${origin_dir}/gateware/kbdmk1com.v"] \
+ [file normalize "${origin_dir}/gateware/max10_reset_button.v"] \
  [file normalize "${origin_dir}/gateware/ak4432_audio.v"] \
  [file normalize "${origin_dir}/gateware/sigmadelta.v"] \
  [file normalize "${origin_dir}/gateware/tmds_10to1ddr.v"] \

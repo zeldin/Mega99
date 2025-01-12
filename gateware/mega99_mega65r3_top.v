@@ -35,9 +35,9 @@ module mega99_mega65r3_top(input        CLK100MHZ,
 			   input	HPD_A,
 			   output	CT_HPD,
 
-			   output	FPGA_TX,      /* FIXME */
-			   output	FPGA_RX,      /*   "   */
-			   input	FPGA_RESET_N, /*   "   */
+			   output	FPGA_TX,
+			   output	FPGA_RX,
+			   input	FPGA_RESET_N,
 
 			   input	SD1_CD,
 			   output	SD1_SCK,
@@ -126,6 +126,7 @@ module mega99_mega65r3_top(input        CLK100MHZ,
 
    wire	       led_red;
    wire	       led_green;
+   wire	       reset_btn;
 
    wire [0:15] debug_pc;
    wire [0:15] debug_st;
@@ -202,9 +203,6 @@ module mega99_mega65r3_top(input        CLK100MHZ,
    assign LS_OE = 1'b1;
    assign CEC_A = 1'bz;
    assign CT_HPD = 1'b1;
-
-   assign FPGA_TX = 1'b1; /* FIXME */
-   assign FPGA_RX = 1'b1; /*   "   */
 
    assign SD1_DAT[3] = ~(sdcard_cs & ~sdcard_select);
    assign SD1_SCK = sdcard_sck & ~sdcard_select;
@@ -295,7 +293,7 @@ module mega99_mega65r3_top(input        CLK100MHZ,
    mainboard #(.vdp_clk_multiplier(10), .cpu_clk_multiplier(36),
 	       .vsp_clk_multiplier(675), .generate_overlay_clk_en(1),
 	       .audio_bits(16), .ENABLE_HDMI_TIMING_TWEAKS(1))
-   mb(.clk(clk), .ext_reset(1'b0 /*FIXME*/ | ~clk_locked), .sys_reset(reset),
+   mb(.clk(clk), .ext_reset(reset_btn | ~clk_locked), .sys_reset(reset),
       .reset_9900(reset_9900), .reset_9901(reset_9901),
       .reset_9918(reset_9918), .reset_9919(reset_9919),
       .reset_5200(reset_5200), .cpu_turbo(cpu_turbo),
@@ -388,5 +386,9 @@ module mega99_mega65r3_top(input        CLK100MHZ,
 		     .PACK(1'b0), .PREQ(),
 		     .USRCCLKO(qspi_sck), .USRCCLKTS(1'b0),
 		     .USRDONEO(1'b1), .USRDONETS(1'b1));
+
+   max10_reset_button #(.CLK_SHIFT(1), .PERIOD(90), .DEBOUNCE(2))
+   max10_reset(.clk(clk), .rx(FPGA_RX), .tx(FPGA_RESET_N),
+	       .sync(FPGA_TX), .reset_button(reset_btn));
 
 endmodule // mega99_mega65r3_top
