@@ -11,7 +11,7 @@
 
 #define GROM(n) ((uint8_t *)(void *)(0x80100000+(n)*0x2000))
 #define CARTROM ((uint8_t *)(void *)0x80200000)
-#define SPEECHROM ((uint8_t *)(void *)0x80300000)
+#define SPEECHROM ((uint8_t *)(void *)0x80400000)
 
 struct mem_regs_fdc {
   uint8_t mounted_wp;

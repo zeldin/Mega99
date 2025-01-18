@@ -450,6 +450,7 @@ set_msg_config -id {Synth 8-7129} -string {{.*Port dat_i\[.*\] in module qspi_co
 set_msg_config -id {Synth 8-7129} -string {{.*Port sel_i\[.\] in module qspi_controller.*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{Port adr_i[26] in module qspi_controller}} -suppress
 set_msg_config -id {Synth 8-7129} -string {{Port adr_i[27] in module qspi_controller}} -suppress
+set_msg_config -id {Synth 8-3332} -string {crom_reg_mux_sel_a_pos} -suppress
 set_msg_config -id {Synth 8-4446} -new_severity "INFO"
 
 

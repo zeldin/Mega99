@@ -100,11 +100,17 @@ static int parse_layout(int *socket_resource, unsigned *cart_mode)
 	    if (!strcmp(pcb_type, "standard"))
 	      *cart_mode = 0u;
 	    else if (!strcmp(pcb_type, "paged"))
-	      *cart_mode = 1u;
+	      *cart_mode = 0x10u;
 	    else if (!strcmp(pcb_type, "minimem"))
-	      *cart_mode = 2u;
+	      *cart_mode = 0x02u;
 	    else if (!strcmp(pcb_type, "mbx"))
-	      *cart_mode = 4u;
+	      *cart_mode = 0x24u;
+	    else if (!strcmp(pcb_type, "paged377"))
+	      *cart_mode = 0x80u;
+	    else if (!strcmp(pcb_type, "paged378"))
+	      *cart_mode = 0x60u;
+	    else if (!strcmp(pcb_type, "paged379i"))
+	      *cart_mode = 0x48u;
 	    else {
 	      fprintf(stderr, "%s pcb unsupported\n", pcb_type);
 	      return -1;
@@ -174,8 +180,11 @@ static int low_load_rpk(const char *filename, fatfs_filehandle_t *fh)
     return -1;
   printf("Loaded\n");
   *CARTROM_CTRL = cart_mode;
+  unsigned cromstorage = 512*1024;
+  unsigned cromsize = (cart_mode & 4u)?
+    16384u : (8192u << (cart_mode >> 4u));
   memset(GROM(3), 0x00, 8192*5);
-  memset(CARTROM, 0x00, 8192*2);
+  memset(CARTROM, 0x00, cromstorage);
   for (unsigned i = 0; i < 3; i++)
     if (socket_resource[i] >= 0) {
       const char *fn = resource_file[socket_resource[i]];
@@ -193,7 +202,9 @@ static int low_load_rpk(const char *filename, fatfs_filehandle_t *fh)
 	  break;
 	case ROM_SOCKET:
 	  p = CARTROM;
-	  size = 16384;
+	  size = cromsize;
+	  if (size > cromstorage)
+	    size = cromstorage;
 	  break;
 	case ROM2_SOCKET:
 	  p = CARTROM+8192;
@@ -208,10 +219,27 @@ static int low_load_rpk(const char *filename, fatfs_filehandle_t *fh)
 	fprintf(stderr, "%s\n", zipfile_strerror(r));
 	return -1;
       }
+      if (i == ROM_SOCKET && r < cromsize && cromsize > 8192u &&
+	  !(cart_mode & 4u)) {
+	uint8_t dummy;
+	if (cromsize > cromstorage && zipfile_read(&dummy, 1) > 0) {
+	  fprintf(stderr, "Cartridge ROM too large!\n");
+	  return -1;
+	}
+	/* Adjust bank switch register width */
+	while (cart_mode >= 0x20) {
+	  unsigned newsize = 4096u << (cart_mode >> 4u);
+	  if (r > newsize)
+	    break;
+	  cromsize = newsize;
+	  cart_mode -= 0x10;
+	}
+	*CARTROM_CTRL = cart_mode;
+      }
       printf("Loaded\n");
     }
-  if (cart_mode & 4u)
-    memset(CARTROM+16384, 0, 1024);
+  if ((cart_mode & 4u))
+    memset(CARTROM+16384+3072, 0, 1024);
   return 0;
 }
 

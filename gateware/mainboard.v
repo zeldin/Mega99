@@ -242,12 +242,12 @@ module mainboard #(
 	     wb_dat_o <= wb_dat_grom;
 	     wb_ack_o <= wb_ack_grom;
 	  end
-	  3'h2: begin
+	  3'h2, 3'h3: begin
 	     wb_stb_crom <= wb_stb_i;
 	     wb_dat_o <= wb_dat_crom;
 	     wb_ack_o <= wb_ack_crom;
 	  end
-	  3'h3: begin
+	  3'h4: begin
 	     wb_stb_sprom <= wb_stb_i;
 	     wb_dat_o <= wb_dat_sprom;
 	     wb_ack_o <= wb_ack_sprom;
@@ -350,8 +350,7 @@ module mainboard #(
 
    cartridge_rom crom(.clk(clk), .cs(romg), .we(we),
 		      .a({a[3:14], a15}), .d(q8), .q(d8_crom),
-		      .wb_adr_i({wb_adr_i[2], wb_adr_i[23 -: 20]}),
-		      .wb_dat_i(wb_dat_i),
+		      .wb_adr_i(wb_adr_i[2:23]), .wb_dat_i(wb_dat_i),
 		      .wb_dat_o(wb_dat_crom), .wb_we_i(wb_we_i),
 		      .wb_sel_i(wb_sel_i), .wb_stb_i(wb_stb_crom),
 		      .wb_ack_o(wb_ack_crom), .wb_cyc_i(wb_cyc_i));
