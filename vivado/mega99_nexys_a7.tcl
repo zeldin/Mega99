@@ -317,6 +317,7 @@ set_property file_type {Memory File} [get_files -of $obj *.hex]
 set obj [get_filesets sources_1]
 set_property -name "dataflow_viewer_settings" -value "min_width=16" -objects $obj
 set_property -name "top" -value "mega99_nexys_a7_top" -objects $obj
+set_property -name "generic" -value "XIL_PART=\"${_xil_part_}\"" -objects $obj
 
 
 # Create 'constrs_1' fileset (if not found)

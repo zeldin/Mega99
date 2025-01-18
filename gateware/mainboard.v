@@ -10,7 +10,9 @@ module mainboard #(
 		   // should be > 8 for full dynamic range
 		   parameter	     audio_bits = 16,
 		   // set to 1 to adjust horizontal border timing for HDMI
-		   parameter	     ENABLE_HDMI_TIMING_TWEAKS = 0
+		   parameter	     ENABLE_HDMI_TIMING_TWEAKS = 0,
+		   // # of 8K banks to support for bank-switched cartridges
+		   parameter	     CROM_BANKS = 64
 		)
                 (input                     clk,
 		 input			   ext_reset,
@@ -348,7 +350,7 @@ module mainboard #(
 	      .wb_sel_i(wb_sel_i), .wb_stb_i(wb_stb_grom),
 	      .wb_ack_o(wb_ack_grom), .wb_cyc_i(wb_cyc_i));
 
-   cartridge_rom crom(.clk(clk), .cs(romg), .we(we),
+   cartridge_rom #(.BANKS(CROM_BANKS)) crom(.clk(clk), .cs(romg), .we(we),
 		      .a({a[3:14], a15}), .d(q8), .q(d8_crom),
 		      .wb_adr_i(wb_adr_i[2:23]), .wb_dat_i(wb_dat_i),
 		      .wb_dat_o(wb_dat_crom), .wb_we_i(wb_we_i),

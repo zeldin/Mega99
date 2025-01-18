@@ -48,6 +48,10 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
 			   output [1:0]	 ddr2_dm,
 			   output	 ddr2_odt);
 
+   parameter XIL_PART = "";
+
+   localparam CROM_BANKS = (XIL_PART == "xc7a50ticsg324-1L" ? 16 : 32);
+
    wire        clk;
    wire	       clk_mem;
    wire	       clk_ref;
@@ -241,7 +245,7 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
 
    mainboard #(.vdp_clk_multiplier(10),  .cpu_clk_multiplier(36),
 	       .vsp_clk_multiplier(675), .generate_overlay_clk_en(1),
-	       .audio_bits(16))
+	       .audio_bits(16), .CROM_BANKS(CROM_BANKS))
    mb(.clk(clk), .ext_reset(~clk_locked), .sys_reset(reset),
       .reset_9900(reset_9900), .reset_9901(reset_9901),
       .reset_9918(reset_9918), .reset_9919(reset_9919),

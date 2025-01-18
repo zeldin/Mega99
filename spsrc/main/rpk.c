@@ -180,7 +180,7 @@ static int low_load_rpk(const char *filename, fatfs_filehandle_t *fh)
     return -1;
   printf("Loaded\n");
   *CARTROM_CTRL = cart_mode;
-  unsigned cromstorage = 512*1024;
+  unsigned cromstorage = 8192u*(CARTROM_CTRL[2]+1u);
   unsigned cromsize = (cart_mode & 4u)?
     16384u : (8192u << (cart_mode >> 4u));
   memset(GROM(3), 0x00, 8192*5);
