@@ -19,11 +19,11 @@ module spmmio_tape(input             clk,
 
    generate
       if (memory_size > 16384)
-	initial $fatal("16384 is max tape memory size");
+	initial $fatal(0, "16384 is max tape memory size");
       if (memory_size < 1280)
-	initial $fatal("memory size must be at least 1280");
+	initial $fatal(0, "memory size must be at least 1280");
       if ((memory_size & (memory_size - 1)) != 0)
-	initial $fatal("memory size must be a power of 2");
+	initial $fatal(0, "memory size must be a power of 2");
    endgenerate
 
    reg        playing;

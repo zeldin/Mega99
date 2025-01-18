@@ -37,7 +37,7 @@ module cartridge_rom(input             clk,
 
    generate
       if (BANKS < 3 || BANKS > 256)
-	initial $fatal("BANKS must be between 3 and 256");
+	initial $fatal(0, "BANKS must be between 3 and 256");
    endgenerate
 
    assign cpu_array_read = cs && !we;

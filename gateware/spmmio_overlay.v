@@ -57,7 +57,7 @@ module spmmio_overlay(input             clk,
 
    generate
       if (num_windows < 1 || num_windows > 4)
-	initial $fatal("num_windows must be between 1 and 4");
+	initial $fatal(0, "num_windows must be between 1 and 4");
    endgenerate
 
    wire [0:(64*num_windows-1)] window_readback;

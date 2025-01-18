@@ -47,7 +47,7 @@ module clkgen(input      ext_reset_in,
    generate
       if (generate_overlay_clk_en)
 	if (vdp_clk_multiplier % 2) begin
-	   initial $fatal("vdp_clk_multiplier must be even for overlay");
+	   initial $fatal(0, "vdp_clk_multiplier must be even for overlay");
 	   assign overlay_clk_en = 1'b0;
 	end else begin
 	   localparam overlay_n = vdp_clk_multiplier / 2;
