@@ -128,13 +128,17 @@ static uint32_t sdcard_getextresponse(void)
 sdcard_type_t sdcard_activate()
 {
   unsigned i;
+  unsigned cardnum = REGS_SDCARD.sd_select & 0xfu;
+  uint32_t mask = 1u;
+  if (!cardnum)
+    mask <<= 4;
   DEBUG_PRINT("Activating card\n");
   REGS_SDCARD.ctrl = SPI_SPEED(400000u) << 8u;
   sdcard_deselect();
   uint8_t r1;
   uint32_t time0 = timer_read();
   do {
-    if (!(REGS_SDCARD.ctrl & 1))
+    if (!(REGS_SDCARD.ctrl & mask))
       return SDCARD_REMOVED;
     r1 = sdcard_docmd_noparam(0);
     if ((timer_read() - time0) > TIMEOUT_IDLE)
@@ -156,7 +160,7 @@ sdcard_type_t sdcard_activate()
   }
   time0 = timer_read();
   do {
-    if (!(REGS_SDCARD.ctrl & 1))
+    if (!(REGS_SDCARD.ctrl & mask))
       return SDCARD_REMOVED;
     r1 = sdcard_docmd_noparam(55);
     if ((r1 & 0x80) || (r1 & ~1)) {
@@ -188,6 +192,10 @@ sdcard_type_t sdcard_activate()
 bool sdcard_read_block(uint32_t blkid, uint8_t *ptr)
 {
   bool result = false;
+  unsigned cardnum = REGS_SDCARD.sd_select & 0xfu;
+  uint32_t mask = 1u;
+  if (!cardnum)
+    mask <<= 4;
   DEBUG_PRINT("Read block %x\n", blkid);
   uint8_t r1 = sdcard_docmd_nodeselect(17, blkid);
   DEBUG_PRINT("CMD17, R1 = %x\n", r1);
@@ -196,7 +204,7 @@ bool sdcard_read_block(uint32_t blkid, uint8_t *ptr)
     uint8_t byt;
     do
       byt = sdcard_recvbyte();
-    while(byt == 0xff && (REGS_SDCARD.ctrl & 1) &&
+    while(byt == 0xff && (REGS_SDCARD.ctrl & mask) &&
 	  (timer_read() - time0) < TIMEOUT_READBLK);
     if (byt == 0xfe) {
       REGS_SDCARD.crc16 = 0;
@@ -221,6 +229,10 @@ bool sdcard_read_block(uint32_t blkid, uint8_t *ptr)
 bool sdcard_write_block(uint32_t blkid, const uint8_t *ptr)
 {
   bool result = false;
+  unsigned cardnum = REGS_SDCARD.sd_select & 0xfu;
+  uint32_t mask = 1u;
+  if (!cardnum)
+    mask <<= 4;
   DEBUG_PRINT("Write block %x\n", blkid);
   uint8_t r1 = sdcard_docmd_nodeselect(24, blkid);
   DEBUG_PRINT("CMD24, R1 = %x\n", r1);
@@ -238,12 +250,12 @@ bool sdcard_write_block(uint32_t blkid, const uint8_t *ptr)
     sdcard_sendbyte(crc16_calc);
     do
       byt = sdcard_recvbyte();
-    while(byt == 0xff && (REGS_SDCARD.ctrl & 1) &&
+    while(byt == 0xff && (REGS_SDCARD.ctrl & mask) &&
 	  (timer_read() - time0) < TIMEOUT_WRITEBLK);
     if ((byt & 0x1f) == 0x05) {
       do
 	byt = sdcard_recvbyte();
-      while(byt == 0x00 && (REGS_SDCARD.ctrl & 1) &&
+      while(byt == 0x00 && (REGS_SDCARD.ctrl & mask) &&
 	    (timer_read() - time0) < TIMEOUT_WRITEBLK);
       if (byt != 0x00)
 	result = true;
