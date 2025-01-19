@@ -135,6 +135,11 @@ void main()
   memset(VDPRAM, 0, 0x1000);
   reset_set_vdp(false);
 
+  // Use LED1/LED2 for turbo
+  REGS_MISC.led1_rgb = 0x0000ffu;
+  REGS_MISC.led2_rgb = 0x0000ffu;
+  REGS_MISC.leds |= 0x88000000u;
+
   // Use LED3/LED4 for drive activity
   REGS_MISC.led3_rgb = 0x00ff00u;
   REGS_MISC.led4_rgb = 0x00ff00u;

@@ -157,7 +157,7 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
    assign QSPI_DQ[2] = (qspi_oe[2] ? qspi_out[2] : 1'bz);
    assign QSPI_DQ[3] = (qspi_oe[3] ? qspi_out[3] : 1'bz);
 
-   assign LED[0] = 1'b0;
+   assign LED[0] = cpu_turbo;
    assign LED[1] = drive_activity[1];
    assign LED[2] = drive_activity[2];
    assign LED[3] = drive_activity[3];
@@ -222,7 +222,7 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
 			.sw_enable({enable_ram32k, enable_fdc, enable_vsp,
 				    enable_1kscratch, swap_joysticks}),
 			.led1_rgb(), .led2_rgb(), .led3_rgb(), .led4_rgb(),
-			.drive_activity(drive_activity),
+			.cpu_turbo(cpu_turbo), .drive_activity(drive_activity),
 			.overlay_clk_en(overlay_clk_en), .overlay_vsync(vdp_vsync),
 			.overlay_hsync(vga_hsync), .overlay_color(overlay_color),
 			.keypress(keypress), .keypress_isup(keypress_isup),

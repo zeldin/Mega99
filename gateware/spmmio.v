@@ -18,6 +18,7 @@ module spmmio(input             clk,
 	      output [0:23]	led2_rgb,
 	      output [0:23]	led3_rgb,
 	      output [0:23]	led4_rgb,
+	      input		cpu_turbo,
 	      input [1:3]	drive_activity,
 	      input		overlay_clk_en,
 	      input		overlay_vsync,
@@ -114,7 +115,7 @@ module spmmio(input             clk,
 		    .sw_reset(sw_reset), .sw_enable(sw_enable),
 		    .led1_rgb(led1_rgb), .led2_rgb(led2_rgb),
 		    .led3_rgb(led3_rgb), .led4_rgb(led4_rgb),
-		    .drive_activity(drive_activity));
+		    .cpu_turbo(cpu_turbo), .drive_activity(drive_activity));
 
    spmmio_sdcard #(.num_sdcard(num_sdcard))
    sdcard(.clk(clk), .reset(reset),

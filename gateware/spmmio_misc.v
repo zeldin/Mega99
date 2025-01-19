@@ -16,6 +16,7 @@ module spmmio_misc(input             clk,
 		   output [0:23]     led2_rgb,
 		   output [0:23]     led3_rgb,
 		   output [0:23]     led4_rgb,
+		   input	     cpu_turbo,
 		   input [1:3]	     drive_activity);
 
    reg [0:23] led1_rgb_value;
@@ -40,7 +41,7 @@ module spmmio_misc(input             clk,
 
    assign status_led_rgb = { {8{led_red}}, {8{led_green}}, {8{1'b0}} };
 
-   assign rgb_enable_flags = { 1'b1, drive_activity };
+   assign rgb_enable_flags = { cpu_turbo, drive_activity };
 
    assign led1_rgb_default = status_led_rgb;
    assign led2_rgb_default = status_led_rgb;
