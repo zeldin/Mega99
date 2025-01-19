@@ -56,7 +56,7 @@ module tms5200_fifo(input       clk,
    endgenerate
 
    assign be = !entry_inuse[15];
-   assign bl = !entry_inuse[8];
+   assign bl = !entry_inuse[7];
    assign bf = entry_inuse[0];
-   
+
 endmodule // tms5200_fifo
