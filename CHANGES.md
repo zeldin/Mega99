@@ -53,3 +53,22 @@ v1.4 (2024-12-01)
 * Peripherals can now be disabled from the new Settings menu
 
 * Joystick 1 and 2 can be swapped from the Settings menu
+
+
+
+v1.5 (2025-01-19)
+=================
+
+* RPK formats "paged377", "paged378" and "paged379i" now supported
+
+* Fixed a bug where loaded GROMs from RPKs could become garbled if
+  inter-GROM "garbage" was not canonically encoded in the dumps
+
+* Physical reset button now supported also on MEGA65 R3
+
+* Turbo mode is now indicated by a blue power LED
+
+* Fixed an SDcard detection bug
+
+* Adjusted the buffer low level of the Speech synthesizer to fix
+  garbled speech in Don't mess with Texas
