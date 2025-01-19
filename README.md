@@ -113,7 +113,7 @@ connectors.
 Cartridges are loaded from RPK files as used by MAME.  To insert a
 cartridge, open the main menu and select "Load RPK", then choose the
 RPK file to load.  Supported cartridge layouts are "standard", "paged",
-"mbx" and "minimem".
+"mbx", "minimem", "paged377", "paged378" and "paged379i".
 
 
 ### Disk drive
