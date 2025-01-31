@@ -50,7 +50,7 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
 
    parameter XIL_PART = "";
 
-   localparam CROM_BANKS = (XIL_PART == "xc7a50ticsg324-1L" ? 16 : 32);
+   localparam CROM_BANKS = (XIL_PART == "xc7a50ticsg324-1L" ? 8 : 16);
 
    wire        clk;
    wire	       clk_mem;
