@@ -30,6 +30,7 @@ module mainboard #(
 		 input			   enable_ram32k,
 		 input			   enable_fdc,
 		 input			   enable_vsp,
+		 input			   enable_tipi,
 		 input			   enable_1kscratch,
 		 input                     swap_joysticks,
 
@@ -55,6 +56,14 @@ module mainboard #(
 		 output			   audio_gate,
 		 output			   mag_out,
 		 output [1:3]		   drive_activity,
+
+		 input			   tipi_clk,
+		 input			   tipi_rt,
+		 input			   tipi_le,
+		 output			   tipi_reset,
+		 input			   tipi_dout,
+		 output			   tipi_din,
+		 input			   tipi_dc,
 
 		 output [0:15]		   debug_pc,
 		 output [0:15]		   debug_st,
@@ -360,6 +369,9 @@ module mainboard #(
    peb peb(.clk(clk), .clk_3mhz_en(clk_3mhz_en), .cpu_clk_en(cpu_clk_en),
 	   .reset(reset), .drive_activity(drive_activity),
 	   .enable_ram32k(enable_ram32k), .enable_fdc(enable_fdc),
+	   .enable_tipi(enable_tipi), .tipi_clk(tipi_clk),
+	   .tipi_rt(tipi_rt), .tipi_le(tipi_le), .tipi_reset(tipi_reset),
+	   .tipi_dout(tipi_dout), .tipi_din(tipi_din), .tipi_dc(tipi_dc),
 	   .a({a, a15 & (cruout | memen)}), .d(q8), .q(d8_peb),
 	   .memen(memen8), .dbin(dbin), .we(we), .cruclk(cruclk),
 	   .cruin(cruin_peb), .ready(ready_peb),

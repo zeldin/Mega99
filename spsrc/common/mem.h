@@ -27,4 +27,6 @@ struct mem_regs_fdc {
 #define FDCBUF ((uint8_t *)(void *)0x80802000)
 #define FDCREGS (*(volatile struct mem_regs_fdc *)(void *)0x80803000)
 
+#define TIPIROM ((uint8_t *)(void *)0x80810000)
+
 #define FLUSH do { __asm__("" : : : "memory"); } while(0)

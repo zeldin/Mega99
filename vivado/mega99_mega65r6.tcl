@@ -38,6 +38,7 @@ proc checkRequiredFiles { origin_dir} {
  "[file normalize "$origin_dir/gateware/peb.v"]"\
  "[file normalize "$origin_dir/gateware/peb_ram32k.v"]"\
  "[file normalize "$origin_dir/gateware/peb_fdc.v"]"\
+ "[file normalize "$origin_dir/gateware/peb_tipi.v"]"\
  "[file normalize "$origin_dir/gateware/tms9900/tms9900_cpu.v"]"\
  "[file normalize "$origin_dir/gateware/tms9900/tms9901_psi.v"]"\
  "[file normalize "$origin_dir/gateware/tms9918/tms9918_vdp.v"]"\
@@ -256,6 +257,7 @@ set files [list \
  [file normalize "${origin_dir}/gateware/peb.v"] \
  [file normalize "${origin_dir}/gateware/peb_ram32k.v"] \
  [file normalize "${origin_dir}/gateware/peb_fdc.v"] \
+ [file normalize "${origin_dir}/gateware/peb_tipi.v"] \
  [file normalize "${origin_dir}/gateware/tms9900/tms9900_cpu.v"] \
  [file normalize "${origin_dir}/gateware/tms9900/tms9901_psi.v"] \
  [file normalize "${origin_dir}/gateware/tms9918/tms9918_vdp.v"] \

@@ -180,6 +180,16 @@ set_property -dict {PACKAGE_PIN P21 IOSTANDARD LVCMOS33} [get_ports SPI_DQ[2]]
 set_property -dict {PACKAGE_PIN R21 IOSTANDARD LVCMOS33} [get_ports SPI_DQ[3]]
 set_property -dict {PACKAGE_PIN T19 IOSTANDARD LVCMOS33} [get_ports SPI_CS]
 
+## PMOD
+set_property -dict {PACKAGE_PIN F3 IOSTANDARD LVCMOS33} [get_ports P2lo[1]]
+set_property -dict {PACKAGE_PIN E3 IOSTANDARD LVCMOS33} [get_ports P2lo[2]]
+set_property -dict {PACKAGE_PIN H4 IOSTANDARD LVCMOS33} [get_ports P2lo[3]]
+set_property -dict {PACKAGE_PIN H5 IOSTANDARD LVCMOS33} [get_ports P2lo[4]]
+set_property -dict {PACKAGE_PIN E2 IOSTANDARD LVCMOS33} [get_ports P2hi[7]]
+set_property -dict {PACKAGE_PIN D2 IOSTANDARD LVCMOS33} [get_ports P2hi[8]]
+set_property -dict {PACKAGE_PIN G4 IOSTANDARD LVCMOS33} [get_ports P2hi[9]]
+set_property -dict {PACKAGE_PIN J5 IOSTANDARD LVCMOS33} [get_ports P2hi[10]]
+
 
 set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design]
 set_property BITSTREAM.CONFIG.CONFIGRATE 66 [current_design]

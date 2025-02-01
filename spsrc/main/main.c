@@ -130,6 +130,11 @@ void main()
     return;
   }
 
+  if (load_rom("tipi.bin", "tipi-dsr.zip", TIPIROM, 32768) < 0) {
+    printf("TIPI disabled (no DSR)\n");
+    memset(TIPIROM, 0, 32768);
+  }
+
   sdcard_set_card_number(0);
   reset_set_vdp(true);
   memset(VDPRAM, 0, 0x1000);
@@ -148,6 +153,9 @@ void main()
   // enable 32K RAM, FDC, and speech
   REGS_MISC.enable =
     REGS_MISC_ENABLE_RAM32K | REGS_MISC_ENABLE_FDC | REGS_MISC_ENABLE_VSP;
+
+  if (TIPIROM[0])
+    REGS_MISC.enable |= REGS_MISC_ENABLE_TIPI;
 
   printf("Starting TMS9900\n");
   keyboard_unblock();

@@ -31,6 +31,8 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
 			   input [8:8]	 JAhi,
 			   input [1:4]	 JBlo,
 			   input [8:8]	 JBhi,
+			   inout [1:4]	 JClo,
+			   inout [7:10]	 JChi,
 			   output [15:0] LED,
 
 			   inout [15:0]	 ddr2_dq,
@@ -137,6 +139,7 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
    wire	       enable_vsp;
    wire	       enable_1kscratch;
    wire	       swap_joysticks;
+   wire	       enable_tipi;
 
    wire	       tp_valid;
    wire [0:31] tp_pc;
@@ -162,6 +165,10 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
    assign LED[2] = drive_activity[2];
    assign LED[3] = drive_activity[3];
    assign LED[15:4] = 12'h000;
+
+   assign JClo[1:3] = 3'bzzz;
+   assign JChi[7:8] = 2'bzz;
+   assign JChi[10] = 1'bz;
 
    nexys_a7_clkwiz clkgen(.clk_mem(clk_mem), .clk_sys(clk), .clk_ref(clk_ref),
 			  .locked(clk_locked), .clk_in1(CLK100MHZ));
@@ -220,7 +227,8 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
 			.sw_reset({reset_9900, reset_9901,
 				   reset_9918, reset_9919, reset_5200}),
 			.sw_enable({enable_ram32k, enable_fdc, enable_vsp,
-				    enable_1kscratch, swap_joysticks}),
+				    enable_1kscratch, swap_joysticks,
+				    enable_tipi}),
 			.led1_rgb(), .led2_rgb(), .led3_rgb(), .led4_rgb(),
 			.cpu_turbo(cpu_turbo), .drive_activity(drive_activity),
 			.overlay_clk_en(overlay_clk_en), .overlay_vsync(vdp_vsync),
@@ -253,7 +261,8 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
       .vdp_clk_en(vdp_clk_en), .vga_clk_en(vga_clk_en),
       .overlay_clk_en(overlay_clk_en), .clk_3mhz_en(clk_3mhz_en),
       .enable_ram32k(enable_ram32k), .enable_fdc(enable_fdc),
-      .enable_vsp(enable_vsp), .enable_1kscratch(enable_1kscratch),
+      .enable_vsp(enable_vsp), .enable_tipi(enable_tipi),
+      .enable_1kscratch(enable_1kscratch),
       .swap_joysticks(swap_joysticks),
       .vdp_hsync(vdp_hsync), .vdp_vsync(vdp_vsync),
       .vdp_cburst(vdp_cburst), .vdp_color(vdp_color),
@@ -266,6 +275,9 @@ module mega99_nexys_a7_top(input         CLK100MHZ,
       .synth_keys_enabled(synth_keys_enabled),
       .cs1_cntrl(cs1_cntrl), .cs2_cntrl(cs2_cntrl),
       .audio_gate(), .mag_out(mag_out), .drive_activity(drive_activity),
+      .tipi_clk(JClo[1]),
+      .tipi_rt(JClo[2]), .tipi_le(JClo[3]), .tipi_reset(JClo[4]),
+      .tipi_dout(JChi[8]), .tipi_din(JChi[9]), .tipi_dc(JChi[10]),
       .debug_pc(debug_pc), .debug_st(debug_st),
       .debug_wp(debug_wp), .debug_ir(debug_ir),
       .debug_vdp_addr(debug_vdp_addr), .debug_grom_addr(debug_grom_addr),

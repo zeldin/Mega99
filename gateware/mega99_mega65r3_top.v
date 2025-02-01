@@ -69,7 +69,10 @@ module mega99_mega65r3_top(input        CLK100MHZ,
 			   input	FB_UP,
 			   input	FB_LEFT,
 			   input	FB_RIGHT,
-			   input	FB_FIRE);
+			   input	FB_FIRE,
+
+			   inout [1:4]	P2lo,
+			   inout [7:10]	P2hi);
 
    wire        clk;
    wire	       clk_hdmi;
@@ -178,6 +181,7 @@ module mega99_mega65r3_top(input        CLK100MHZ,
    wire	       enable_vsp;
    wire	       enable_1kscratch;
    wire	       swap_joysticks;
+   wire	       enable_tipi;
 
    wire	       tp_valid;
    wire [0:31] tp_pc;
@@ -215,6 +219,10 @@ module mega99_mega65r3_top(input        CLK100MHZ,
    assign SPI_DQ[1] = (qspi_oe[1] ? qspi_out[1] : 1'bz);
    assign SPI_DQ[2] = (qspi_oe[2] ? qspi_out[2] : 1'bz);
    assign SPI_DQ[3] = (qspi_oe[3] ? qspi_out[3] : 1'bz);
+
+   assign P2lo[1:3] = 3'bzzz;
+   assign P2hi[7:8] = 2'bzz;
+   assign P2hi[10] = 1'bz;
 
    mega65_clkwiz clkgen(.clk_sys(clk), .clk_sys_phi90(clk_phi90),
 			.clk_hdmi(clk_hdmi), .clk_hdmi_x5(clk_hdmi_x5),
@@ -265,7 +273,8 @@ module mega99_mega65r3_top(input        CLK100MHZ,
 		     .sw_reset({reset_9900, reset_9901,
 				reset_9918, reset_9919, reset_5200}),
 		     .sw_enable({enable_ram32k, enable_fdc, enable_vsp,
-				 enable_1kscratch, swap_joysticks}),
+				 enable_1kscratch, swap_joysticks,
+				 enable_tipi}),
 		     .led1_rgb(led1_rgb), .led2_rgb(led2_rgb),
 		     .led3_rgb(led3_rgb), .led4_rgb(led4_rgb),
 		     .cpu_turbo(cpu_turbo), .drive_activity(drive_activity),
@@ -300,7 +309,8 @@ module mega99_mega65r3_top(input        CLK100MHZ,
       .vdp_clk_en(vdp_clk_en), .vga_clk_en(vga_clk_en),
       .overlay_clk_en(overlay_clk_en), .clk_3mhz_en(clk_3mhz_en),
       .enable_ram32k(enable_ram32k), .enable_fdc(enable_fdc),
-      .enable_vsp(enable_vsp), .enable_1kscratch(enable_1kscratch),
+      .enable_vsp(enable_vsp), .enable_tipi(enable_tipi),
+      .enable_1kscratch(enable_1kscratch),
       .swap_joysticks(swap_joysticks),
       .vdp_hsync(vdp_hsync), .vdp_vsync(vdp_vsync),
       .vdp_cburst(vdp_cburst), .vdp_color(vdp_color),
@@ -313,6 +323,9 @@ module mega99_mega65r3_top(input        CLK100MHZ,
       .synth_keys_enabled(synth_keys_enabled),
       .cs1_cntrl(cs1_cntrl), .cs2_cntrl(cs2_cntrl),
       .audio_gate(), .mag_out(mag_out), .drive_activity(drive_activity),
+      .tipi_clk(P2lo[1]),
+      .tipi_rt(P2lo[2]), .tipi_le(P2lo[3]), .tipi_reset(P2lo[4]),
+      .tipi_dout(P2hi[8]), .tipi_din(P2hi[9]), .tipi_dc(P2hi[10]),
       .debug_pc(debug_pc), .debug_st(debug_st),
       .debug_wp(debug_wp), .debug_ir(debug_ir),
       .debug_vdp_addr(debug_vdp_addr), .debug_grom_addr(debug_grom_addr),
