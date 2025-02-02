@@ -6,6 +6,7 @@ module peb(input            clk,
 	   input	    enable_ram32k,
 	   input	    enable_fdc,
 	   input	    enable_tipi,
+	   input [0:3]	    tipi_crubase,
 
 	   input	    tipi_clk,
 	   input	    tipi_rt,
@@ -101,6 +102,7 @@ module peb(input            clk,
 	       .wb_cyc_i(wb_cyc_i));
 
    peb_tipi tipi(.clk(clk), .reset(reset), .enable(enable_tipi),
+		 .crubase(tipi_crubase),
 		 .a(a), .d(d), .q(q_tipi), .q_select(q_select_tipi),
 		 .memen(memen), .we(we), .cruclk(cruclk), .cruin(cruin_tipi),
 		 .cru_select(cru_select_tipi), .ready(ready_tipi), .led(),

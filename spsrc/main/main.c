@@ -154,8 +154,10 @@ void main()
   REGS_MISC.enable =
     REGS_MISC_ENABLE_RAM32K | REGS_MISC_ENABLE_FDC | REGS_MISC_ENABLE_VSP;
 
+  // enable TIPI at >1200, but only if we have the DSR
   if (TIPIROM[0])
-    REGS_MISC.enable |= REGS_MISC_ENABLE_TIPI;
+    REGS_MISC.enable |=
+      REGS_MISC_ENABLE_TIPI | (2u << REGS_MISC_ENABLE_TIPI_CRUADDR_SHIFT);
 
   printf("Starting TMS9900\n");
   keyboard_unblock();

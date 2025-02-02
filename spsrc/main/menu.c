@@ -10,6 +10,7 @@
 #include "tape.h"
 #include "strerr.h"
 #include "regs.h"
+#include "mem.h"
 
 #define MAX_FILESELECTOR_FILES 1000
 #define MAX_FILESELECTOR_NAMELEN 40
@@ -72,6 +73,7 @@ static char settings_menu_entry_fdc[] = "\x0c Enabled  \x0d Disabled";
 static char settings_menu_entry_vsp[] = "\x0c Enabled  \x0d Disabled";
 static char settings_menu_entry_scratchpad[] = "\x0c 256 bytes  \x0d 1K";
 static char settings_menu_entry_joysticks[] = "\x0c Normal  \x0d Swapped";
+static char settings_menu_entry_tipi[] = "\x0c >1200  \x0d >1000  \x0d Disabled";
 
 static const char * const settings_menu_entries[] = {
   "&Settings",
@@ -86,6 +88,8 @@ static const char * const settings_menu_entries[] = {
   settings_menu_entry_scratchpad,
   MT "Joysticks",
   settings_menu_entry_joysticks,
+  MT "TIPI",
+  settings_menu_entry_tipi,
   "-",
   "Back to main menu",
   NULL
@@ -271,20 +275,45 @@ static void settings_menu_select(unsigned entry)
     settings_menu_update();
     break;
   case 14:
+    if (!(REGS_MISC.enable & REGS_MISC_ENABLE_TIPI))
+      REGS_MISC.enable |=
+	REGS_MISC_ENABLE_TIPI | (2u << REGS_MISC_ENABLE_TIPI_CRUADDR_SHIFT);
+    else {
+      REGS_MISC.enable &= ~REGS_MISC_ENABLE_TIPI;
+      if ((REGS_MISC.enable & (2u << REGS_MISC_ENABLE_TIPI_CRUADDR_SHIFT)))
+	REGS_MISC.enable ^=
+	  REGS_MISC_ENABLE_TIPI | (2u << REGS_MISC_ENABLE_TIPI_CRUADDR_SHIFT);
+    }
+    settings_menu_update();
+    break;
+  case 16:
     menu_close();
     break;
   }
 }
 
-static void update_settings_line(char *line, uint16_t first)
+static void update_settings_line3(char *line, uint16_t first, uint16_t second)
 {
   while (*line) {
     if (*line == 0xc || *line == 0xd) {
       *line = (first ? 0xc : 0xd);
-      first = !first;
+      if (first)
+	first = second = 0;
+      else if (second) {
+	first = second;
+	second = 0;
+      } else {
+	second = 1;
+	first = 0;
+      }
     }
     line++;
   }
+}
+
+static void update_settings_line(char *line, uint16_t first)
+{
+  update_settings_line3(line, first, !first);
 }
 
 static void settings_menu_update(void)
@@ -300,6 +329,12 @@ static void settings_menu_update(void)
 		       (~enabled) & REGS_MISC_ENABLE_1KSP);
   update_settings_line(settings_menu_entry_joysticks,
 		       (~enabled) & REGS_MISC_ENABLE_JOYSWP);
+  if (!TIPIROM[0])
+    strcpy(settings_menu_entry_tipi, MT "Unavailable (no DSR)");
+  else
+    update_settings_line3(settings_menu_entry_tipi,
+			  enabled & (2u<<REGS_MISC_ENABLE_TIPI_CRUADDR_SHIFT),
+			  enabled & REGS_MISC_ENABLE_TIPI);
   if (current_menu == &settings_menu)
     menu_redraw();
 }

@@ -1,6 +1,7 @@
 module peb_tipi(input        clk,
 		input	     reset,
 		input	     enable,
+		input [0:3]  crubase,
 
 		input [0:15] a,
 		input [0:7]  d,
@@ -64,7 +65,7 @@ module peb_tipi(input        clk,
    wire [0:14] readaddr;
 
    assign q_select = dsr_enable && (a[0:2] == 3'b010);
-   assign cru_select = enable && (a[0:7] == 8'h12);
+   assign cru_select = enable && (a[0:3] == 4'h1) && (a[4:7] == crubase);
    assign dsr_select = q_select && memen && !we;
    assign reg_select = (a[0:11] == 12'h5ff && a[12]);
    assign readaddr = (dsr_select ? { dsr_bank, a[3:15] } : wb_adr_i[0:14] );
