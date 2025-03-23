@@ -51,6 +51,7 @@ COMMON_SOURCES += $(GATEWARE)/spmmio_uart.v
 COMMON_SOURCES += $(GATEWARE)/spmmio_overlay.v
 COMMON_SOURCES += $(GATEWARE)/spmmio_keyboard.v
 COMMON_SOURCES += $(GATEWARE)/spmmio_tape.v
+COMMON_SOURCES += $(GATEWARE)/spmmio_tipi.v
 COMMON_SOURCES += $(GATEWARE)/icap_wrapper.v
 COMMON_SOURCES += $(GATEWARE)/qspi_controller.v
 
@@ -227,6 +228,7 @@ SP_MAIN_SRCS += main/zipfile.c
 SP_MAIN_SRCS += main/rpk.c
 SP_MAIN_SRCS += main/tape.c
 SP_MAIN_SRCS += main/fdc.c
+SP_MAIN_SRCS += main/tipi.c
 SP_MAIN_SRCS += main/overlay.c
 SP_MAIN_SRCS += main/keyboard.c
 SP_MAIN_SRCS += main/menu.c

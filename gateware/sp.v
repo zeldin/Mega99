@@ -25,8 +25,8 @@ module sp(input         clk,
 	  output	led_green,
 	  output	led_red,
 	  output [0:4]	sw_reset,
-	  output [0:5]  sw_enable,
-	  output [0:3]  sw_dip,
+	  output [0:6]	sw_enable,
+	  output [0:3]	sw_dip,
 	  output [0:23]	led1_rgb,
 	  output [0:23]	led2_rgb,
 	  output [0:23]	led3_rgb,
@@ -67,7 +67,16 @@ module sp(input         clk,
 	  output [3:0]	qspi_out,
 	  output [3:0]	qspi_oe,
 	  output	qspi_csn,
-	  output	qspi_sck);
+	  output	qspi_sck,
+
+	  input		tipi_enable,
+	  output	tipi_clk,
+	  output	tipi_rt,
+	  output	tipi_le,
+	  input		tipi_reset,
+	  output	tipi_dout,
+	  input		tipi_din,
+	  output	tipi_dc);
 
    parameter keyboard_model = 0;
    parameter num_sdcard = 1;
@@ -240,7 +249,10 @@ module sp(input         clk,
 	  .sdcard_cd(sdcard_cd), .sdcard_wp(sdcard_wp),
 	  .sdcard_sck(sdcard_sck), .sdcard_miso(sdcard_miso),
 	  .sdcard_mosi(sdcard_mosi),
-	  .uart_txd(uart_txd), .uart_rxd(uart_rxd));
+	  .uart_txd(uart_txd), .uart_rxd(uart_rxd),
+	  .tipi_enable(tipi_enable), .tipi_clk(tipi_clk),
+	  .tipi_rt(tipi_rt), .tipi_le(tipi_le), .tipi_reset(tipi_reset),
+	  .tipi_dout(tipi_dout), .tipi_din(tipi_din), .tipi_dc(tipi_dc));
 
    qspi_controller qspi(.clk(clk), .reset(reset),
 			.adr_i(or1k_d_adr[4:31]),

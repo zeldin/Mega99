@@ -11,7 +11,7 @@ module spmmio_misc(input             clk,
 		   output reg	     led_red,
 		   output reg	     led_green,
 		   output reg [0:4]  sw_reset,
-		   output reg [0:5]  sw_enable,
+		   output reg [0:6]  sw_enable,
 		   output reg [0:3]  sw_dip,
 		   output [0:23]     led1_rgb,
 		   output [0:23]     led2_rgb,
@@ -71,7 +71,7 @@ module spmmio_misc(input             clk,
 	end
 	4'h1: begin
 	   q[0:7] <= { sw_dip, 4'b0000 };
-	   q[8:15] <= { sw_enable, 2'b00 };
+	   q[8:15] <= { sw_enable, 1'b0 };
 	   q[16:23] <= 8'hff;
 	   q[24:31] <= { sw_reset, 3'b111 };
 	end
@@ -100,7 +100,7 @@ module spmmio_misc(input             clk,
 	 led3_rgb_enable <= 4'b0000;
 	 led4_rgb_enable <= 4'b0000;
 	 sw_reset <= 5'b11111;
-	 sw_enable <= 6'b000000;
+	 sw_enable <= 7'b0000000;
 	 sw_dip <= 4'b0000;
       end else if (cs && we) begin
 	 if (sel[0])
@@ -117,7 +117,7 @@ module spmmio_misc(input             clk,
 		led3_rgb_enable <= d[8:11];
 		led4_rgb_enable <= d[12:15];
 	     end
-	     4'h1: sw_enable <= d[8:13];
+	     4'h1: sw_enable <= d[8:14];
 	     4'h2: led1_rgb_value[0:7] <= d[8:15];
 	     4'h3: led2_rgb_value[0:7] <= d[8:15];
 	     4'h4: led3_rgb_value[0:7] <= d[8:15];

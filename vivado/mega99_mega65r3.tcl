@@ -25,6 +25,7 @@ proc checkRequiredFiles { origin_dir} {
  "[file normalize "$origin_dir/gateware/spmmio_overlay.v"]"\
  "[file normalize "$origin_dir/gateware/spmmio_keyboard.v"]"\
  "[file normalize "$origin_dir/gateware/spmmio_tape.v"]"\
+ "[file normalize "$origin_dir/gateware/spmmio_tipi.v"]"\
  "[file normalize "$origin_dir/gateware/icap_wrapper.v"]"\
  "[file normalize "$origin_dir/gateware/qspi_controller.v"]"\
  "[file normalize "$origin_dir/or1k_boot_code.hex"]"\
@@ -246,6 +247,7 @@ set files [list \
  [file normalize "${origin_dir}/gateware/spmmio_overlay.v"] \
  [file normalize "${origin_dir}/gateware/spmmio_keyboard.v"] \
  [file normalize "${origin_dir}/gateware/spmmio_tape.v"] \
+ [file normalize "${origin_dir}/gateware/spmmio_tipi.v"] \
  [file normalize "${origin_dir}/gateware/icap_wrapper.v"] \
  [file normalize "${origin_dir}/gateware/qspi_controller.v"] \
  [file normalize "${origin_dir}/or1k_boot_code.hex"] \
@@ -440,6 +442,8 @@ set_msg_config -id {Synth 8-7129} -string {{.*Port d\[.*\] in module spmmio_sdca
 set_msg_config -id {Synth 8-7129} -string {{.*Port sel\[.\] in module spmmio_misc.*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{.*Port d\[.*\] in module spmmio_misc.*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{.*Port adr\[.\] in module spmmio_tape.*}} -regexp -suppress
+set_msg_config -id {Synth 8-7129} -string {{.*Port d\[.*\] in module spmmio_tipi.*}} -regexp -suppress
+set_msg_config -id {Synth 8-7129} -string {{.*Port sel\[.*\] in module spmmio_tipi.*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{Port adr_i[22] in module spmmio}} -suppress
 set_msg_config -id {Synth 8-7129} -string {{Port adr_i[23] in module spmmio}} -suppress
 set_msg_config -id {Synth 8-7129} -string {{Port dbin in module peb}} -suppress

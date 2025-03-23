@@ -191,7 +191,20 @@ module mega99_mega65r6_top(input        CLK100MHZ,
    wire	       enable_1kscratch;
    wire	       swap_joysticks;
    wire	       enable_tipi;
+   wire	       tipi_internal;
    wire [0:3]  tipi_crubase;
+   wire	       tipi_clk;
+   wire	       tipi_rt;
+   wire	       tipi_le;
+   wire	       tipi_reset;
+   wire	       tipi_dout;
+   wire	       tipi_din;
+   wire	       tipi_dc;
+   wire	       tipi_clk_sp;
+   wire	       tipi_rt_sp;
+   wire	       tipi_le_sp;
+   wire	       tipi_dout_sp;
+   wire	       tipi_dc_sp;
 
    wire	       tp_valid;
    wire [0:31] tp_pc;
@@ -243,8 +256,16 @@ module mega99_mega65r6_top(input        CLK100MHZ,
    assign FB_FIRE_O = 1'b1;   
 
    assign P2lo[1:3] = 3'bzzz;
+   assign P2lo[4] = ((tipi_internal || !enable_tipi)? 1'bz : tipi_reset);
    assign P2hi[7:8] = 2'bzz;
+   assign P2hi[9] = ((tipi_internal || !enable_tipi)? 1'bz : tipi_din);
    assign P2hi[10] = 1'bz;
+
+   assign tipi_clk = (tipi_internal? tipi_clk_sp : P2lo[1]);
+   assign tipi_rt = (tipi_internal? tipi_rt_sp : P2lo[2]);
+   assign tipi_le = (tipi_internal? tipi_le_sp : P2lo[3]);
+   assign tipi_dout = (tipi_internal? tipi_dout_sp : P2hi[8]);
+   assign tipi_dc = (tipi_internal? tipi_dc_sp : P2hi[10]);
 
    mega65_clkwiz clkgen(.clk_sys(clk), .clk_sys_phi90(clk_phi90),
 			.clk_hdmi(clk_hdmi), .clk_hdmi_x5(clk_hdmi_x5),
@@ -296,7 +317,7 @@ module mega99_mega65r6_top(input        CLK100MHZ,
 				reset_9918, reset_9919, reset_5200}),
 		     .sw_enable({enable_ram32k, enable_fdc, enable_vsp,
 				 enable_1kscratch, swap_joysticks,
-				 enable_tipi}),
+				 enable_tipi, tipi_internal}),
 		     .sw_dip(tipi_crubase),
 		     .led1_rgb(led1_rgb), .led2_rgb(led2_rgb),
 		     .led3_rgb(led3_rgb), .led4_rgb(led4_rgb),
@@ -320,7 +341,12 @@ module mega99_mega65r6_top(input        CLK100MHZ,
 		     .sdcard_mosi(sdcard_mosi),
 		     .uart_txd(UART_TXD), .uart_rxd(UART_RXD),
 		     .qspi_in(SPI_DQ), .qspi_out(qspi_out), .qspi_oe(qspi_oe),
-		     .qspi_csn(SPI_CS), .qspi_sck(qspi_sck));
+		     .qspi_csn(SPI_CS), .qspi_sck(qspi_sck),
+		     .tipi_enable(enable_tipi && tipi_internal),
+		     .tipi_clk(tipi_clk_sp), .tipi_rt(tipi_rt_sp),
+		     .tipi_le(tipi_le_sp), .tipi_reset(tipi_reset),
+		     .tipi_dout(tipi_dout_sp), .tipi_din(tipi_din),
+		     .tipi_dc(tipi_dc_sp));
 
    mainboard #(.vdp_clk_multiplier(10), .cpu_clk_multiplier(36),
 	       .vsp_clk_multiplier(675), .generate_overlay_clk_en(1),
@@ -347,9 +373,9 @@ module mega99_mega65r6_top(input        CLK100MHZ,
       .synth_keys_enabled(synth_keys_enabled),
       .cs1_cntrl(cs1_cntrl), .cs2_cntrl(cs2_cntrl),
       .audio_gate(), .mag_out(mag_out), .drive_activity(drive_activity),
-      .tipi_clk(P2lo[1]),
-      .tipi_rt(P2lo[2]), .tipi_le(P2lo[3]), .tipi_reset(P2lo[4]),
-      .tipi_dout(P2hi[8]), .tipi_din(P2hi[9]), .tipi_dc(P2hi[10]),
+      .tipi_clk(tipi_clk),
+      .tipi_rt(tipi_rt), .tipi_le(tipi_le), .tipi_reset(tipi_reset),
+      .tipi_dout(tipi_dout), .tipi_din(tipi_din), .tipi_dc(tipi_dc),
       .debug_pc(debug_pc), .debug_st(debug_st),
       .debug_wp(debug_wp), .debug_ir(debug_ir),
       .debug_vdp_addr(debug_vdp_addr), .debug_grom_addr(debug_grom_addr),

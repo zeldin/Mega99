@@ -74,6 +74,7 @@ static char settings_menu_entry_vsp[] = "\x0c Enabled  \x0d Disabled";
 static char settings_menu_entry_scratchpad[] = "\x0c 256 bytes  \x0d 1K";
 static char settings_menu_entry_joysticks[] = "\x0c Normal  \x0d Swapped";
 static char settings_menu_entry_tipi[] = "\x0c >1200  \x0d >1000  \x0d Disabled";
+static char settings_menu_entry_tipi2[] = "\x0c Internal  \x0d PMOD";
 
 static const char * const settings_menu_entries[] = {
   "&Settings",
@@ -90,6 +91,7 @@ static const char * const settings_menu_entries[] = {
   settings_menu_entry_joysticks,
   MT "TIPI",
   settings_menu_entry_tipi,
+  settings_menu_entry_tipi2,
   "-",
   "Back to main menu",
   NULL
@@ -286,7 +288,11 @@ static void settings_menu_select(unsigned entry)
     }
     settings_menu_update();
     break;
-  case 16:
+  case 15:
+    REGS_MISC.enable ^= REGS_MISC_ENABLE_TIPI_INTERNAL;
+    settings_menu_update();
+    break;
+  case 17:
     menu_close();
     break;
   }
@@ -329,12 +335,16 @@ static void settings_menu_update(void)
 		       (~enabled) & REGS_MISC_ENABLE_1KSP);
   update_settings_line(settings_menu_entry_joysticks,
 		       (~enabled) & REGS_MISC_ENABLE_JOYSWP);
-  if (!TIPIROM[0])
+  if (!TIPIROM[0]) {
     strcpy(settings_menu_entry_tipi, MT "Unavailable (no DSR)");
-  else
+    strcpy(settings_menu_entry_tipi2, MT "");
+  } else {
     update_settings_line3(settings_menu_entry_tipi,
 			  enabled & (2u<<REGS_MISC_ENABLE_TIPI_CRUADDR_SHIFT),
 			  enabled & REGS_MISC_ENABLE_TIPI);
+    update_settings_line(settings_menu_entry_tipi2,
+			 enabled & REGS_MISC_ENABLE_TIPI_INTERNAL);
+  }
   if (current_menu == &settings_menu)
     menu_redraw();
 }

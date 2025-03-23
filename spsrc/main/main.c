@@ -10,6 +10,7 @@
 #include "rpk.h"
 #include "tape.h"
 #include "fdc.h"
+#include "tipi.h"
 #include "strerr.h"
 #include "overlay.h"
 #include "keyboard.h"
@@ -157,7 +158,8 @@ void main()
   // enable TIPI at >1200, but only if we have the DSR
   if (TIPIROM[0])
     REGS_MISC.enable |=
-      REGS_MISC_ENABLE_TIPI | (2u << REGS_MISC_ENABLE_TIPI_CRUADDR_SHIFT);
+      REGS_MISC_ENABLE_TIPI | (2u << REGS_MISC_ENABLE_TIPI_CRUADDR_SHIFT) |
+      REGS_MISC_ENABLE_TIPI_INTERNAL;
 
   printf("Starting TMS9900\n");
   keyboard_unblock();
@@ -169,5 +171,6 @@ void main()
     keyboard_task();
     tape_task();
     fdc_task();
+    tipi_task();
   }
 }

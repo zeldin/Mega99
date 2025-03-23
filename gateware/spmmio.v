@@ -13,7 +13,7 @@ module spmmio(input             clk,
 	      output		led_red,
 	      output		led_green,
 	      output [0:4]	sw_reset,
-	      output [0:5]	sw_enable,
+	      output [0:6]	sw_enable,
 	      output [0:3]	sw_dip,
 	      output [0:23]	led1_rgb,
 	      output [0:23]	led2_rgb,
@@ -49,7 +49,16 @@ module spmmio(input             clk,
 	      output		sdcard_mosi,
 
 	      output		uart_txd,
-	      input		uart_rxd);
+	      input		uart_rxd,
+
+	      input		tipi_enable,
+	      output		tipi_clk,
+	      output		tipi_rt,
+	      output		tipi_le,
+	      input		tipi_reset,
+	      output		tipi_dout,
+	      input		tipi_din,
+	      output		tipi_dc);
 
    parameter keyboard_model = 0;
    parameter num_sdcard = 1;
@@ -60,6 +69,7 @@ module spmmio(input             clk,
    reg	       stb_overlay;
    reg	       stb_kbd;
    reg	       stb_tape;
+   reg	       stb_tipi;
    wire        ack_overlay;
    wire [0:31] dat_misc;
    wire [0:31] dat_sdcard;
@@ -67,6 +77,7 @@ module spmmio(input             clk,
    wire [0:31] dat_overlay;
    wire [0:31] dat_kbd;
    wire [0:31] dat_tape;
+   wire [0:31] dat_tipi;
 
    always @(*) begin
       ack_o <= stb_i;
@@ -78,6 +89,7 @@ module spmmio(input             clk,
       stb_overlay <= 1'b0;
       stb_kbd <= 1'b0;
       stb_tape <= 1'b0;
+      stb_tipi <= 1'b0;
       case (adr_i[0 +: 8])
 	8'h00: begin
 	   stb_misc <= stb_i;
@@ -103,6 +115,10 @@ module spmmio(input             clk,
 	8'h05: begin
 	   stb_tape <= stb_i;
 	   dat_o <= dat_tape;
+	end
+	8'h06: begin
+	   stb_tipi <= stb_i;
+	   dat_o <= dat_tipi;
 	end
 	default: ;
       endcase // case (adr_i[0 +: 8])
@@ -158,5 +174,12 @@ module spmmio(input             clk,
 		    .sel(sel_i), .we(we_i), .d(dat_i), .q(dat_tape),
 		    .tape_audio(tape_audio), .cs1_cntrl(cs1_cntrl),
 		    .cs2_cntrl(cs2_cntrl), .mag_out(mag_out));
+
+   spmmio_tipi tipi(.clk(clk), .reset(reset), .clk_3mhz_en(clk_3mhz_en),
+		    .adr(adr_i[21 -: 4]), .cs(cyc_i && stb_tipi),
+		    .sel(sel_i), .we(we_i), .d(dat_i), .q(dat_tipi),
+		    .enable(tipi_enable), .tclk(tipi_clk),
+		    .rt(tipi_rt), .le(tipi_le), .treset(tipi_reset),
+		    .dout(tipi_dout), .din(tipi_din), .dc(tipi_dc));
 
 endmodule // spmmio

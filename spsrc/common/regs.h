@@ -21,6 +21,7 @@ struct mmio_regs_misc {
 #define REGS_MISC_ENABLE_1KSP   UINT16_C(0x10)
 #define REGS_MISC_ENABLE_JOYSWP UINT16_C(0x08)
 #define REGS_MISC_ENABLE_TIPI   UINT16_C(0x04)
+#define REGS_MISC_ENABLE_TIPI_INTERNAL      UINT16_C(0x02)
 #define REGS_MISC_ENABLE_TIPI_CRUADDR_MASK  UINT16_C(0xF000)
 #define REGS_MISC_ENABLE_TIPI_CRUADDR_SHIFT 12u
 
@@ -95,3 +96,22 @@ struct mmio_regs_tape {
 #define REGS_TAPE (*(volatile struct mmio_regs_tape *)(void *)0xff05ff00)
 
 #define TAPE_SAMPLES ((uint8_t *)(void *)0xff050000)
+
+struct mmio_regs_tipi {
+  union {
+    struct {
+      uint32_t status;
+      uint32_t control;
+    };
+    struct {
+      uint16_t status_flags;
+      uint8_t tc;
+      uint8_t td;
+      uint16_t control_flags;
+      uint8_t rc;
+      uint8_t rd;
+    };
+  };
+};
+
+#define REGS_TIPI (*(volatile struct mmio_regs_tipi *)(void *)0xff060000)
