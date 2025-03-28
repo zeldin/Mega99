@@ -81,6 +81,7 @@ module mega99_mega65r6_top(input        CLK100MHZ,
 			   output	FB_LEFT_O,
 			   output	FB_RIGHT_O,
 			   output	FB_FIRE_O,
+			   output       EXP_SLOT_EN,
 
 			   inout [1:4]	P2lo,
 			   inout [7:10]	P2hi);
@@ -253,7 +254,8 @@ module mega99_mega65r6_top(input        CLK100MHZ,
    assign FB_UP_O = 1'b1;
    assign FB_LEFT_O = 1'b1;
    assign FB_RIGHT_O = 1'b1;
-   assign FB_FIRE_O = 1'b1;   
+   assign FB_FIRE_O = 1'b1;
+   assign EXP_SLOT_EN = 1'b1;
 
    assign P2lo[1:3] = 3'bzzz;
    assign P2lo[4] = ((tipi_internal || !enable_tipi)? 1'bz : tipi_reset);

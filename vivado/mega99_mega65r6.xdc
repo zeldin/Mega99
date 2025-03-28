@@ -46,6 +46,7 @@ set_property -dict {PACKAGE_PIN N20 IOSTANDARD LVCMOS33} [get_ports FB_UP_O]
 set_property -dict {PACKAGE_PIN M17 IOSTANDARD LVCMOS33} [get_ports FB_LEFT_O]
 set_property -dict {PACKAGE_PIN E18 IOSTANDARD LVCMOS33} [get_ports FB_RIGHT_O]
 set_property -dict {PACKAGE_PIN N19 IOSTANDARD LVCMOS33} [get_ports FB_FIRE_O]
+set_property -dict {PACKAGE_PIN T21 IOSTANDARD LVCMOS33} [get_ports EXP_SLOT_EN]
 
 ##VGA Connector
 
