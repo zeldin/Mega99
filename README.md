@@ -35,6 +35,13 @@ ROMs are searched for first on the external SD card, and then on the
 internal.  If there is a directory MEGA99 in the root of the SD card,
 it is searched before the root directory for the file.
 
+The following ROM images are optional, and enable use of
+extra peripherals:
+
+| ROM file         | Zip file        | Use           |
+| ---------------- | --------------- | ------------- |
+| tipi.bin         | tipi-dsr.zip    | TIPI DSR ROM  |
+
 
 ## Peripherals
 
@@ -177,7 +184,34 @@ The speech synthesizer is included and functional.
 
 ### 32K RAM expansion
 
-The 32K RAM expansion is included and always enabled.
+The 32K RAM expansion is included and enabled by default.
+
+
+### TIPI
+
+If a [TIPI](https://github.com/jedimatt42/tipi/wiki) DSR ROM image
+is provided, TipiPEB hardware can be enabled on CRU address >1200
+(default) or >1000 (allows DSK1 to be overridden).  This hardware
+is connected either to PMOD connector 2 for connection to a physical
+Raspberry Pi, or it can be connected internally to the service processor
+which supports part of the TIPI service set (default).  Currently
+the internal TIPI services are restricted to loading programs (in
+TIFILES format) from the SD card root directory.
+
+Pin mappings for the Raspberry Pi connection:
+
+| PMOD2 | TIPI | RPi | Function |
+| ----- | ---- | --- | -------- |
+| 1     | 1    | 31  | R_CLK    |
+| 2     | 3    | 33  | R_RT     |
+| 3     | 5    | 35  | R_LE     |
+| 4     | 7    | 37  | R_RESET  |
+| 5     | 9    | 39  | GND      |
+| 7     | 2    | 32  | TEST_1P  |
+| 8     | 6    | 36  | R_DOUT   |
+| 9     | 8    | 38  | R_DIN    |
+| 10    | 10   | 40  | R_DC     |
+| 11    | 4    | 34  | GND      |
 
 
 # Running on Nexys A7
@@ -233,6 +267,12 @@ Pin mappings for the joystick connections:
 | 11   | 8   | Ground   |
 
 
+### TIPI
+
+The hardware TIPI connection has the same pinout as on MEGA65, using
+PMOD connector JC.
+
+
 # Ideas for future enhancements
 
 * Load and save to real tapes might be possible using a 1531 datasette
@@ -241,9 +281,6 @@ Pin mappings for the joystick connections:
 * Reading and writing 3.5" floppies using the MEGA65 builtin floppy drive
   should be possible, but maybe not so useful considering TI-99/4A floppies
   are 5.25"?
-
-* There could be a DSR to access the contents of the SD card directly
-  (using [TIFILES](https://www.ninerpedia.org/wiki/TIFILES_format))
 
 
 # Acknowledgments
