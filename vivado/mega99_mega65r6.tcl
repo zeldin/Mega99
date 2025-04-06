@@ -427,6 +427,7 @@ set_msg_config -suppress -id {Synth 8-3917} -string {FB_UP_O}
 set_msg_config -suppress -id {Synth 8-3917} -string {FB_LEFT_O}
 set_msg_config -suppress -id {Synth 8-3917} -string {FB_RIGHT_O}
 set_msg_config -suppress -id {Synth 8-3917} -string {FB_FIRE_O}
+set_msg_config -suppress -id {Synth 8-3917} -string {EXP_SLOT_EN}
 set_msg_config -id {Synth 8-7129} -string {{.*Port wb_adr_i\[.\] in module cartridge_rom.*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{Port grclk_en in module groms}} -suppress
 set_msg_config -id {Synth 8-7129} -string {{.*Port grom_set\[.\] in module groms.*}} -regexp -suppress
