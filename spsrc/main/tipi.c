@@ -3,6 +3,12 @@
 #include "fatfs.h"
 #include "tipi.h"
 
+#if TIPI_DEBUG_ENABLED
+#define TIPI_DEBUG(...) printf(__VA_ARGS__)
+#else
+#define TIPI_DEBUG(...) do { } while(0)
+#endif
+
 enum {
   TIPI_EDVNAME = 0x00,
   TIPI_EWPROT = 0x01,
@@ -220,22 +226,22 @@ static void tipi_handle_pab(void)
 {
   uint8_t rc;
   tipi_packet[tipi_packet_pos] = 0;
-  printf("PAB operation fn=\"%s\"\n", tipi_packet);
+  TIPI_DEBUG("PAB operation fn=\"%s\"\n", tipi_packet);
   if (!strncmp(tipi_packet, "PI.", 3))
     tipi_handle_special(tipi_packet+3);
   else if (!strncmp(tipi_packet, "TIPI.", 5) ||
 	   !strncmp(tipi_packet, "DSK1.", 5))
   switch(pab.opcode) {
   case TIPI_LOAD:
-    printf("Load >%04x bytes to >%04x\n",
-	   (unsigned)pab.record_num,
-	   (unsigned)pab.buf_addr);
+    TIPI_DEBUG("Load >%04x bytes to >%04x\n",
+	       (unsigned)pab.record_num,
+	       (unsigned)pab.buf_addr);
     if ((rc = tipi_open_tifile(&load_handle, tipi_packet)) != TIPI_SUCCESS) {
-      printf("Open failed %02x\n", (unsigned)rc);
+      TIPI_DEBUG("Open failed %02x\n", (unsigned)rc);
       tipi_reply_byte(rc);
       break;
     }
-    printf("Flags: %02x\n", (unsigned)load_handle.header.flags);
+    TIPI_DEBUG("Flags: %02x\n", (unsigned)load_handle.header.flags);
     int r = fatfs_read(&load_handle.handle, tipi_reply, pab.record_num);
     tipi_reply_byte(tipi_errno_to_status(r));
     if (r >= 0)
@@ -251,7 +257,7 @@ static void tipi_handle_pab(void)
 
 static void tipi_reset(void)
 {
-  printf("TIPI RESET\n");
+  TIPI_DEBUG("TIPI RESET\n");
   REGS_TIPI.control = 0;
   tipi_packet_pos = 0;
   tipi_packet_len = 0;
@@ -277,10 +283,10 @@ static void tipi_handle_byte(uint8_t byt)
   }
   if (tipi_packet_pos < tipi_packet_len)
     return;
-  printf("Got pkt: <");
+  TIPI_DEBUG("Got pkt: <");
   for (unsigned i=0; i<tipi_packet_len; i++)
-    printf(" %02x", (unsigned)tipi_packet[i]);
-  printf(" >\n");
+    TIPI_DEBUG(" %02x", (unsigned)tipi_packet[i]);
+  TIPI_DEBUG(" >\n");
   reply_state = REPLY_STATE_IDLE;
   if (tipi_got_pab) {
     tipi_got_pab = false;
