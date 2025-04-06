@@ -72,3 +72,12 @@ v1.5 (2025-01-19)
 
 * Adjusted the buffer low level of the Speech synthesizer to fix
   garbled speech in Don't mess with Texas
+
+
+v1.6 (2025-04-06)
+=================
+
+* Add support for TIPI, either with RaspberryPi hardware or
+  builtin emulation (restricted to simple program loading for now)
+
+* Fixed non-working joystick port 2 on MEGA65 R6
