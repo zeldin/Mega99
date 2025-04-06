@@ -83,6 +83,26 @@ static struct {
   uint8_t name_len;
 } pab;
 
+static const char *config_records[] = {
+  "DSK1_DIR=."
+};
+
+static const char *status_records[] = {
+  "ERROR=netifaces",
+  "VERSION=MEGA99"
+};
+
+static struct tipi_special_handler {
+  const char *name;
+  const char * const *records;
+  uint8_t numrec, recno;
+} special_handlers[] = {
+  { "CONFIG",
+    config_records, sizeof(config_records)/sizeof(config_records[0]) },
+  { "STATUS",
+    status_records, sizeof(status_records)/sizeof(status_records[0]) },
+};
+
 static uint8_t tipi_errno_to_status(int r)
 {
   if (r >= 0)
@@ -134,15 +154,77 @@ static void tipi_reply_byte(uint8_t b)
   tipi_reply_len = 0;
 }
 
+static void tipi_handle_special_handler(struct tipi_special_handler *handler)
+{
+  uint16_t recno = handler->recno;
+  if ((pab.flag_status & 1))
+    recno = pab.record_num;
+  switch(pab.opcode) {
+  case TIPI_OPEN:
+    if ((pab.flag_status & 0xe) != 0x4 ||
+	(pab.record_len && pab.record_len != 80)) {
+      tipi_reply_byte(TIPI_EOPATTR);
+      break;
+    }
+    handler->recno = 0;
+    tipi_reply_byte(TIPI_SUCCESS);
+    break;
+  case TIPI_CLOSE:
+    tipi_reply_byte(TIPI_SUCCESS);
+    break;
+  case TIPI_STATUS:
+    if ((pab.flag_status & 0xe) != 0x4) {
+      tipi_reply_byte(TIPI_EOPATTR);
+      break;
+    }
+    tipi_reply_byte(TIPI_SUCCESS);
+    tipi_reply[0] = (recno >= handler->numrec? 0x5 : 0x4);
+    tipi_reply_n(1);
+    break;
+  case TIPI_READ:
+    if ((pab.flag_status & 0xe) != 0x4) {
+      tipi_reply_byte(TIPI_EOPATTR);
+      break;
+    }
+    if (recno >= handler->numrec) {
+      tipi_reply_byte(TIPI_EEOF);
+      break;
+    }
+    tipi_reply_byte(TIPI_SUCCESS);
+    {
+      const char *rec = handler->records[recno];
+      size_t l = strlen(rec);
+      handler->recno = ++recno;
+      memcpy(tipi_reply, rec, l);
+      tipi_reply_n(l);
+    }
+    break;
+  default:
+    tipi_reply_byte(TIPI_EILLOP);
+    break;
+  }
+}
+
+static void tipi_handle_special(const char *name)
+{
+  unsigned i;
+  for (i=0; i<sizeof(special_handlers)/sizeof(special_handlers[0]); i++)
+    if (!strcmp(name, special_handlers[i].name)) {
+      tipi_handle_special_handler(&special_handlers[i]);
+      return;
+    }
+  tipi_reply_byte(TIPI_EDVNAME);
+}
+
 static void tipi_handle_pab(void)
 {
   uint8_t rc;
-  if (tipi_packet_pos != pab.name_len) {
-    printf("Bad name len!\n");
-    return;
-  }
   tipi_packet[tipi_packet_pos] = 0;
   printf("PAB operation fn=\"%s\"\n", tipi_packet);
+  if (!strncmp(tipi_packet, "PI.", 3))
+    tipi_handle_special(tipi_packet+3);
+  else if (!strncmp(tipi_packet, "TIPI.", 5) ||
+	   !strncmp(tipi_packet, "DSK1.", 5))
   switch(pab.opcode) {
   case TIPI_LOAD:
     printf("Load >%04x bytes to >%04x\n",
@@ -163,6 +245,8 @@ static void tipi_handle_pab(void)
     tipi_reply_byte(TIPI_EILLOP);
     break;
   }
+  else
+    tipi_reply_byte(TIPI_EDVNAME);
 }
 
 static void tipi_reset(void)
