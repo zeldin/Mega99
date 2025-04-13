@@ -117,6 +117,11 @@ void main()
 
   zipfile_init();
 
+  // Check if PCODE card is present
+  ((volatile uint8_t *)PCODEROM1)[0] = 0xbb;
+  uint8_t pcode_readback = ((volatile uint8_t *)PCODEROM1)[0];
+  PCODEROM1[0] = 0;
+
   if (load_rom("994a_rom_hb.u610", "ti99_4a.zip", CPUROMH, 4096) < 0 ||
       load_rom("994a_rom_lb.u611", "ti99_4a.zip", CPUROML, 4096) < 0 ||
       load_rom("994a_grom0.u500", "ti99_4a.zip", GROM(0), 6144) < 0 ||
@@ -135,6 +140,22 @@ void main()
     printf("TIPI disabled (no DSR)\n");
     memset(TIPIROM, 0, 32768);
   }
+
+  if (pcode_readback == 0xbb)
+    /* Load PCODE card ROMs if PCODE card is detected */
+    if (load_rom("pcode_grom0.u11", "ti99_pcode.zip", PCODEGROM(0), 6144)< 0 ||
+	load_rom("pcode_grom1.u13", "ti99_pcode.zip", PCODEGROM(1), 6144)< 0 ||
+	load_rom("pcode_grom2.u14", "ti99_pcode.zip", PCODEGROM(2), 6144)< 0 ||
+	load_rom("pcode_grom3.u16", "ti99_pcode.zip", PCODEGROM(3), 6144)< 0 ||
+	load_rom("pcode_grom4.u19", "ti99_pcode.zip", PCODEGROM(4), 6144)< 0 ||
+	load_rom("pcode_grom5.u20", "ti99_pcode.zip", PCODEGROM(5), 6144)< 0 ||
+	load_rom("pcode_grom6.u21", "ti99_pcode.zip", PCODEGROM(6), 6144)< 0 ||
+	load_rom("pcode_grom7.u22", "ti99_pcode.zip", PCODEGROM(7), 6144)< 0 ||
+	load_rom("pcode_rom0.u1", "ti99_pcode.zip", PCODEROM1, 4096) < 0 ||
+	load_rom("pcode_rom1.u18", "ti99_pcode.zip", PCODEROM2, 8192) < 0) {
+      printf("PCODE card disabled (missing ROM)\n");
+      memset(PCODEROM1, 0, 4096);
+    }
 
   sdcard_set_card_number(0);
   reset_set_vdp(true);

@@ -29,4 +29,8 @@ struct mem_regs_fdc {
 
 #define TIPIROM ((uint8_t *)(void *)0x80810000)
 
+#define PCODEROM1    ((uint8_t *)(void *)0x80820000)
+#define PCODEROM2    ((uint8_t *)(void *)0x80822000)
+#define PCODEGROM(n) ((uint8_t *)(void *)(0x80830000+(n)*0x2000))
+
 #define FLUSH do { __asm__("" : : : "memory"); } while(0)

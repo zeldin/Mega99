@@ -35,6 +35,7 @@ proc checkRequiredFiles { origin_dir} {
  "[file normalize "$origin_dir/gateware/peb_ram32k.v"]"\
  "[file normalize "$origin_dir/gateware/peb_fdc.v"]"\
  "[file normalize "$origin_dir/gateware/peb_tipi.v"]"\
+ "[file normalize "$origin_dir/gateware/peb_pcode.v"]"\
  "[file normalize "$origin_dir/gateware/tms9900/tms9900_cpu.v"]"\
  "[file normalize "$origin_dir/gateware/tms9900/tms9901_psi.v"]"\
  "[file normalize "$origin_dir/gateware/tms9918/tms9918_vdp.v"]"\
@@ -254,6 +255,7 @@ set files [list \
  [file normalize "${origin_dir}/gateware/peb_ram32k.v"] \
  [file normalize "${origin_dir}/gateware/peb_fdc.v"] \
  [file normalize "${origin_dir}/gateware/peb_tipi.v"] \
+ [file normalize "${origin_dir}/gateware/peb_pcode.v"] \
  [file normalize "${origin_dir}/gateware/tms9900/tms9900_cpu.v"] \
  [file normalize "${origin_dir}/gateware/tms9900/tms9901_psi.v"] \
  [file normalize "${origin_dir}/gateware/tms9918/tms9918_vdp.v"] \
@@ -480,6 +482,8 @@ set_msg_config -id {Synth 8-7129} -string {{.*Port dat_i\[.*\] in module qspi_co
 set_msg_config -id {Synth 8-7129} -string {{.*Port sel_i\[.\] in module qspi_controller.*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{Port adr_i[26] in module qspi_controller}} -suppress
 set_msg_config -id {Synth 8-7129} -string {{Port adr_i[27] in module qspi_controller}} -suppress
+set_msg_config -id {Synth 8-7129} -string {{Port grom_clk_en in module peb}} -suppress
+set_msg_config -id {Synth 8-7129} -string {{Port enable_pcode in module peb}} -suppress
 set_msg_config -id {Synth 8-3332} -string {crom_reg_mux_sel_a_pos} -suppress
 set_msg_config -id {Synth 8-4446} -new_severity "INFO"
 

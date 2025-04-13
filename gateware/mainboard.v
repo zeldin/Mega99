@@ -12,7 +12,9 @@ module mainboard #(
 		   // set to 1 to adjust horizontal border timing for HDMI
 		   parameter	     ENABLE_HDMI_TIMING_TWEAKS = 0,
 		   // # of 8K banks to support for bank-switched cartridges
-		   parameter	     CROM_BANKS = 64
+		   parameter	     CROM_BANKS = 64,
+		   // set to 0 to disable PCODE card
+		   parameter         INCLUDE_PCODE = 1
 		)
                 (input                     clk,
 		 input			   ext_reset,
@@ -31,6 +33,7 @@ module mainboard #(
 		 input			   enable_fdc,
 		 input			   enable_vsp,
 		 input			   enable_tipi,
+		 input			   enable_pcode,
 		 input			   enable_1kscratch,
 		 input			   swap_joysticks,
 		 input [0:3]		   tipi_crubase,
@@ -367,11 +370,12 @@ module mainboard #(
 		      .wb_sel_i(wb_sel_i), .wb_stb_i(wb_stb_crom),
 		      .wb_ack_o(wb_ack_crom), .wb_cyc_i(wb_cyc_i));
 
-   peb peb(.clk(clk), .clk_3mhz_en(clk_3mhz_en), .cpu_clk_en(cpu_clk_en),
+   peb #(.INCLUDE_PCODE(INCLUDE_PCODE)) peb(.clk(clk), .cpu_clk_en(cpu_clk_en),
+	   .clk_3mhz_en(clk_3mhz_en), .grom_clk_en(grom_clk_en),
 	   .reset(reset), .drive_activity(drive_activity),
 	   .enable_ram32k(enable_ram32k), .enable_fdc(enable_fdc),
-	   .enable_tipi(enable_tipi), .tipi_crubase(tipi_crubase),
-	   .tipi_clk(tipi_clk),
+	   .enable_tipi(enable_tipi), .enable_pcode(enable_pcode),
+	   .tipi_crubase(tipi_crubase), .tipi_clk(tipi_clk),
 	   .tipi_rt(tipi_rt), .tipi_le(tipi_le), .tipi_reset(tipi_reset),
 	   .tipi_dout(tipi_dout), .tipi_din(tipi_din), .tipi_dc(tipi_dc),
 	   .a({a, a15 & (cruout | memen)}), .d(q8), .q(d8_peb),

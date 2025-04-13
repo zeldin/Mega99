@@ -182,6 +182,7 @@ module mega99_mega65r3_top(input        CLK100MHZ,
    wire	       enable_1kscratch;
    wire	       swap_joysticks;
    wire	       enable_tipi;
+   wire	       enable_pcode;
    wire	       tipi_internal;
    wire [0:3]  tipi_crubase;
    wire	       tipi_clk;
@@ -296,7 +297,7 @@ module mega99_mega65r3_top(input        CLK100MHZ,
 				reset_9918, reset_9919, reset_5200}),
 		     .sw_enable({enable_ram32k, enable_fdc, enable_vsp,
 				 enable_1kscratch, swap_joysticks,
-				 enable_tipi, tipi_internal}),
+				 enable_tipi, tipi_internal, enable_pcode}),
 		     .sw_dip(tipi_crubase),
 		     .led1_rgb(led1_rgb), .led2_rgb(led2_rgb),
 		     .led3_rgb(led3_rgb), .led4_rgb(led4_rgb),
@@ -338,7 +339,7 @@ module mega99_mega65r3_top(input        CLK100MHZ,
       .overlay_clk_en(overlay_clk_en), .clk_3mhz_en(clk_3mhz_en),
       .enable_ram32k(enable_ram32k), .enable_fdc(enable_fdc),
       .enable_vsp(enable_vsp), .enable_tipi(enable_tipi),
-      .enable_1kscratch(enable_1kscratch),
+      .enable_pcode(enable_pcode), .enable_1kscratch(enable_1kscratch),
       .swap_joysticks(swap_joysticks),
       .tipi_crubase(tipi_crubase),
       .vdp_hsync(vdp_hsync), .vdp_vsync(vdp_vsync),

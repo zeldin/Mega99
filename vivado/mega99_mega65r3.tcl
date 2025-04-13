@@ -42,6 +42,7 @@ proc checkRequiredFiles { origin_dir} {
  "[file normalize "$origin_dir/gateware/peb_ram32k.v"]"\
  "[file normalize "$origin_dir/gateware/peb_fdc.v"]"\
  "[file normalize "$origin_dir/gateware/peb_tipi.v"]"\
+ "[file normalize "$origin_dir/gateware/peb_pcode.v"]"\
  "[file normalize "$origin_dir/gateware/tms9900/tms9900_cpu.v"]"\
  "[file normalize "$origin_dir/gateware/tms9900/tms9901_psi.v"]"\
  "[file normalize "$origin_dir/gateware/tms9918/tms9918_vdp.v"]"\
@@ -264,6 +265,7 @@ set files [list \
  [file normalize "${origin_dir}/gateware/peb_ram32k.v"] \
  [file normalize "${origin_dir}/gateware/peb_fdc.v"] \
  [file normalize "${origin_dir}/gateware/peb_tipi.v"] \
+ [file normalize "${origin_dir}/gateware/peb_pcode.v"] \
  [file normalize "${origin_dir}/gateware/tms9900/tms9900_cpu.v"] \
  [file normalize "${origin_dir}/gateware/tms9900/tms9901_psi.v"] \
  [file normalize "${origin_dir}/gateware/tms9918/tms9918_vdp.v"] \
@@ -425,6 +427,7 @@ set_msg_config -suppress -id {Synth 8-3917} -string {CT_HPD}
 set_msg_config -suppress -id {Synth 8-3917} -string {LS_OE}
 set_msg_config -suppress -id {Synth 8-3917} -string {FPGA_TX}
 set_msg_config -suppress -id {Synth 8-3917} -string {FPGA_RX}
+set_msg_config -suppress -id {Synth 8-6014} -string {cru_bit7_reg}
 set_msg_config -id {Synth 8-7129} -string {{.*Port wb_adr_i\[.\] in module cartridge_rom.*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{Port grclk_en in module groms}} -suppress
 set_msg_config -id {Synth 8-7129} -string {{.*Port grom_set\[.\] in module groms.*}} -regexp -suppress

@@ -1,11 +1,13 @@
 module peb(input            clk,
-	   input	    clk_3mhz_en,
 	   input	    cpu_clk_en,
+	   input	    clk_3mhz_en,
+	   input	    grom_clk_en,
 	   input	    reset,
 	   output [1:3]	    drive_activity,
 	   input	    enable_ram32k,
 	   input	    enable_fdc,
 	   input	    enable_tipi,
+	   input            enable_pcode,
 	   input [0:3]	    tipi_crubase,
 
 	   input	    tipi_clk,
@@ -35,38 +37,48 @@ module peb(input            clk,
 	   output reg	    wb_ack_o,
 	   input	    wb_cyc_i);
 
+   parameter INCLUDE_PCODE = 1;
+
    wire	      q_select_fdc;
    wire	      q_select_ram32k;
    wire	      q_select_tipi;
+   wire	      q_select_pcode;
    wire       cru_select_fdc;
    wire       cru_select_tipi;
    wire [0:7] q_fdc;
    wire [0:7] q_ram32k;
    wire [0:7] q_tipi;
+   wire [0:7] q_pcode;
    wire	      cruin_fdc;
    wire	      cruin_tipi;
    wire	      ready_fdc;
    wire	      ready_ram32k;
    wire	      ready_tipi;
+   wire	      ready_pcode;
    reg	      wb_stb_fdc;
    reg	      wb_stb_tipi;
+   reg	      wb_stb_pcode;
    wire [0:7] wb_dat_fdc;
    wire [0:7] wb_dat_tipi;
+   wire [0:7] wb_dat_pcode;
    wire	      wb_ack_fdc;
    wire	      wb_ack_tipi;
+   wire	      wb_ack_pcode;
 
    assign q = (q_select_fdc ? q_fdc : 8'h00) |
 	      (q_select_ram32k ? q_ram32k : 8'h00) |
-	      (q_select_tipi ? q_tipi : 8'h00);
+	      (q_select_tipi ? q_tipi : 8'h00) |
+	      (q_select_pcode ? q_pcode : 8'h00);
    assign cruin = (cru_select_fdc ? cruin_fdc : 1'b0) |
 		  (cru_select_tipi ? cruin_tipi : 1'b0);
-   assign ready = ready_fdc & ready_ram32k & ready_tipi;
+   assign ready = ready_fdc & ready_ram32k & ready_tipi & ready_pcode;
 
    always @(*) begin
       wb_dat_o <= 8'h00;
       wb_ack_o <= 1'b0;
       wb_stb_fdc <= 1'b0;
       wb_stb_tipi <= 1'b0;
+      wb_stb_pcode <= 1'b0;
       case (wb_adr_i[0 +: 3])
 	3'h0:
 	  case (wb_adr_i[3 +: 4])
@@ -79,6 +91,11 @@ module peb(input            clk,
 	       wb_stb_tipi <= wb_stb_i;
 	       wb_dat_o <= wb_dat_tipi;
 	       wb_ack_o <= wb_ack_tipi;
+	    end
+	    4'h2, 4'h3: begin
+	       wb_stb_pcode <= wb_stb_i;
+	       wb_dat_o <= wb_dat_pcode;
+	       wb_ack_o <= wb_ack_pcode;
 	    end
 	    default: ;
 	  endcase // case (wb_adr_i[3 +: 4])
@@ -113,5 +130,25 @@ module peb(input            clk,
 		 .wb_dat_o(wb_dat_tipi), .wb_we_i(wb_we_i),
 		 .wb_sel_i(wb_sel_i), .wb_stb_i(wb_stb_tipi),
 		 .wb_ack_o(wb_ack_tipi), .wb_cyc_i(wb_cyc_i));
+
+   generate
+      if (INCLUDE_PCODE)
+	peb_pcode pcode(.clk(clk), .grclk_en(grom_clk_en), .reset(reset),
+			.enable(enable_pcode),
+			.a(a), .d(d), .q(q_pcode), .q_select(q_select_pcode),
+			.memen(memen), .dbin(dbin), .cruclk(cruclk),
+			.ready(ready_pcode), .led(),
+			.wb_adr_i(wb_adr_i[22 -: 17]), .wb_dat_i(wb_dat_i),
+			.wb_dat_o(wb_dat_pcode), .wb_we_i(wb_we_i),
+			.wb_sel_i(wb_sel_i), .wb_stb_i(wb_stb_pcode),
+			.wb_ack_o(wb_ack_pcode), .wb_cyc_i(wb_cyc_i));
+      else begin
+	 assign q_select_pcode = 1'b0;
+	 assign q_pcode = 8'h00;
+	 assign ready_pcode = 1'b1;
+	 assign wb_dat_pcode = 8'h00;
+	 assign wb_ack_pcode = 1'b1;
+      end // else: !if(INCLUDE_PCODE)
+   endgenerate
 
 endmodule // peb
