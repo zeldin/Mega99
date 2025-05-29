@@ -107,9 +107,12 @@ void fdc_task(void)
       continue;
     uint8_t track = track_side;
     uint8_t sps = dsk_shape[drive] & 0x3f;
-    if (!(dsk_shape[drive] & 0x80))
-      // Single sided
+    if (!(dsk_shape[drive] & 0x80) || !(track&1))
+      // Single sided / side 0
       track >>= 1;
+    else
+      // Side 1
+      track = dsk_tracks[drive] + ~(track >> 1);
     if (track >= dsk_tracks[drive] || sector >= sps)
       // Outside disk
       continue;
