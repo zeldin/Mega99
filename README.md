@@ -38,9 +38,19 @@ it is searched before the root directory for the file.
 The following ROM images are optional, and enable use of
 extra peripherals:
 
-| ROM file         | Zip file        | Use           |
-| ---------------- | --------------- | ------------- |
-| tipi.bin         | tipi-dsr.zip    | TIPI DSR ROM  |
+| ROM file         | Zip file        | Use              |
+| ---------------- | --------------- | ---------------- |
+| tipi.bin         | tipi-dsr.zip    | TIPI DSR ROM     |
+| pcode_grom0.u11  | ti99_pcode.zip  | P-code card GROM |
+| pcode_grom1.u13  | ti99_pcode.zip  | P-code card GROM |
+| pcode_grom2.u14  | ti99_pcode.zip  | P-code card GROM |
+| pcode_grom3.u16  | ti99_pcode.zip  | P-code card GROM |
+| pcode_grom4.u19  | ti99_pcode.zip  | P-code card GROM |
+| pcode_grom5.u20  | ti99_pcode.zip  | P-code card GROM |
+| pcode_grom6.u21  | ti99_pcode.zip  | P-code card GROM |
+| pcode_grom7.u22  | ti99_pcode.zip  | P-code card GROM |
+| pcode_rom0.u1    | ti99_pcode.zip  | P-code card ROM  |
+| pcode_rom1.u18   | ti99_pcode.zip  | P-code card ROM  |
 
 
 ## Peripherals
@@ -187,6 +197,14 @@ The speech synthesizer is included and functional.
 The 32K RAM expansion is included and enabled by default.
 
 
+### P-code card
+
+The P-code card can be enabled from the settings menu if the required
+ROM files are present.  Note that the card is disabled by default because
+it takes over the whole system on powerup.  Use the "Reset and exit" menu
+option after enabling the card to start the p-System.
+
+
 ### TIPI
 
 If a [TIPI](https://github.com/jedimatt42/tipi/wiki) DSR ROM image
@@ -265,6 +283,12 @@ Pin mappings for the joystick connections:
 | 4    | 4   | Right    |
 | 8    | 6   | Fire     |
 | 11   | 8   | Ground   |
+
+
+### P-code card
+
+The P-code card is not supported on Nexys A7 because it requires a
+large amount of BRAM.
 
 
 ### TIPI
