@@ -16,7 +16,7 @@ module mainboard #(
 		   // set to 0 to disable PCODE card
 		   parameter         INCLUDE_PCODE = 1
 		)
-                (input                     clk,
+                (input			   clk,
 		 input			   ext_reset,
 		 output			   sys_reset,
 		 input			   reset_9900,
@@ -24,6 +24,7 @@ module mainboard #(
 		 input			   reset_9918,
 		 input			   reset_9919,
 		 input			   reset_5200,
+		 input			   reset_peb,
 		 input			   cpu_turbo,
 		 output			   vdp_clk_en,
 		 output			   vga_clk_en,
@@ -372,7 +373,7 @@ module mainboard #(
 
    peb #(.INCLUDE_PCODE(INCLUDE_PCODE)) peb(.clk(clk), .cpu_clk_en(cpu_clk_en),
 	   .clk_3mhz_en(clk_3mhz_en), .grom_clk_en(grom_clk_en),
-	   .reset(reset), .drive_activity(drive_activity),
+	   .reset(reset|reset_peb), .drive_activity(drive_activity),
 	   .enable_ram32k(enable_ram32k), .enable_fdc(enable_fdc),
 	   .enable_tipi(enable_tipi), .enable_pcode(enable_pcode),
 	   .tipi_crubase(tipi_crubase), .tipi_clk(tipi_clk),

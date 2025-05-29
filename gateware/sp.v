@@ -24,7 +24,7 @@ module sp(input         clk,
 
 	  output	led_green,
 	  output	led_red,
-	  output [0:4]	sw_reset,
+	  output [0:5]	sw_reset,
 	  output [0:7]	sw_enable,
 	  output [0:3]	sw_dip,
 	  output [0:23]	led1_rgb,

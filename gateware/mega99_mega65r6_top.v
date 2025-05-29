@@ -186,6 +186,7 @@ module mega99_mega65r6_top(input        CLK100MHZ,
    wire	       reset_9918;
    wire	       reset_9919;
    wire	       reset_5200;
+   wire	       reset_peb;
    wire	       enable_ram32k;
    wire	       enable_fdc;
    wire	       enable_vsp;
@@ -316,8 +317,8 @@ module mega99_mega65r6_top(input        CLK100MHZ,
 		     .tp_valid(tp_valid), .tp_pc(tp_pc), .tp_insn(tp_insn),
 
 		     .led_green(led_green), .led_red(led_red),
-		     .sw_reset({reset_9900, reset_9901,
-				reset_9918, reset_9919, reset_5200}),
+		     .sw_reset({reset_9900, reset_9901, reset_9918, reset_9919,
+				reset_5200, reset_peb}),
 		     .sw_enable({enable_ram32k, enable_fdc, enable_vsp,
 				 enable_1kscratch, swap_joysticks,
 				 enable_tipi, tipi_internal, enable_pcode}),
@@ -357,7 +358,7 @@ module mega99_mega65r6_top(input        CLK100MHZ,
    mb(.clk(clk), .ext_reset(RESET_BTN | ~clk_locked), .sys_reset(reset),
       .reset_9900(reset_9900), .reset_9901(reset_9901),
       .reset_9918(reset_9918), .reset_9919(reset_9919),
-      .reset_5200(reset_5200), .cpu_turbo(cpu_turbo),
+      .reset_5200(reset_5200), .reset_peb(reset_peb), .cpu_turbo(cpu_turbo),
       .vdp_clk_en(vdp_clk_en), .vga_clk_en(vga_clk_en),
       .overlay_clk_en(overlay_clk_en), .clk_3mhz_en(clk_3mhz_en),
       .enable_ram32k(enable_ram32k), .enable_fdc(enable_fdc),
