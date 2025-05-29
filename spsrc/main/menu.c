@@ -73,6 +73,7 @@ static char settings_menu_entry_fdc[] = "\x0c Enabled  \x0d Disabled";
 static char settings_menu_entry_vsp[] = "\x0c Enabled  \x0d Disabled";
 static char settings_menu_entry_scratchpad[] = "\x0c 256 bytes  \x0d 1K";
 static char settings_menu_entry_joysticks[] = "\x0c Normal  \x0d Swapped";
+static char settings_menu_entry_pcode[] = "\x0c Enabled  \x0d Disabled ";
 static char settings_menu_entry_tipi[] = "\x0c >1200  \x0d >1000  \x0d Disabled";
 static char settings_menu_entry_tipi2[] = "\x0c Internal  \x0d PMOD";
 
@@ -89,6 +90,8 @@ static const char * const settings_menu_entries[] = {
   settings_menu_entry_scratchpad,
   MT "Joysticks",
   settings_menu_entry_joysticks,
+  MT "P-code card",
+  settings_menu_entry_pcode,
   MT "TIPI",
   settings_menu_entry_tipi,
   settings_menu_entry_tipi2,
@@ -277,6 +280,10 @@ static void settings_menu_select(unsigned entry)
     settings_menu_update();
     break;
   case 14:
+    REGS_MISC.enable ^= REGS_MISC_ENABLE_PCODE;
+    settings_menu_update();
+    break;
+  case 16:
     if (!(REGS_MISC.enable & REGS_MISC_ENABLE_TIPI))
       REGS_MISC.enable |=
 	REGS_MISC_ENABLE_TIPI | (2u << REGS_MISC_ENABLE_TIPI_CRUADDR_SHIFT);
@@ -288,11 +295,11 @@ static void settings_menu_select(unsigned entry)
     }
     settings_menu_update();
     break;
-  case 15:
+  case 17:
     REGS_MISC.enable ^= REGS_MISC_ENABLE_TIPI_INTERNAL;
     settings_menu_update();
     break;
-  case 17:
+  case 19:
     menu_close();
     break;
   }
@@ -335,6 +342,12 @@ static void settings_menu_update(void)
 		       (~enabled) & REGS_MISC_ENABLE_1KSP);
   update_settings_line(settings_menu_entry_joysticks,
 		       (~enabled) & REGS_MISC_ENABLE_JOYSWP);
+  if (!PCODEROM1[0]) {
+    strcpy(settings_menu_entry_pcode, MT "Unavailable (no ROMs)");
+  } else {
+    update_settings_line(settings_menu_entry_pcode,
+			 enabled & REGS_MISC_ENABLE_PCODE);
+  }
   if (!TIPIROM[0]) {
     strcpy(settings_menu_entry_tipi, MT "Unavailable (no DSR)");
     strcpy(settings_menu_entry_tipi2, MT "");
