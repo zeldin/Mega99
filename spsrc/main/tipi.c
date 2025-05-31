@@ -94,8 +94,30 @@ static struct {
   uint8_t name_len;
 } pab;
 
+static fatfs_filehandle_t dsk_dirmap[9];
+
+static char dsk_config[9][81] = {
+  "DSK1_DIR=",
+  "DSK2_DIR=",
+  "DSK3_DIR=",
+  "DSK4_DIR=",
+  "DSK5_DIR=",
+  "DSK6_DIR=",
+  "DSK7_DIR=",
+  "DSK8_DIR=",
+  "DSK9_DIR="
+};
+
 static const char *config_records[] = {
-  "DSK1_DIR=."
+  dsk_config[0],
+  dsk_config[1],
+  dsk_config[2],
+  dsk_config[3],
+  dsk_config[4],
+  dsk_config[5],
+  dsk_config[6],
+  dsk_config[7],
+  dsk_config[8]
 };
 
 static const char *status_records[] = {
@@ -103,13 +125,17 @@ static const char *status_records[] = {
   "VERSION=MEGA99"
 };
 
+static uint8_t tipi_config_write(void);
+
 static struct tipi_special_handler {
   const char *name;
   const char * const *records;
   uint8_t numrec, recno;
-} special_handlers[] = {
+  uint8_t (*write_func)(void);
+} *current_special_handler = NULL, special_handlers[] = {
   { "CONFIG",
-    config_records, sizeof(config_records)/sizeof(config_records[0]) },
+    config_records, sizeof(config_records)/sizeof(config_records[0]), 0,
+    tipi_config_write },
   { "STATUS",
     status_records, sizeof(status_records)/sizeof(status_records[0]) },
 };
@@ -177,18 +203,28 @@ static uint8_t tipi_update_tifile_header(struct tifiles_handle *h)
     return TIPI_EFILERR;
 }
 
+static int tipi_open_mapdir(const char *fname, fatfs_filehandle_t *h)
+{
+  if (!strncmp(fname, "DSK", 3) &&
+      fname[3] >= '1' && fname[3] <= '9' && fname[4] == '.' &&
+      dsk_config[fname[3]-'1'][9]) {
+    *h = dsk_dirmap[fname[3]-'1'];
+  } else
+    return fatfs_open_rootdir(h);
+}
+
 static uint8_t tipi_open_or_create_tifile(struct tifiles_handle *h,
 					  const char *fname,
 					  struct tifiles_header *header)
 {
   int r;
   const char *dot = strchr(fname, '.');
+  if ((r = tipi_open_mapdir(fname, &h->direntry)) < 0)
+    return r;
   if (dot)
     fname = dot+1;
   else
     fname = "";
-  if ((r = fatfs_open_rootdir(&h->direntry)) < 0)
-    return r;
   if (header != NULL) {
     if ((r = fatfs_open_or_createat(fname, &h->handle, &h->direntry)) >= 0)
       if (!h->handle.size) {
@@ -252,6 +288,29 @@ static void tipi_reply_byte(uint8_t b)
   tipi_reply_len = 0;
 }
 
+static void tipi_config_drive_path(char *name, fatfs_filehandle_t *dirmap)
+{
+  fatfs_filehandle_t fh;
+  int r;
+  if ((r = fatfs_open_dir(tipi_packet+9, &fh)) < 0) {
+    TIPI_DEBUG("Failed to open \"%s\" error %d\n", tipi_packet+9, r);
+  } else {
+    *dirmap = fh;
+    strcpy(name, tipi_packet+9);
+  }
+}
+ 
+static uint8_t tipi_config_write(void)
+{
+  TIPI_DEBUG("Config write: %s\n", tipi_packet);
+  if (!strncmp(tipi_packet, "DSK", 3) &&
+      tipi_packet[3] >= '1' && tipi_packet[3] <= '9' &&
+      !strncmp(tipi_packet+4, "_DIR=", 5))
+    tipi_config_drive_path(&dsk_config[tipi_packet[3]-'1'][9],
+			   &dsk_dirmap[tipi_packet[3]-'1']);
+  tipi_reply_byte(TIPI_SUCCESS);
+}
+
 static void tipi_handle_special_handler(struct tipi_special_handler *handler)
 {
   uint16_t recno = handler->recno;
@@ -259,7 +318,8 @@ static void tipi_handle_special_handler(struct tipi_special_handler *handler)
     recno = pab.record_num;
   switch(pab.opcode) {
   case TIPI_OPEN:
-    if ((pab.flag_status & 0xe) != 0x4 ||
+    if (((pab.flag_status & 0xe) != 0x4 &&
+	 (handler->write_func == NULL || (pab.flag_status & 0xe) != 0x6)) ||
 	(pab.record_len && pab.record_len != 80)) {
       tipi_reply_byte(TIPI_EOPATTR);
       break;
@@ -297,6 +357,24 @@ static void tipi_handle_special_handler(struct tipi_special_handler *handler)
       tipi_reply_n(l);
     }
     break;
+  case TIPI_WRITE:
+    if ((pab.flag_status & 0xe) != 0x6 ||
+	handler->write_func == NULL ||
+	pab.record_len != 80 || pab.char_cnt > 80) {
+      tipi_reply_byte(TIPI_EOPATTR);
+      break;
+    }
+    if (tipi_pab_extra) {
+      if (tipi_packet_pos != pab.char_cnt)
+	tipi_reply_byte(TIPI_EFILERR);
+      else
+	handler->write_func();
+    } else {
+      tipi_got_pab = true;
+      tipi_pab_extra = true;
+      tipi_reply_byte(TIPI_SUCCESS);
+    }
+    break;
   default:
     tipi_reply_byte(TIPI_EILLOP);
     break;
@@ -308,7 +386,8 @@ static void tipi_handle_special(const char *name)
   unsigned i;
   for (i=0; i<sizeof(special_handlers)/sizeof(special_handlers[0]); i++)
     if (!strcmp(name, special_handlers[i].name)) {
-      tipi_handle_special_handler(&special_handlers[i]);
+      tipi_handle_special_handler(current_special_handler =
+				  &special_handlers[i]);
       return;
     }
   tipi_reply_byte(TIPI_EDVNAME);
@@ -326,10 +405,15 @@ static void tipi_handle_pab(void)
       tipi_handle_special(tipi_packet+3);
       return;
     } else if (strncmp(tipi_packet, "TIPI.", 5) &&
-	       strncmp(tipi_packet, "DSK1.", 5)) {
+	       (strncmp(tipi_packet, "DSK", 3) ||
+		tipi_packet[3] < '0' || tipi_packet[3] > '9' ||
+		tipi_packet[4] != '.')) {
       tipi_reply_byte(TIPI_EDVNAME);
       return;
     }
+  } else if (current_special_handler != NULL) {
+    tipi_handle_special_handler(current_special_handler);
+    return;
   }
   switch(pab.opcode) {
   case TIPI_LOAD:
@@ -435,6 +519,7 @@ static void tipi_handle_byte(uint8_t byt)
     memcpy(&pab, tipi_packet, sizeof(pab));
     tipi_got_pab = true;
     tipi_pab_extra = false;
+    current_special_handler = NULL;
   } else {
     tipi_reply_byte(TIPI_EILLOP);
   }
