@@ -81,3 +81,19 @@ v1.6 (2025-04-06)
   builtin emulation (restricted to simple program loading for now)
 
 * Fixed non-working joystick port 2 on MEGA65 R6
+
+
+v1.7 (2025-05-31)
+=================
+
+* P-code card now supported
+
+* Fixed incorrect numbering of tracks in double sided disk images
+
+* TIPI DSR ROM can now be loaded from a MAME compatible zip file
+
+* Internal TIPI mode improved:
+
+  - SAVE implemented
+
+  - DSK base directory can be set in CALL TIPI
