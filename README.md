@@ -38,19 +38,23 @@ it is searched before the root directory for the file.
 The following ROM images are optional, and enable use of
 extra peripherals:
 
-| ROM file         | Zip file        | Use              |
-| ---------------- | --------------- | ---------------- |
-| tipi.bin         | tipi-dsr.zip    | TIPI DSR ROM     |
-| pcode_grom0.u11  | ti99_pcode.zip  | P-code card GROM |
-| pcode_grom1.u13  | ti99_pcode.zip  | P-code card GROM |
-| pcode_grom2.u14  | ti99_pcode.zip  | P-code card GROM |
-| pcode_grom3.u16  | ti99_pcode.zip  | P-code card GROM |
-| pcode_grom4.u19  | ti99_pcode.zip  | P-code card GROM |
-| pcode_grom5.u20  | ti99_pcode.zip  | P-code card GROM |
-| pcode_grom6.u21  | ti99_pcode.zip  | P-code card GROM |
-| pcode_grom7.u22  | ti99_pcode.zip  | P-code card GROM |
-| pcode_rom0.u1    | ti99_pcode.zip  | P-code card ROM  |
-| pcode_rom1.u18   | ti99_pcode.zip  | P-code card ROM  |
+| ROM file         | Zip file        | Use                |
+| ---------------- | --------------- | ------------------ |
+| tipidsr.u2       | ti99_tipi.zip   | TIPI DSR ROM       |
+| tipi.bin         | tipi-dsr.zip    | TIPI DSR ROM (alt) |
+| pcode_grom0.u11  | ti99_pcode.zip  | P-code card GROM   |
+| pcode_grom1.u13  | ti99_pcode.zip  | P-code card GROM   |
+| pcode_grom2.u14  | ti99_pcode.zip  | P-code card GROM   |
+| pcode_grom3.u16  | ti99_pcode.zip  | P-code card GROM   |
+| pcode_grom4.u19  | ti99_pcode.zip  | P-code card GROM   |
+| pcode_grom5.u20  | ti99_pcode.zip  | P-code card GROM   |
+| pcode_grom6.u21  | ti99_pcode.zip  | P-code card GROM   |
+| pcode_grom7.u22  | ti99_pcode.zip  | P-code card GROM   |
+| pcode_rom0.u1    | ti99_pcode.zip  | P-code card ROM    |
+| pcode_rom1.u18   | ti99_pcode.zip  | P-code card ROM    |
+
+The TIPI DSR ROM can be present under any of two different names;
+the first one found will be used.
 
 
 ## Peripherals

@@ -136,7 +136,8 @@ void main()
     return;
   }
 
-  if (load_rom("tipi.bin", "tipi-dsr.zip", TIPIROM, 32768) < 0) {
+  if (load_rom("tipidsr.u2", "ti99_tipi.zip", TIPIROM, 32768) < 0 &&
+      load_rom("tipi.bin", "tipi-dsr.zip", TIPIROM, 32768) < 0) {
     printf("TIPI disabled (no DSR)\n");
     memset(TIPIROM, 0, 32768);
   }
