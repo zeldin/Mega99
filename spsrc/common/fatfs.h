@@ -26,6 +26,8 @@ extern int fatfs_open_dir(const char *dirname, fatfs_filehandle_t *dirfh);
 #ifndef BOOTCODE
 extern int fatfs_open_or_create(const char *filename, fatfs_filehandle_t *fh,
 				fatfs_filehandle_t *dirent_fh);
+extern int fatfs_open_or_createat(const char *filename, fatfs_filehandle_t *fh,
+				  fatfs_filehandle_t *dirent_fh);
 extern int fatfs_write(fatfs_filehandle_t *fh, const void *p, uint32_t bytes);
 extern int fatfs_setpos(fatfs_filehandle_t *fh, uint32_t newpos);
 extern int fatfs_read_directory(fatfs_filehandle_t *fh, fatfs_filehandle_t *entry,

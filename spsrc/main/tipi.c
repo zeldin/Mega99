@@ -9,6 +9,11 @@
 #define TIPI_DEBUG(...) do { } while(0)
 #endif
 
+#define PROGRAM 0x01u
+#define INTERNAL 0x02u
+#define PROTECTED 0x08u
+#define VARIABLE 0x80u
+
 enum {
   TIPI_EDVNAME = 0x00,
   TIPI_EWPROT = 0x01,
@@ -54,7 +59,7 @@ struct tifiles_header {
 };
 
 struct tifiles_handle {
-  fatfs_filehandle_t handle;
+  fatfs_filehandle_t handle, direntry;
   struct tifiles_header header;
 };
 
@@ -64,7 +69,7 @@ static uint8_t tipi_packet[0x10000u];
 static uint8_t tipi_reply[0x10000u];
 static uint16_t tipi_reply_pos = 0, tipi_reply_len = 0;
 static uint16_t tipi_packet_pos = 0, tipi_packet_len = 0;
-static bool tipi_got_pab = false;
+static bool tipi_got_pab = false, tipi_pab_extra = false;
 static uint8_t tipi_reply_status;
 static enum {
   REPLY_STATE_IDLE,
@@ -76,7 +81,7 @@ static enum {
   REPLY_STATE_PAYLOAD
 } reply_state = REPLY_STATE_IDLE;
 
-static struct tifiles_handle load_handle;
+static struct tifiles_handle load_handle, save_handle;
 
 static struct {
   uint8_t opcode;
@@ -125,7 +130,56 @@ static uint8_t tipi_errno_to_status(int r)
     }
 }
 
-static uint8_t tipi_open_tifile(struct tifiles_handle *h, const char *fname)
+static void tipi_init_header(struct tifiles_header *header,
+			     const char *fname)
+{
+  unsigned i;
+  const char *dot = strchr(fname, '.');
+  if (dot)
+    fname = dot+1;
+  else
+    fname = "";
+  memset(header, 0, sizeof(*header));
+  memcpy(header->id, "\x07TIFILES", sizeof(header->id));
+  for (i=0; i<sizeof(header->filename); i++)
+    if (!*fname)
+      break;
+    else
+      header->filename[i] = *fname++;
+  while (i<sizeof(header->filename))
+    header->filename[i++] = ' ';
+}
+
+static uint8_t tipi_write_to_file(struct tifiles_handle *h, const void *data,
+				  uint32_t pos, uint32_t bytes)
+{
+  int r;
+  if ((r = fatfs_setpos(&h->handle, pos + 0x80u)) >= 0)
+    r = fatfs_write(&h->handle, data, bytes);
+  if (r < 0)
+    return tipi_errno_to_status(r);
+  else if (r == bytes)
+    return TIPI_SUCCESS;
+  else
+    return TIPI_EFILERR;
+}
+
+static uint8_t tipi_update_tifile_header(struct tifiles_handle *h)
+{
+  int r;
+  if ((r = fatfs_setpos(&h->handle, 0)) >= 0)
+    r = fatfs_write(&h->handle, &h->header, sizeof(h->header));
+  if (r < 0)
+    return tipi_errno_to_status(r);
+  else if (r == sizeof(h->header))
+    return TIPI_SUCCESS;
+  else
+    return TIPI_EFILERR;
+}
+
+static uint8_t tipi_open_or_create_tifile(struct tifiles_handle *h,
+					  const char *fname,
+					  struct tifiles_header *header)
 {
   int r;
   const char *dot = strchr(fname, '.');
@@ -133,8 +187,32 @@ static uint8_t tipi_open_tifile(struct tifiles_handle *h, const char *fname)
     fname = dot+1;
   else
     fname = "";
-  if ((r = fatfs_open(fname, &h->handle)) < 0)
-    return tipi_errno_to_status(r);
+  if ((r = fatfs_open_rootdir(&h->direntry)) < 0)
+    return r;
+  if (header != NULL) {
+    if ((r = fatfs_open_or_createat(fname, &h->handle, &h->direntry)) >= 0)
+      if (!h->handle.size) {
+	/* New file */
+	if ((r = fatfs_setsize(&h->handle, &h->direntry, 0x80u)) >= 0) {
+	  if ((r = fatfs_write(&h->handle, header, sizeof(*header))) ==
+	      sizeof(*header)) {
+	    uint8_t pad[0x80u - sizeof(*header)];
+	    memset(pad, 0, sizeof(pad));
+	    if ((r = fatfs_write(&h->handle, pad, sizeof(pad))) == sizeof(pad)) {
+	      memcpy(&h->header, header, sizeof(h->header));
+	      return TIPI_SUCCESS;
+	    }
+	  }
+	  if (r >= 0)
+	    return TIPI_EFILERR;
+	}
+	return tipi_errno_to_status(r);
+      }
+  } else
+    r = fatfs_openat(fname, &h->handle, &h->direntry);
+  if (r < 0)
+      return tipi_errno_to_status(r);
+  /* Existing file */
   r = fatfs_read(&h->handle, &h->header, sizeof(h->header));
   if (r == sizeof(h->header)) {
     if (memcmp(h->header.id, "\x07TIFILES", 8))
@@ -142,7 +220,21 @@ static uint8_t tipi_open_tifile(struct tifiles_handle *h, const char *fname)
     r = fatfs_setpos(&h->handle, 0x80u);
   } else if (r >= 0)
     return TIPI_EFILERR;
+  if (header != NULL && r >= 0) {
+    if ((h->header.flags & PROTECTED))
+      return TIPI_EWPROT;
+    /* Check file has the correct mode */
+    if ((h->header.flags & 0x83u) != (header->flags & 0x83u) ||
+	(h->header.rec_length != header->rec_length &&
+	 !(h->header.flags & PROGRAM)))
+      return TIPI_EFILERR;
+  }
   return tipi_errno_to_status(r);
+}
+
+static uint8_t tipi_open_tifile(struct tifiles_handle *h, const char *fname)
+{
+  return tipi_open_or_create_tifile(h, fname, NULL);
 }
 
 static void tipi_reply_n(uint16_t len)
@@ -224,13 +316,21 @@ static void tipi_handle_special(const char *name)
 
 static void tipi_handle_pab(void)
 {
+  struct tifiles_header new_header;
   uint8_t rc;
+  int r;
   tipi_packet[tipi_packet_pos] = 0;
-  TIPI_DEBUG("PAB operation fn=\"%s\"\n", tipi_packet);
-  if (!strncmp(tipi_packet, "PI.", 3))
-    tipi_handle_special(tipi_packet+3);
-  else if (!strncmp(tipi_packet, "TIPI.", 5) ||
-	   !strncmp(tipi_packet, "DSK1.", 5))
+  if (!tipi_pab_extra) {
+    TIPI_DEBUG("PAB operation fn=\"%s\"\n", tipi_packet);
+    if (!strncmp(tipi_packet, "PI.", 3)) {
+      tipi_handle_special(tipi_packet+3);
+      return;
+    } else if (strncmp(tipi_packet, "TIPI.", 5) &&
+	       strncmp(tipi_packet, "DSK1.", 5)) {
+      tipi_reply_byte(TIPI_EDVNAME);
+      return;
+    }
+  }
   switch(pab.opcode) {
   case TIPI_LOAD:
     TIPI_DEBUG("Load >%04x bytes to >%04x\n",
@@ -242,17 +342,52 @@ static void tipi_handle_pab(void)
       break;
     }
     TIPI_DEBUG("Flags: %02x\n", (unsigned)load_handle.header.flags);
-    int r = fatfs_read(&load_handle.handle, tipi_reply, pab.record_num);
+    if (!(load_handle.header.flags & PROGRAM)) {
+      tipi_reply_byte(TIPI_EFILERR);
+      break;
+    }
+    r = fatfs_read(&load_handle.handle, tipi_reply, pab.record_num);
     tipi_reply_byte(tipi_errno_to_status(r));
     if (r >= 0)
       tipi_reply_n(r);
+    break;
+  case TIPI_SAVE:
+    if (tipi_pab_extra) {
+      if (tipi_packet_pos != pab.record_num) {
+	TIPI_DEBUG("Got wrong amount of data (>%04x)\n", (unsigned)tipi_packet_pos);
+	tipi_reply_byte(TIPI_EILLOP);
+	break;
+      }
+      if ((r = fatfs_setsize(&save_handle.handle, &save_handle.direntry,
+			     pab.record_num + 0x80u)) < 0)
+	rc = tipi_errno_to_status(r);
+      else if ((rc = tipi_write_to_file(&save_handle, tipi_packet,
+					0, pab.record_num)) == TIPI_SUCCESS)
+	rc = tipi_update_tifile_header(&save_handle);
+      tipi_reply_byte(rc);
+      break;
+    }
+    TIPI_DEBUG("Save >%04x bytes from >%04x\n",
+	       (unsigned)pab.record_num,
+	       (unsigned)pab.buf_addr);
+    tipi_init_header(&new_header, tipi_packet);
+    new_header.flags = PROGRAM;
+    if ((rc = tipi_open_or_create_tifile(&save_handle, tipi_packet,
+					 &new_header)) != TIPI_SUCCESS) {
+      TIPI_DEBUG("Open failed %02x\n", (unsigned)rc);
+      tipi_reply_byte(rc);
+      break;
+    }
+    save_handle.header.num_sectors = (pab.record_num + 0xffu) >> 8;
+    save_handle.header.eof_offset = (pab.record_num & 0xffu);
+    tipi_got_pab = true;
+    tipi_pab_extra = true;
+    tipi_reply_byte(TIPI_SUCCESS);
     break;
   default:
     tipi_reply_byte(TIPI_EILLOP);
     break;
   }
-  else
-    tipi_reply_byte(TIPI_EDVNAME);
 }
 
 static void tipi_reset(void)
@@ -283,10 +418,15 @@ static void tipi_handle_byte(uint8_t byt)
   }
   if (tipi_packet_pos < tipi_packet_len)
     return;
+#if TIPI_DEBUG_ENABLED
   TIPI_DEBUG("Got pkt: <");
-  for (unsigned i=0; i<tipi_packet_len; i++)
-    TIPI_DEBUG(" %02x", (unsigned)tipi_packet[i]);
+  if (tipi_got_pab && tipi_pab_extra)
+    TIPI_DEBUG("... %u bytes ...", (unsigned)tipi_packet_len);
+  else
+    for (unsigned i=0; i<tipi_packet_len; i++)
+      TIPI_DEBUG(" %02x", (unsigned)tipi_packet[i]);
   TIPI_DEBUG(" >\n");
+#endif
   reply_state = REPLY_STATE_IDLE;
   if (tipi_got_pab) {
     tipi_got_pab = false;
@@ -294,6 +434,7 @@ static void tipi_handle_byte(uint8_t byt)
   } else if (tipi_packet_len == 10 && tipi_packet[0] < 0x10) {
     memcpy(&pab, tipi_packet, sizeof(pab));
     tipi_got_pab = true;
+    tipi_pab_extra = false;
   } else {
     tipi_reply_byte(TIPI_EILLOP);
   }

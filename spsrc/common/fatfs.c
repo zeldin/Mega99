@@ -971,12 +971,10 @@ static int fatfs_create_dir_entry(const char *filename, fatfs_filehandle_t *fh,
   return r;
 }
 
-int fatfs_open_or_create(const char *filename, fatfs_filehandle_t *fh,
-			 fatfs_filehandle_t *dirent_fh)
+int fatfs_open_or_createat(const char *filename, fatfs_filehandle_t *fh,
+			   fatfs_filehandle_t *dirent_fh)
 {
   int r;
-  if ((r = fatfs_open_rootdir(dirent_fh)) < 0)
-    return r;
   if (!*filename)
     return -EISDIR;
   r = fatfs_search_dir(filename, fh, dirent_fh);
@@ -988,6 +986,15 @@ int fatfs_open_or_create(const char *filename, fatfs_filehandle_t *fh,
       r = fatfs_create_dir_entry(filename, fh, dirent_fh);
   }
   return r;
+}
+
+int fatfs_open_or_create(const char *filename, fatfs_filehandle_t *fh,
+			 fatfs_filehandle_t *dirent_fh)
+{
+  int r;
+  if ((r = fatfs_open_rootdir(dirent_fh)) < 0)
+    return r;
+  return fatfs_open_or_createat(filename, fh, dirent_fh);
 }
 
 int fatfs_write(fatfs_filehandle_t *fh, const void *p, uint32_t bytes)
