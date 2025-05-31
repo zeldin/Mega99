@@ -40,7 +40,7 @@ extra peripherals:
 
 | ROM file         | Zip file        | Use                |
 | ---------------- | --------------- | ------------------ |
-| tipidsr.u2       | ti99_tipi.zip   | TIPI DSR ROM       |
+| tipidsr_2023.u2  | ti99_tipi.zip   | TIPI DSR ROM       |
 | tipi.bin         | tipi-dsr.zip    | TIPI DSR ROM (alt) |
 | pcode_grom0.u11  | ti99_pcode.zip  | P-code card GROM   |
 | pcode_grom1.u13  | ti99_pcode.zip  | P-code card GROM   |
