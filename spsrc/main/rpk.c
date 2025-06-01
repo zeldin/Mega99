@@ -14,7 +14,7 @@
 
 #define MAX_RESOURCES         8
 #define MAX_ID_LENGTH        15
-#define MAX_FILE_LENGTH      15
+#define MAX_FILE_LENGTH     255
 #define MAX_SOCKET_ID_LENGTH 15
 #define MAX_PCB_TYPE_LENGTH  15
 
