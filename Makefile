@@ -9,6 +9,7 @@ COMMON_SOURCES += $(GATEWARE)/address_decoder.v
 COMMON_SOURCES += $(GATEWARE)/multiplexer.v
 COMMON_SOURCES += $(GATEWARE)/keymatrix.v
 COMMON_SOURCES += $(GATEWARE)/groms.v
+COMMON_SOURCES += $(GATEWARE)/grom_storage_bram.v
 COMMON_SOURCES += $(GATEWARE)/cartridge_rom.v
 COMMON_SOURCES += $(GATEWARE)/console_rom.v
 COMMON_SOURCES += $(GATEWARE)/scratchpad_ram.v

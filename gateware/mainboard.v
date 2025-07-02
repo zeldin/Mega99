@@ -175,7 +175,13 @@ module mainboard #(
    reg	       wb_stb_crom;
    reg	       wb_stb_sprom;
    reg	       wb_stb_peb;
-   
+
+   wire [0:3]  prefetch_grom_set;
+   wire [0:15] prefetch_grom_addr;
+   wire	       grom_do_prefetch;
+   wire	       grom_prefetch_complete;
+   wire [0:7]  grom_prefetch_data;
+
    assign sys_reset = reset;
    
    assign int_in[1] = 1'b1;
@@ -206,6 +212,8 @@ module mainboard #(
 			   (audio_mix[0:1] == 2'b00 ||
 			    audio_mix[0:1] == 2'b11 ? audio_mix :
 			    {audio_mix[0], {(audio_bits-1){audio_mix[0]}}}));
+
+   assign debug_grom_addr = prefetch_grom_addr;
 
    always @(posedge clk) begin
       d_rom_valid <= dbin && romen;
@@ -358,11 +366,22 @@ module mainboard #(
 
    groms grom(.clk(clk), .grclk_en(grom_clk_en), .m(dbin), .gs(gs),
 	      .mo(a[14]), .d(q8), .q(d8_grom), .gready(ready_grom),
-	      .grom_set(a[10:13]), .debug_grom_addr(debug_grom_addr),
-	      .wb_adr_i(wb_adr_i[23 -: 16]), .wb_dat_i(wb_dat_i),
-	      .wb_dat_o(wb_dat_grom), .wb_we_i(wb_we_i),
-	      .wb_sel_i(wb_sel_i), .wb_stb_i(wb_stb_grom),
-	      .wb_ack_o(wb_ack_grom), .wb_cyc_i(wb_cyc_i));
+	      .grom_set(a[10:13]), .prefetch_grom_set(prefetch_grom_set),
+	      .prefetch_grom_addr(prefetch_grom_addr),
+	      .do_prefetch(grom_do_prefetch),
+	      .prefetch_complete(grom_prefetch_complete),
+	      .prefetch_data(grom_prefetch_data));
+
+   grom_storage_bram
+     grom_storage(.clk(clk), .prefetch_grom_set(prefetch_grom_set),
+		  .prefetch_grom_addr(prefetch_grom_addr),
+		  .do_prefetch(grom_do_prefetch),
+		  .prefetch_complete(grom_prefetch_complete),
+		  .prefetch_data(grom_prefetch_data),
+		  .wb_adr_i(wb_adr_i[23 -: 16]), .wb_dat_i(wb_dat_i),
+		  .wb_dat_o(wb_dat_grom), .wb_we_i(wb_we_i),
+		  .wb_sel_i(wb_sel_i), .wb_stb_i(wb_stb_grom),
+		  .wb_ack_o(wb_ack_grom), .wb_cyc_i(wb_cyc_i));
 
    cartridge_rom #(.BANKS(CROM_BANKS)) crom(.clk(clk), .cs(romg), .we(we),
 		      .a({a[3:14], a15}), .d(q8), .q(d8_crom),

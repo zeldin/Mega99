@@ -28,6 +28,7 @@ proc checkRequiredFiles { origin_dir} {
  "[file normalize "$origin_dir/gateware/multiplexer.v"]"\
  "[file normalize "$origin_dir/gateware/keymatrix.v"]"\
  "[file normalize "$origin_dir/gateware/groms.v"]"\
+ "[file normalize "$origin_dir/gateware/grom_storage_bram.v"]"\
  "[file normalize "$origin_dir/gateware/cartridge_rom.v"]"\
  "[file normalize "$origin_dir/gateware/console_rom.v"]"\
  "[file normalize "$origin_dir/gateware/scratchpad_ram.v"]"\
@@ -248,6 +249,7 @@ set files [list \
  [file normalize "${origin_dir}/gateware/multiplexer.v"] \
  [file normalize "${origin_dir}/gateware/keymatrix.v"] \
  [file normalize "${origin_dir}/gateware/groms.v"] \
+ [file normalize "${origin_dir}/gateware/grom_storage_bram.v"] \
  [file normalize "${origin_dir}/gateware/cartridge_rom.v"] \
  [file normalize "${origin_dir}/gateware/console_rom.v"] \
  [file normalize "${origin_dir}/gateware/scratchpad_ram.v"] \
@@ -455,7 +457,7 @@ set_msg_config -suppress -id {Synth 8-3917} -string {AUD_SD}
 set_msg_config -id {Synth 8-3917} -string {{.*LED\[.*\].*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{.*Port wb_adr_i\[.\] in module cartridge_rom.*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{Port grclk_en in module groms}} -suppress
-set_msg_config -id {Synth 8-7129} -string {{.*Port grom_set\[.\] in module groms.*}} -regexp -suppress
+set_msg_config -id {Synth 8-7129} -string {{.*Port prefetch_grom_set\[.\] in module grom_storage_bram.*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{.*Port a\[.\] in module scratchpad_ram.*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{.*Port a\[.\] in module console_rom.*}} -regexp -suppress
 set_msg_config -id {Synth 8-7129} -string {{.*Port wb_adr_i\[.\] in module console_rom.*}} -regexp -suppress

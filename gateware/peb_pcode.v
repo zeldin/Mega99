@@ -49,6 +49,11 @@ module peb_pcode(input        clk,
 
    reg	       dsr_wb_ack_o;
 
+   wire [0:15] prefetch_grom_addr;
+   wire	       grom_do_prefetch;
+   wire	       grom_prefetch_complete;
+   wire [0:7]  grom_prefetch_data;
+
    assign led = (LED_BIT7 ? cru_bit7 : cru_bit0);
    assign dsr_enable = cru_bit0;
    assign rom2_bank = cru_bit4;
@@ -118,10 +123,21 @@ module peb_pcode(input        clk,
    groms pcode_groms(.clk(clk), .grclk_en(grclk_en), .m(dbin),
 		     .gs(gs), .mo(a[14]), .d(d), .q(grom_q),
 		     .gready(grom_ready), .grom_set(4'h0),
-		     .debug_grom_addr(),
-		     .wb_adr_i(wb_adr_i[1:16]), .wb_dat_i(wb_dat_i),
-		     .wb_dat_o(grom_wb_dat_o), .wb_we_i(wb_we_i),
-		     .wb_sel_i(wb_sel_i), .wb_stb_i(wb_stb_i && wb_adr_i[0]),
-		     .wb_ack_o(grom_wb_ack_o), .wb_cyc_i(wb_cyc_i));
+		     .prefetch_grom_set(),
+		     .prefetch_grom_addr(prefetch_grom_addr),
+		     .do_prefetch(grom_do_prefetch),
+		     .prefetch_complete(grom_prefetch_complete),
+		     .prefetch_data(grom_prefetch_data));
+
+   grom_storage_bram
+     pcode_grom_storage(.clk(clk), .prefetch_grom_set(4'h0),
+			.prefetch_grom_addr(prefetch_grom_addr),
+			.do_prefetch(grom_do_prefetch),
+			.prefetch_complete(grom_prefetch_complete),
+			.prefetch_data(grom_prefetch_data),
+			.wb_adr_i(wb_adr_i[1:16]), .wb_dat_i(wb_dat_i),
+			.wb_dat_o(grom_wb_dat_o), .wb_we_i(wb_we_i),
+			.wb_sel_i(wb_sel_i), .wb_stb_i(wb_stb_i && wb_adr_i[0]),
+			.wb_ack_o(grom_wb_ack_o), .wb_cyc_i(wb_cyc_i));
 
 endmodule // peb_pcode
