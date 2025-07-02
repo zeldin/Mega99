@@ -11,12 +11,12 @@ module multiplexer(input         clk,
 		   input [0:7]	 d8,
 		   output [0:7]	 q8);
 
-   reg [0:2] shift_reg;
+   reg [0:3] shift_reg;
    reg [0:7] odd_latch;
    reg	     odd_live;
    reg	     odd_complete;
 
-   assign a15 = ~shift_reg[2];
+   assign a15 = ~shift_reg[3];
    assign memen8 = memen & !(a15 && odd_complete);
    assign ready = sysrdy && !(start && a15);
    assign q8 = (a15 ? q[8:15] : q[0:7]);
@@ -38,8 +38,8 @@ module multiplexer(input         clk,
    // U613
    always @(posedge clk)
      if (!start)
-       shift_reg <= 3'b000;
+       shift_reg <= 4'b0000;
      else if (clk_en && (sysrdy || (odd_complete && a15)))
-       shift_reg <= { ~shift_reg[2], shift_reg[0:1] };
+       shift_reg <= { ~shift_reg[3], shift_reg[0:2] };
 
 endmodule // multiplexer
