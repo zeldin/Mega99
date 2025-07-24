@@ -14,7 +14,9 @@ module mainboard #(
 		   // # of 8K banks to support for bank-switched cartridges
 		   parameter	     CROM_BANKS = 64,
 		   // set to 0 to disable PCODE card
-		   parameter         INCLUDE_PCODE = 1
+		   parameter         INCLUDE_PCODE = 1,
+		   // set to 0 to use local storage instead of DMA for GROM
+		   parameter         USE_GROM_DMA = 1
 		)
                 (input			   clk,
 		 input			   ext_reset,
@@ -25,6 +27,7 @@ module mainboard #(
 		 input			   reset_9919,
 		 input			   reset_5200,
 		 input			   reset_peb,
+		 input			   reset_grom,
 		 input			   cpu_turbo,
 		 output			   vdp_clk_en,
 		 output			   vga_clk_en,
@@ -84,7 +87,16 @@ module mainboard #(
 		 input [0:0]		   wb_sel_i,
 		 input			   wb_stb_i,
 		 output reg		   wb_ack_o,
-		 input			   wb_cyc_i);
+		 input			   wb_cyc_i,
+
+		 output [0:20]		   dma_adr_o,
+		 output [0:31]		   dma_dat_o,
+		 input [0:31]		   dma_dat_i,
+		 output			   dma_we_o,
+		 output [0:3]		   dma_sel_o,
+		 output			   dma_stb_o,
+		 input			   dma_ack_i,
+		 output			   dma_cyc_o);
 
    wire	       reset;
    wire	       vdp_clk_en_next;
@@ -182,6 +194,11 @@ module mainboard #(
    wire	       grom_prefetch_complete;
    wire [0:7]  grom_prefetch_data;
 
+   wire [0:19] grom_dma_adr;
+   wire	       grom_dma_stb;
+   wire	       grom_dma_ack;
+   wire	       grom_dma_cyc;
+
    assign sys_reset = reset;
    
    assign int_in[1] = 1'b1;
@@ -214,6 +231,14 @@ module mainboard #(
 			    {audio_mix[0], {(audio_bits-1){audio_mix[0]}}}));
 
    assign debug_grom_addr = prefetch_grom_addr;
+
+   assign dma_adr_o = { 1'b0, grom_dma_adr };
+   assign dma_dat_o = 32'h00000000;
+   assign dma_we_o = 1'b0;
+   assign dma_sel_o = 4'b0000;
+   assign dma_stb_o = grom_dma_stb;
+   assign grom_dma_ack = dma_ack_i;
+   assign dma_cyc_o = grom_dma_cyc;
 
    always @(posedge clk) begin
       d_rom_valid <= dbin && romen;
@@ -372,16 +397,42 @@ module mainboard #(
 	      .prefetch_complete(grom_prefetch_complete),
 	      .prefetch_data(grom_prefetch_data));
 
-   grom_storage_bram
-     grom_storage(.clk(clk), .prefetch_grom_set(prefetch_grom_set),
-		  .prefetch_grom_addr(prefetch_grom_addr),
-		  .do_prefetch(grom_do_prefetch),
-		  .prefetch_complete(grom_prefetch_complete),
-		  .prefetch_data(grom_prefetch_data),
-		  .wb_adr_i(wb_adr_i[23 -: 16]), .wb_dat_i(wb_dat_i),
-		  .wb_dat_o(wb_dat_grom), .wb_we_i(wb_we_i),
-		  .wb_sel_i(wb_sel_i), .wb_stb_i(wb_stb_grom),
-		  .wb_ack_o(wb_ack_grom), .wb_cyc_i(wb_cyc_i));
+   generate
+      if (USE_GROM_DMA) begin
+
+	 grom_storage_dma
+	   grom_storage(.clk(clk), .reset(reset|reset_grom),
+			.prefetch_grom_set(prefetch_grom_set),
+			.prefetch_grom_addr(prefetch_grom_addr),
+			.do_prefetch(grom_do_prefetch),
+			.prefetch_complete(grom_prefetch_complete),
+			.prefetch_data(grom_prefetch_data),
+			.dma_adr(grom_dma_adr), .dma_dat(dma_dat_i),
+			.dma_stb(grom_dma_stb), .dma_ack(grom_dma_ack),
+			.dma_cyc(grom_dma_cyc));
+
+	 assign wb_dat_grom = 8'h00;
+	 assign wb_ack_grom = 1'b0;
+
+      end else begin
+
+	 grom_storage_bram
+	   grom_storage(.clk(clk), .prefetch_grom_set(prefetch_grom_set),
+			.prefetch_grom_addr(prefetch_grom_addr),
+			.do_prefetch(grom_do_prefetch),
+			.prefetch_complete(grom_prefetch_complete),
+			.prefetch_data(grom_prefetch_data),
+			.wb_adr_i(wb_adr_i[23 -: 16]), .wb_dat_i(wb_dat_i),
+			.wb_dat_o(wb_dat_grom), .wb_we_i(wb_we_i),
+			.wb_sel_i(wb_sel_i), .wb_stb_i(wb_stb_grom),
+			.wb_ack_o(wb_ack_grom), .wb_cyc_i(wb_cyc_i));
+
+	 assign grom_dma_adr = 21'h000000;
+	 assign grom_dma_stb = 1'b0;
+	 assign grom_dma_cyc = 1'b0;
+
+      end
+   endgenerate
 
    cartridge_rom #(.BANKS(CROM_BANKS)) crom(.clk(clk), .cs(romg), .we(we),
 		      .a({a[3:14], a15}), .d(q8), .q(d8_crom),

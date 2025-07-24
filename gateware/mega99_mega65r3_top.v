@@ -171,12 +171,22 @@ module mega99_mega65r3_top(input        CLK100MHZ,
    wire	       sp_ack_i;
    wire	       sp_cyc_o;
 
+   wire [0:20] mb_dma_adr_o;
+   wire [0:31] mb_dma_dat_o;
+   wire [0:31] mb_dma_dat_i;
+   wire	       mb_dma_we_o;
+   wire [0:3]  mb_dma_sel_o;
+   wire	       mb_dma_stb_o;
+   wire	       mb_dma_ack_i;
+   wire	       mb_dma_cyc_o;
+
    wire	       reset_9900;
    wire	       reset_9901;
    wire	       reset_9918;
    wire	       reset_9919;
    wire	       reset_5200;
    wire	       reset_peb;
+   wire	       reset_grom;
    wire	       enable_ram32k;
    wire	       enable_fdc;
    wire	       enable_vsp;
@@ -286,6 +296,11 @@ module mega99_mega65r3_top(input        CLK100MHZ,
 		     .wb_sel_o(sp_sel_o), .wb_stb_o(sp_stb_o),
 		     .wb_ack_i(sp_ack_i), .wb_cyc_o(sp_cyc_o),
 
+		     .dma_adr_i(mb_dma_adr_o), .dma_dat_i(mb_dma_dat_o),
+		     .dma_dat_o(mb_dma_dat_i), .dma_we_i(mb_dma_we_o),
+		     .dma_sel_i(mb_dma_sel_o), .dma_stb_i(mb_dma_stb_o),
+		     .dma_ack_o(mb_dma_ack_i), .dma_cyc_i(mb_dma_cyc_o),
+
 		     .xmem_adr_o(xmem_adr_o), .xmem_dat_o(xmem_dat_o),
 		     .xmem_dat_i(xmem_dat_i), .xmem_we_o(xmem_we_o),
 		     .xmem_sel_o(xmem_sel_o), .xmem_stb_o(xmem_stb_o),
@@ -295,7 +310,7 @@ module mega99_mega65r3_top(input        CLK100MHZ,
 
 		     .led_green(led_green), .led_red(led_red),
 		     .sw_reset({reset_9900, reset_9901,	reset_9918, reset_9919,
-				reset_5200, reset_peb}),
+				reset_5200, reset_peb, reset_grom}),
 		     .sw_enable({enable_ram32k, enable_fdc, enable_vsp,
 				 enable_1kscratch, swap_joysticks,
 				 enable_tipi, tipi_internal, enable_pcode}),
@@ -335,7 +350,8 @@ module mega99_mega65r3_top(input        CLK100MHZ,
    mb(.clk(clk), .ext_reset(reset_btn | ~clk_locked), .sys_reset(reset),
       .reset_9900(reset_9900), .reset_9901(reset_9901),
       .reset_9918(reset_9918), .reset_9919(reset_9919),
-      .reset_5200(reset_5200), .reset_peb(reset_peb), .cpu_turbo(cpu_turbo),
+      .reset_5200(reset_5200), .reset_peb(reset_peb),
+      .reset_grom(reset_grom), .cpu_turbo(cpu_turbo),
       .vdp_clk_en(vdp_clk_en), .vga_clk_en(vga_clk_en),
       .overlay_clk_en(overlay_clk_en), .clk_3mhz_en(clk_3mhz_en),
       .enable_ram32k(enable_ram32k), .enable_fdc(enable_fdc),
@@ -362,7 +378,11 @@ module mega99_mega65r3_top(input        CLK100MHZ,
       .debug_vdp_addr(debug_vdp_addr), .debug_grom_addr(debug_grom_addr),
       .wb_adr_i(sp_adr_o), .wb_dat_i(sp_dat_o), .wb_dat_o(sp_dat_i),
       .wb_we_i(sp_we_o), .wb_sel_i(sp_sel_o), .wb_stb_i(sp_stb_o),
-      .wb_ack_o(sp_ack_i), .wb_cyc_i(sp_cyc_o));
+      .wb_ack_o(sp_ack_i), .wb_cyc_i(sp_cyc_o),
+      .dma_adr_o(mb_dma_adr_o), .dma_dat_o(mb_dma_dat_o),
+      .dma_dat_i(mb_dma_dat_i), .dma_we_o(mb_dma_we_o),
+      .dma_sel_o(mb_dma_sel_o), .dma_stb_o(mb_dma_stb_o),
+      .dma_ack_i(mb_dma_ack_i), .dma_cyc_o(mb_dma_cyc_o));
 
    tms9918_scandoubler
      scandoubler(.clk(clk), .clk_en_in(vdp_clk_en), .clk_en_out(vga_clk_en),

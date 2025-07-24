@@ -29,6 +29,7 @@ proc checkRequiredFiles { origin_dir} {
  "[file normalize "$origin_dir/gateware/keymatrix.v"]"\
  "[file normalize "$origin_dir/gateware/groms.v"]"\
  "[file normalize "$origin_dir/gateware/grom_storage_bram.v"]"\
+ "[file normalize "$origin_dir/gateware/grom_storage_dma.v"]"\
  "[file normalize "$origin_dir/gateware/cartridge_rom.v"]"\
  "[file normalize "$origin_dir/gateware/console_rom.v"]"\
  "[file normalize "$origin_dir/gateware/scratchpad_ram.v"]"\
@@ -250,6 +251,7 @@ set files [list \
  [file normalize "${origin_dir}/gateware/keymatrix.v"] \
  [file normalize "${origin_dir}/gateware/groms.v"] \
  [file normalize "${origin_dir}/gateware/grom_storage_bram.v"] \
+ [file normalize "${origin_dir}/gateware/grom_storage_dma.v"] \
  [file normalize "${origin_dir}/gateware/cartridge_rom.v"] \
  [file normalize "${origin_dir}/gateware/console_rom.v"] \
  [file normalize "${origin_dir}/gateware/scratchpad_ram.v"] \

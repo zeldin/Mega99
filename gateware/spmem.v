@@ -1,4 +1,4 @@
-module spmem(input         clk,
+module spmem(input	   clk,
 	     input	   reset,
 
 	     input [1:31]  sp_i_adr,
@@ -9,7 +9,7 @@ module spmem(input         clk,
 	     input [0:2]   sp_i_cti,
 	     input [0:1]   sp_i_bte,
 	     input [0:31]  sp_i_dato,
-	     output 	   sp_i_ack,
+	     output	   sp_i_ack,
 	     output [0:31] sp_i_dati,
 
 	     input [1:31]  sp_d_adr,
@@ -20,8 +20,17 @@ module spmem(input         clk,
 	     input [0:2]   sp_d_cti,
 	     input [0:1]   sp_d_bte,
 	     input [0:31]  sp_d_dato,
-	     output 	   sp_d_ack,
+	     output	   sp_d_ack,
 	     output [0:31] sp_d_dati,
+
+	     input [2:31]  dma_adr_i,
+	     input	   dma_stb_i,
+	     input	   dma_cyc_i,
+	     input [0:3]   dma_sel_i,
+	     input	   dma_we_i,
+	     input [0:31]  dma_dat_i,
+	     output	   dma_ack_o,
+	     output [0:31] dma_dat_o,
 
 	     output [2:31] xmem_adr_o,
 	     output	   xmem_stb_o,
@@ -34,8 +43,13 @@ module spmem(input         clk,
 
    parameter boot_mem_init_file = "";
 
+   wire xmem_i_request;
+   wire xmem_d_request;
+   wire xmem_dma_request;
    wire xmem_i_access;
    wire xmem_d_access;
+   wire xmem_dma_access;
+   reg	xmem_i_in_progress;
    reg	xmem_d_in_progress;
 
    reg [0:31]  boot_mem[0:4095];
@@ -45,20 +59,34 @@ module spmem(input         clk,
    wire	       boot_mem_i_access;
    wire	       boot_mem_d_access;
 
-   assign xmem_i_access = (!reset && sp_i_cyc && sp_i_stb && !sp_i_we &&
-			   sp_i_adr[1] == 1'b1 && !xmem_d_in_progress);
-   assign xmem_d_access = (!reset && sp_d_cyc && sp_d_stb &&
-			   sp_d_adr[1] == 1'b1);
+   assign xmem_i_request = (!reset && sp_i_cyc && sp_i_stb && !sp_i_we &&
+			    sp_i_adr[1] == 1'b1);
+   assign xmem_d_request = (!reset && sp_d_cyc && sp_d_stb &&
+			    sp_d_adr[1] == 1'b1);
+   assign xmem_dma_request = (!reset && dma_cyc_i && dma_stb_i);
 
-   assign sp_i_ack = (xmem_i_access ? xmem_ack_i : boot_mem_i_ack);
-   assign sp_d_ack = (xmem_d_access && !xmem_i_access ? xmem_ack_i : boot_mem_d_ack);
+   assign xmem_i_access = xmem_i_request &&
+			  ((!xmem_dma_request && !xmem_d_in_progress) ||
+			   xmem_i_in_progress);
+   assign xmem_d_access = xmem_d_request &&
+			  ((!xmem_dma_request && !xmem_i_request) ||
+			   xmem_d_in_progress);
+   assign xmem_dma_access = xmem_dma_request && !xmem_i_in_progress &&
+			    !xmem_d_in_progress;
 
-   assign xmem_adr_o = { (xmem_i_access ? sp_i_adr[2:29] : sp_d_adr[2:29]), 2'b00 };
-   assign xmem_stb_o = xmem_i_access || xmem_d_access;
-   assign xmem_cyc_o = xmem_i_access || xmem_d_access;
-   assign xmem_sel_o = sp_d_sel;
-   assign xmem_we_o = sp_d_we && !xmem_i_access;
-   assign xmem_dat_o = sp_d_dato;
+   assign sp_i_ack = (xmem_i_request ? (xmem_i_access && xmem_ack_i) : boot_mem_i_ack);
+   assign sp_d_ack = (xmem_d_request ? (xmem_d_access && xmem_ack_i) : boot_mem_d_ack);
+   assign dma_ack_o = xmem_dma_access && xmem_ack_i;
+
+   assign xmem_adr_o = (xmem_dma_access ? dma_adr_i :
+			{ (xmem_i_access ? sp_i_adr[2:29] : sp_d_adr[2:29]),
+			  2'b00 });
+   assign xmem_stb_o = xmem_i_access || xmem_d_access || xmem_dma_access;
+   assign xmem_cyc_o = xmem_i_access || xmem_d_access || xmem_dma_access;
+   assign xmem_sel_o = (xmem_dma_access ? dma_sel_i : sp_d_sel);
+   assign xmem_we_o = (xmem_dma_access & dma_we_i) |
+		      (xmem_d_access & sp_d_we);
+   assign xmem_dat_o = (xmem_dma_access ? dma_dat_i : sp_d_dato);
 
    assign boot_mem_i_access = (!reset && !boot_mem_i_ack &&
 			       sp_i_cyc && sp_i_stb && !sp_i_we &&
@@ -68,13 +96,17 @@ module spmem(input         clk,
 			       sp_d_adr[1] == 1'b0);
    assign sp_i_dati = (sp_i_adr[1] ? xmem_dat_i : boot_mem_data);
    assign sp_d_dati = (sp_d_adr[1] ? xmem_dat_i : boot_mem_data);
+   assign dma_dat_o = xmem_dat_i;
 
    initial $readmemh({boot_mem_init_file, ".hex"}, boot_mem);
 
    always @(posedge clk) begin
 
-      if (xmem_d_access && !xmem_i_access)
-	xmem_d_in_progress <= 1'b1;
+      xmem_i_in_progress <= xmem_i_access;
+      if (reset || xmem_ack_i)
+	xmem_i_in_progress <= 1'b0;
+
+      xmem_d_in_progress <= xmem_d_access;
       if (reset || xmem_ack_i)
 	xmem_d_in_progress <= 1'b0;
 

@@ -32,6 +32,7 @@ struct mmio_regs_misc {
 #define REGS_MISC_RESET_SGC UINT16_C(0x10)
 #define REGS_MISC_RESET_VSP UINT16_C(0x08)
 #define REGS_MISC_RESET_PEB UINT16_C(0x04)
+#define REGS_MISC_RESET_GROM UINT16_C(0x02)
 
 struct mmio_regs_sdcard {
   uint16_t ctrl;

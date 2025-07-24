@@ -33,11 +33,10 @@ module groms(input	      clk,	// Enabled cycles should give
    always @(posedge clk) begin
 
       if (do_prefetch) begin
-	 if (prefetch_complete) begin
-	    addr <= addr + 13'h1;
+	 if (prefetch_complete)
 	    do_prefetch <= 1'b0;
-	 end
       end else if (grom_byte_update) begin
+	 addr <= addr + 13'h1;
 	 grom_out_byte <= prefetch_data;
 	 grom_byte_update <= 1'b0;
       end else begin
