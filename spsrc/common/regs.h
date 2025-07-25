@@ -118,3 +118,7 @@ struct mmio_regs_tipi {
 };
 
 #define REGS_TIPI (*(volatile struct mmio_regs_tipi *)(void *)0xff060000)
+
+#define REGS_IOMMU (*(volatile uint32_t (*)[32][32])(void *)0xff070000)
+
+#define REGS_IOMMU_DESCRIPTOR(tag, addr16) (REGS_IOMMU[(tag)][(addr16)>>11])

@@ -122,6 +122,15 @@ void main()
   uint8_t pcode_readback = ((volatile uint8_t *)PCODEROM1)[0];
   PCODEROM1[0] = 0;
 
+  // Init IOMMU mapping
+  memset(GROM(0), 0, 65536);
+  for(unsigned i=0; i<16; i++)
+    for(unsigned j=0; j<32; j++)
+      REGS_IOMMU_DESCRIPTOR(i, j<<11) = (j<<11) + (uintptr_t)GROM(0);
+  for(unsigned i=16; i<32; i++)
+    for(unsigned j=0; j<32; j++)
+      REGS_IOMMU_DESCRIPTOR(i, j<<11) = 0;
+
   if (load_rom("994a_rom_hb.u610", "ti99_4a.zip", CPUROMH, 4096) < 0 ||
       load_rom("994a_rom_lb.u611", "ti99_4a.zip", CPUROML, 4096) < 0 ||
       load_rom("994a_grom0.u500", "ti99_4a.zip", GROM(0), 6144) < 0 ||

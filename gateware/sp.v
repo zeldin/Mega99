@@ -131,6 +131,13 @@ module sp(input		clk,
    reg [0:31]  db_shiftreg;
    reg	       d_wb_ack;
 
+   wire [2:20] dma_physpage;
+   wire	       dma_physstb;
+   wire	       dma_physack;
+   wire	       dma_validpage;
+   wire [0:15] dma_pattern;
+   wire [0:31] dma_physdat;
+
    assign or1k_irq = 32'd0;
 
    assign or1k_i_err = 1'b0;
@@ -152,6 +159,8 @@ module sp(input		clk,
    assign wb_sel_o = or1k_d_sel[db_subaddr];
    assign wb_stb_o = or1k_d_stb && !or1k_d_ack;
    assign wb_cyc_o = or1k_d_cyc && (or1k_d_adr[0:7] == 8'h80);
+
+   assign dma_dat_o = (dma_validpage ? dma_physdat : {2{ dma_pattern }});
 
    always @(posedge clk) begin
       if (reset || d_wb_ack || !or1k_d_cyc || !or1k_d_stb) begin
@@ -225,10 +234,10 @@ module sp(input		clk,
 	    .sp_d_we(or1k_d_we), .sp_d_cti(or1k_d_cti),
 	    .sp_d_bte(or1k_d_bte), .sp_d_dato(or1k_d_dato),
 	    .sp_d_ack(mem_ack), .sp_d_dati(mem_data),
-	    .dma_adr_i({ 9'b000000010, dma_adr_i }),
-	    .dma_stb_i(dma_stb_i), .dma_cyc_i(dma_cyc_i),
+	    .dma_adr_i({ dma_physpage, dma_adr_i[10:20] }),
+	    .dma_stb_i(dma_physstb), .dma_cyc_i(dma_cyc_i),
 	    .dma_sel_i(dma_sel_i), .dma_we_i(dma_we_i), .dma_dat_i(dma_dat_i),
-	    .dma_ack_o(dma_ack_o), .dma_dat_o(dma_dat_o),
+	    .dma_ack_o(dma_physack), .dma_dat_o(dma_physdat),
 	    .xmem_adr_o(xmem_adr_o),
 	    .xmem_stb_o(xmem_stb_o), .xmem_cyc_o(xmem_cyc_o),
 	    .xmem_sel_o(xmem_sel_o), .xmem_we_o(xmem_we_o),
@@ -265,7 +274,12 @@ module sp(input		clk,
 	  .uart_txd(uart_txd), .uart_rxd(uart_rxd),
 	  .tipi_enable(tipi_enable), .tipi_clk(tipi_clk),
 	  .tipi_rt(tipi_rt), .tipi_le(tipi_le), .tipi_reset(tipi_reset),
-	  .tipi_dout(tipi_dout), .tipi_din(tipi_din), .tipi_dc(tipi_dc));
+	  .tipi_dout(tipi_dout), .tipi_din(tipi_din), .tipi_dc(tipi_dc),
+	  .dma_virtpage(dma_adr_i[0:9]), .dma_physpage(dma_physpage),
+	  .dma_cyc(dma_cyc_i), .dma_we(dma_we_i),
+	  .dma_virtstb(dma_stb_i), .dma_physstb(dma_physstb),
+	  .dma_virtack(dma_ack_o), .dma_physack(dma_physack),
+	  .dma_validpage(dma_validpage), .dma_pattern(dma_pattern));
 
    qspi_controller qspi(.clk(clk), .reset(reset),
 			.adr_i(or1k_d_adr[4:31]),

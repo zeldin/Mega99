@@ -55,6 +55,7 @@ COMMON_SOURCES += $(GATEWARE)/spmmio_overlay.v
 COMMON_SOURCES += $(GATEWARE)/spmmio_keyboard.v
 COMMON_SOURCES += $(GATEWARE)/spmmio_tape.v
 COMMON_SOURCES += $(GATEWARE)/spmmio_tipi.v
+COMMON_SOURCES += $(GATEWARE)/spmmio_iommu.v
 COMMON_SOURCES += $(GATEWARE)/icap_wrapper.v
 COMMON_SOURCES += $(GATEWARE)/qspi_controller.v
 

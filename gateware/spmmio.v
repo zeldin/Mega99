@@ -1,4 +1,4 @@
-module spmmio(input             clk,
+module spmmio(input		clk,
 	      input		reset,
 
 	      input [0:23]	adr_i, // 21 is last significant bit
@@ -58,7 +58,18 @@ module spmmio(input             clk,
 	      input		tipi_reset,
 	      output		tipi_dout,
 	      input		tipi_din,
-	      output		tipi_dc);
+	      output		tipi_dc,
+
+	      input [0:9]	dma_virtpage,
+	      output [2:20]	dma_physpage,
+	      input		dma_cyc,
+	      input		dma_we,
+	      input		dma_virtstb,
+	      output		dma_physstb,
+	      output		dma_virtack,
+	      input		dma_physack,
+	      output		dma_validpage,
+	      output [0:15]	dma_pattern);
 
    parameter keyboard_model = 0;
    parameter num_sdcard = 1;
@@ -70,7 +81,9 @@ module spmmio(input             clk,
    reg	       stb_kbd;
    reg	       stb_tape;
    reg	       stb_tipi;
+   reg	       stb_iommu;
    wire        ack_overlay;
+   wire        ack_iommu;
    wire [0:31] dat_misc;
    wire [0:31] dat_sdcard;
    wire [0:31] dat_uart;
@@ -78,6 +91,7 @@ module spmmio(input             clk,
    wire [0:31] dat_kbd;
    wire [0:31] dat_tape;
    wire [0:31] dat_tipi;
+   wire [0:31] dat_iommu;
 
    always @(*) begin
       ack_o <= stb_i;
@@ -90,6 +104,7 @@ module spmmio(input             clk,
       stb_kbd <= 1'b0;
       stb_tape <= 1'b0;
       stb_tipi <= 1'b0;
+      stb_iommu <= 1'b0;
       case (adr_i[0 +: 8])
 	8'h00: begin
 	   stb_misc <= stb_i;
@@ -119,6 +134,11 @@ module spmmio(input             clk,
 	8'h06: begin
 	   stb_tipi <= stb_i;
 	   dat_o <= dat_tipi;
+	end
+	8'h07: begin
+	   stb_iommu <= stb_i;
+	   ack_o <= ack_iommu;
+	   dat_o <= dat_iommu;
 	end
 	default: ;
       endcase // case (adr_i[0 +: 8])
@@ -181,5 +201,14 @@ module spmmio(input             clk,
 		    .enable(tipi_enable), .tclk(tipi_clk),
 		    .rt(tipi_rt), .le(tipi_le), .treset(tipi_reset),
 		    .dout(tipi_dout), .din(tipi_din), .dc(tipi_dc));
+
+   spmmio_iommu iommu(.clk(clk), .reset(reset),
+		      .adr(adr_i[21 -: 10]), .cs(cyc_i && stb_iommu),
+		      .sel(sel_i), .we(we_i), .d(dat_i), .q(dat_iommu),
+		      .ack(ack_iommu), .cyc(dma_cyc), .dma_we(dma_we),
+		      .virtpage(dma_virtpage), .physpage(dma_physpage),
+		      .virtstb(dma_virtstb), .physstb(dma_physstb),
+		      .virtack(dma_virtack), .physack(dma_physack),
+		      .validpage(dma_validpage), .pattern(dma_pattern));
 
 endmodule // spmmio
