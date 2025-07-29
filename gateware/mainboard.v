@@ -412,7 +412,7 @@ module mainboard #(
 			.dma_cyc(grom_dma_cyc));
 
 	 assign wb_dat_grom = 8'h00;
-	 assign wb_ack_grom = 1'b0;
+	 assign wb_ack_grom = 1'b1;
 
       end else begin
 
