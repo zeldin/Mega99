@@ -9,6 +9,8 @@
 #include "mem.h"
 #include "embedfile.h"
 
+#define grom_mem (*((uint8_t (*)[3][0x2000])(void *)0x40000000))
+
 static int open_auxfile(const char *filename, fatfs_filehandle_t *fh)
 {
   int r, r0;
@@ -59,6 +61,13 @@ static int load_rom(const char *filename, uint8_t *ptr, uint32_t len)
   return r;
 }
 
+static void update_garbage(uint8_t *grom)
+{
+  unsigned i;
+  for (i=0; i<0x800; i++)
+    grom[0x1800+i] = grom[0x800+i] | grom[0x1000+i];
+}
+
 void main()
 {
   REGS_MISC.reset = ~0;
@@ -77,9 +86,19 @@ void main()
   /* Otherwise, just load the mandatory ROMs and start the CPU */
   if (load_rom("994a_rom_hb.u610", CPUROMH, 4096) >= 0 &&
       load_rom("994a_rom_lb.u611", CPUROML, 4096) >= 0 &&
-      load_rom("994a_grom0.u500", GROM(0), 6144) >= 0 &&
-      load_rom("994a_grom1.u501", GROM(1), 6144) >= 0 &&
-      load_rom("994a_grom2.u502", GROM(2), 6144) >= 0) {
+      load_rom("994a_grom0.u500", grom_mem[0], 6144) >= 0 &&
+      load_rom("994a_grom1.u501", grom_mem[1], 6144) >= 0 &&
+      load_rom("994a_grom2.u502", grom_mem[2], 6144) >= 0) {
+    update_garbage(grom_mem[0]);
+    update_garbage(grom_mem[1]);
+    update_garbage(grom_mem[2]);
+    memcpy(GROM(0), grom_mem[0], 8192);
+    memcpy(GROM(1), grom_mem[1], 8192);
+    memcpy(GROM(2), grom_mem[2], 8192);
+    for(unsigned i=0; i<32; i++)
+      for(unsigned j=0; j<32; j++)
+	REGS_IOMMU_DESCRIPTOR(i, j<<11) =
+	  (i < 16 && j < 12? (j<<11)+(ptrdiff_t)&grom_mem[0][0] : 0);
     REGS_MISC.reset = ~0;
     memset(VDPRAM, 0, 0x1000);
     REGS_MISC.reset = 0; // Release CPU from reset
