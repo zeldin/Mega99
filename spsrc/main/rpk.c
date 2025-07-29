@@ -112,6 +112,8 @@ static int parse_layout(int *socket_resource, unsigned *cart_mode)
 	      *cart_mode = 0x60u;
 	    else if (!strcmp(pcb_type, "paged379i"))
 	      *cart_mode = 0x48u;
+	    else if (!strcmp(pcb_type, "gromemu"))
+	      *cart_mode = 0xc0u;
 	    else {
 	      fprintf(stderr, "%s pcb unsupported\n", pcb_type);
 	      return -1;
@@ -223,7 +225,8 @@ static int low_load_rpk(const char *filename, fatfs_filehandle_t *fh)
 	      return -1;
 	    }
 	    memcpy(gp, p, (left < 0x2000 ? left : 0x2000));
-	    groms_update_garbage(gp);
+	    if (cart_mode != 0xc0u)
+	      groms_update_garbage(gp);
 	    p = ((uint8_t *)p) + 0x2000;
 	    base += 0x2000;
 	    if (left < 0x2000)
