@@ -230,6 +230,7 @@ SP_MAIN_SRCS += main/newlib_stubs.c
 SP_MAIN_SRCS += main/board.S
 SP_MAIN_SRCS += main/zipfile.c
 SP_MAIN_SRCS += main/rpk.c
+SP_MAIN_SRCS += main/groms.c
 SP_MAIN_SRCS += main/tape.c
 SP_MAIN_SRCS += main/fdc.c
 SP_MAIN_SRCS += main/tipi.c

@@ -16,6 +16,7 @@
 #include "keyboard.h"
 #include "reset.h"
 #include "embedfile.h"
+#include "groms.h"
 
 static int open_auxfile(const char *filename, fatfs_filehandle_t *fh)
 {
@@ -101,6 +102,18 @@ static int load_rom(const char *filename, const char *zipfilename,
   return r;
 }
 
+static int load_grom(const char *filename, const char *zipfilename,
+		     uint16_t base)
+{
+  void *gp = groms_allocate_grom(0xffffu, base);
+  if (!gp)
+    return -1;
+  int r = load_rom(filename, zipfilename, gp, 6144);
+  if (r >= 0)
+    groms_update_garbage(gp);
+  return r;
+}
+
 void main()
 {
   printf("Main SP binary entered\n");
@@ -123,19 +136,17 @@ void main()
   PCODEROM1[0] = 0;
 
   // Init IOMMU mapping
-  memset(GROM(0), 0, 65536);
-  for(unsigned i=0; i<16; i++)
-    for(unsigned j=0; j<32; j++)
-      REGS_IOMMU_DESCRIPTOR(i, j<<11) = (j<<11) + (uintptr_t)GROM(0);
-  for(unsigned i=16; i<32; i++)
+  for(unsigned i=0; i<32; i++)
     for(unsigned j=0; j<32; j++)
       REGS_IOMMU_DESCRIPTOR(i, j<<11) = 0;
 
+  groms_init();
+  groms_free_grom_range(0xffffu, 0x0000, 0x10000u);
   if (load_rom("994a_rom_hb.u610", "ti99_4a.zip", CPUROMH, 4096) < 0 ||
       load_rom("994a_rom_lb.u611", "ti99_4a.zip", CPUROML, 4096) < 0 ||
-      load_rom("994a_grom0.u500", "ti99_4a.zip", GROM(0), 6144) < 0 ||
-      load_rom("994a_grom1.u501", "ti99_4a.zip", GROM(1), 6144) < 0 ||
-      load_rom("994a_grom2.u502", "ti99_4a.zip", GROM(2), 6144) < 0 ||
+      load_grom("994a_grom0.u500", "ti99_4a.zip", 0x0000) < 0 ||
+      load_grom("994a_grom1.u501", "ti99_4a.zip", 0x2000) < 0 ||
+      load_grom("994a_grom2.u502", "ti99_4a.zip", 0x4000) < 0 ||
       load_rom("cd2325a.vsm", "ti99_speech.zip", SPEECHROM, 16384) < 0 ||
       load_rom("cd2326a.vsm", "ti99_speech.zip", SPEECHROM+16384, 16384) < 0 ||
       load_rom("fdc_dsr.u26", "ti99_fdc.zip", FDCROM, 4096) < 0 ||

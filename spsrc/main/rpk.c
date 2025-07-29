@@ -5,6 +5,7 @@
 #include "rpk.h"
 #include "yxml.h"
 #include "strerr.h"
+#include "groms.h"
 
 #define EXPECT_ROM_ID       1
 #define EXPECT_ROM_FILE     2
@@ -183,7 +184,8 @@ static int low_load_rpk(const char *filename, fatfs_filehandle_t *fh)
   unsigned cromstorage = 8192u*(CARTROM_CTRL[2]+1u);
   unsigned cromsize = (cart_mode & 4u)?
     16384u : (8192u << (cart_mode >> 4u));
-  memset(GROM(3), 0x00, 8192*5);
+  uint16_t grom_sets = 0xffffu;
+  groms_free_grom_range(grom_sets, 0x6000, 8192*5);
   memset(CARTROM, 0x00, cromstorage);
   for (unsigned i = 0; i < 3; i++)
     if (socket_resource[i] >= 0) {
@@ -212,8 +214,23 @@ static int low_load_rpk(const char *filename, fatfs_filehandle_t *fh)
 	  break;
 	}
 	r = zipfile_read(p, size);
-	if (r > 0 && p == grom_staging)
-	  memcpy(GROM(3), grom_staging, r);
+	if (r > 0 && p == grom_staging) {
+	  uint16_t base = 0x6000, left = r;
+	  while (left > 0) {
+	    void *gp = groms_allocate_grom(grom_sets, base);
+	    if (!gp) {
+	      fprintf(stderr, "Out of GROM space!\n");
+	      return -1;
+	    }
+	    memcpy(gp, p, (left < 0x2000 ? left : 0x2000));
+	    groms_update_garbage(gp);
+	    p = ((uint8_t *)p) + 0x2000;
+	    base += 0x2000;
+	    if (left < 0x2000)
+	      break;
+	    left -= 0x2000;
+	  }
+	}
       }
       if (r < 0) {
 	fprintf(stderr, "%s\n", zipfile_strerror(r));

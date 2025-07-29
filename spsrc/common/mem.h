@@ -9,8 +9,7 @@
 #define GROM_CTRL ((uint8_t *)(void *)0x80020000)
 #define CARTROM_CTRL ((uint8_t *)(void *)0x80030000)
 
-#define GROM(n) ((uint8_t *)(void *)(0x40400000+(n)*0x2000))
-//#define GROM(n) ((uint8_t *)(void *)(0x80100000+(n)*0x2000))
+#define GROM(n) ((uint8_t *)(void *)(0x80100000+(n)*0x2000))
 #define CARTROM ((uint8_t *)(void *)0x80200000)
 #define SPEECHROM ((uint8_t *)(void *)0x80400000)
 
