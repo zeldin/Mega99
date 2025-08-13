@@ -4,6 +4,7 @@
 #include "keyboard.h"
 #include "reset.h"
 #include "fatfs.h"
+#include "dirpath.h"
 #include "sdcard.h"
 #include "rpk.h"
 #include "fdc.h"
@@ -104,7 +105,7 @@ static const char * fileselector_menu_entries[MAX_FILESELECTOR_ENTRIES];
 static char fileselector_menu_names[MAX_FILESELECTOR_FILES][MAX_FILESELECTOR_NAMELEN+1];
 static char textinput_buffer[256];
 
-static fatfs_filehandle_t saved_rpk_dir, saved_dsk_dir,
+static dirpath_t saved_rpk_dir, saved_dsk_dir,
   saved_tap_dir, saved_mm_dir, *fileselector_saved_dir = NULL;
 
 static void menu_set(const struct menu_page *page);
@@ -117,7 +118,7 @@ static void fileselector_menu_refill(void);
 static void menu_open_fileselector(const char *title,
 				   void (*open_func)(fatfs_filehandle_t *fh,
 						     const char *filename),
-				   fatfs_filehandle_t *saved_dir);
+				   dirpath_t *saved_dir);
 static void menu_text_input(const char *title,
 			    void (*input_func)(const char *data, unsigned len),
 			    bool (*filter_func)(char key));
@@ -146,8 +147,8 @@ static struct menu_page fileselector_menu = {
 };
 
 static const struct menu_page *current_menu = NULL;
-static fatfs_filehandle_t fileselector_dir, fileselector_file[MAX_FILESELECTOR_FILES];
-
+static fatfs_filehandle_t fileselector_file[MAX_FILESELECTOR_FILES], fileselector_dirpos[MAX_FILESELECTOR_FILES];
+static dirpath_t fileselector_dir;
 static void (*fileselector_open_func)(fatfs_filehandle_t *fh, const char *filename);
 static unsigned fileselector_cnt;
 static unsigned menu_dsk_number;
@@ -578,13 +579,18 @@ static int fileselector_menu_fill(bool root)
   char *p;
   fileselector_cnt = 0;
   if (root &&
-      (r = fatfs_open_rootdir(&fileselector_dir)) < 0)
+      (r = dirpath_open_rootdir(&fileselector_dir)) < 0)
     return r;
   if (fileselector_saved_dir)
     *fileselector_saved_dir = fileselector_dir;
-  while((r = fatfs_read_directory(&fileselector_dir, &fileselector_file[fileselector_cnt],
-				  (p = fileselector_menu_names[fileselector_cnt])+1,
-				  MAX_FILESELECTOR_NAMELEN)) > 0) {
+  fatfs_filehandle_t dir_fh = fileselector_dir.fh;
+  for (;;) {
+    fileselector_dirpos[fileselector_cnt] = dir_fh;
+    r = fatfs_read_directory(&dir_fh, &fileselector_file[fileselector_cnt],
+			     (p = fileselector_menu_names[fileselector_cnt])+1,
+			     MAX_FILESELECTOR_NAMELEN);
+    if (r <= 0)
+      break;
     if ((r & 8))
       *p = FILETYPE_LABEL;
     else if ((r & 16)) {
@@ -613,8 +619,9 @@ static void fileselector_menu_select(unsigned entry)
   }
   switch (typ) {
   case FILETYPE_DIR:
-    fileselector_dir = fileselector_file[entry];
-    int r = fileselector_menu_fill(!fileselector_dir.start_cluster);
+    dirpath_subdir(&fileselector_dir, &fileselector_file[entry],
+		   &fileselector_dirpos[entry]);
+    int r = fileselector_menu_fill(!fileselector_dir.fh.start_cluster);
     if (r < 0) {
       fprintf(stderr, "%s\n", fatfs_strerror(-r));
       menu_close();
@@ -636,7 +643,7 @@ static void fileselector_menu_select(unsigned entry)
 static void menu_open_fileselector(const char *title,
 				   void (*open_func)(fatfs_filehandle_t *fh,
 						     const char *filename),
-				   fatfs_filehandle_t *saved_dir)
+				   dirpath_t *saved_dir)
 {
   fileselector_open_func = open_func;
   fileselector_menu_entries[0] = title;
@@ -645,13 +652,11 @@ static void menu_open_fileselector(const char *title,
   int r = -ECARDCHANGED;
   if (saved_dir != NULL) {
     fileselector_saved_dir = saved_dir;
-    if (saved_dir->start_cluster) {
-      fileselector_dir = *saved_dir;
+    if ((r = dirpath_restore(&fileselector_dir, saved_dir)) >= 0)
       r = fileselector_menu_fill(false);
-    }
   } else
     fileselector_saved_dir = NULL;
-  if (r == -ECARDCHANGED)
+  if (r == -ECARDCHANGED || r == -ENOCARD)
     r = fileselector_menu_fill(true);
   if (r == -ENOCARD && sdcard_num_cards() > 1) {
     sdcard_set_card_number(sdcard_get_card_number()? 0 : 1);
