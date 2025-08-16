@@ -21,6 +21,7 @@
 #define FILETYPE_DIR   0x11
 #define FILETYPE_LABEL 0x12
 #define MINOR_TITLE    0x13
+#define ERROR_LINE     0x14
 
 #define MT "\x13"
 
@@ -29,6 +30,7 @@ static const uint16_t menu_altcolor[] = {
   WINDOW_COLOR(5, 4),
   WINDOW_COLOR(13, 4),
   WINDOW_COLOR(14, 4),
+  WINDOW_COLOR(6, 4)
 };
 
 struct menu_scroll_control {
@@ -543,7 +545,7 @@ static void menu_move(struct overlay_window *ow, const char * const * items,
       return;
     if (items[y-1][0] && items[y-1][1] &&
 	items[y-1][0] != '&' && items[y-1][0] != FILETYPE_LABEL &&
-	items[y-1][0] != MINOR_TITLE)
+	items[y-1][0] != MINOR_TITLE && items[y-1][0] != ERROR_LINE)
       break;
   }
   if (ow->cursor_y)
@@ -575,16 +577,15 @@ static void fileselector_menu_refill(void)
 
 static int fileselector_menu_fill(bool root)
 {
-  int r;
+  int r = 0;
   char *p;
   fileselector_cnt = 0;
-  if (root &&
-      (r = dirpath_open_rootdir(&fileselector_dir)) < 0)
-    return r;
-  if (fileselector_saved_dir)
+  if (root)
+    r = dirpath_open_rootdir(&fileselector_dir);
+  if (r == 0 && fileselector_saved_dir)
     *fileselector_saved_dir = fileselector_dir;
   fatfs_filehandle_t dir_fh = fileselector_dir.fh;
-  for (;;) {
+  while (r >= 0) {
     fileselector_dirpos[fileselector_cnt] = dir_fh;
     r = fatfs_read_directory(&dir_fh, &fileselector_file[fileselector_cnt],
 			     (p = fileselector_menu_names[fileselector_cnt])+1,
@@ -601,6 +602,11 @@ static int fileselector_menu_fill(bool root)
       *p = FILETYPE_FILE;
     if (++fileselector_cnt >= MAX_FILESELECTOR_FILES)
       break;
+  }
+  if (r < 0) {
+    fileselector_cnt = 1;
+    snprintf(fileselector_menu_names[0], sizeof(fileselector_menu_names[0]),
+	     "\x14" "%s", fatfs_strerror(-r));
   }
   fileselector_scroll_control.top_entry = 0;
   fileselector_scroll_control.total_entries = fileselector_cnt + 3;
@@ -629,12 +635,7 @@ static void fileselector_menu_select(unsigned entry)
     dirpath_subdir(&fileselector_dir, &fileselector_file[entry],
 		   &fileselector_dirpos[entry]);
     int r = fileselector_menu_fill(!fileselector_dir.fh.start_cluster);
-    if (r < 0) {
-      fprintf(stderr, "%s\n", fatfs_strerror(-r));
-      menu_close();
-    } else {
-      menu_set(&fileselector_menu);
-    }
+    menu_set(&fileselector_menu);
     break;
   case FILETYPE_FILE:
     if (fileselector_open_func)
@@ -664,6 +665,8 @@ static void menu_open_fileselector(const char *title,
     fileselector_saved_dir = saved_dir;
     if ((r = dirpath_restore(&fileselector_dir, saved_dir)) >= 0)
       r = fileselector_menu_fill(false);
+    else
+      r = -ECARDCHANGED;
   } else
     fileselector_saved_dir = NULL;
   if (r == -ECARDCHANGED || r == -ENOCARD)
@@ -672,12 +675,8 @@ static void menu_open_fileselector(const char *title,
     sdcard_set_card_number(sdcard_get_card_number()? 0 : 1);
     r = fileselector_menu_fill(true);
   }
-  if (r < 0) {
-    fprintf(stderr, "%s\n", fatfs_strerror(-r));
-  } else {
-    fileselector_menu.parent = current_menu;
-    menu_set(&fileselector_menu);
-  }
+  fileselector_menu.parent = current_menu;
+  menu_set(&fileselector_menu);
 }
 
 static void menu_text_input(const char *title,
@@ -818,16 +817,12 @@ void menu_key(char key)
 	(*current_menu->select_func)(menu_window.cursor_y);
       break;
     case '.':
-      if (current_menu == &fileselector_menu && sdcard_num_cards() > 1) {
+      if (current_menu == &fileselector_menu) {
 	int r;
-	sdcard_set_card_number(sdcard_get_card_number() ^ 1);
+	if (sdcard_num_cards() > 1)
+	  sdcard_set_card_number(sdcard_get_card_number() ^ 1);
 	r = fileselector_menu_fill(true);
-	if (r < 0) {
-	  fprintf(stderr, "%s\n", fatfs_strerror(-r));
-	  menu_close();
-	} else {
-	  menu_set(&fileselector_menu);
-	}
+	menu_set(&fileselector_menu);
       }
       break;
     }
