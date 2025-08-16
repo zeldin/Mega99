@@ -102,7 +102,7 @@ static const char * const settings_menu_entries[] = {
 };
 
 static const char * fileselector_menu_entries[MAX_FILESELECTOR_ENTRIES];
-static char fileselector_menu_names[MAX_FILESELECTOR_FILES][MAX_FILESELECTOR_NAMELEN+1];
+static char fileselector_menu_names[MAX_FILESELECTOR_FILES][MAX_FILESELECTOR_NAMELEN+1], fileselector_status_line[MAX_FILESELECTOR_NAMELEN+2];
 static char textinput_buffer[256];
 
 static dirpath_t saved_rpk_dir, saved_dsk_dir,
@@ -136,7 +136,7 @@ static const struct menu_page settings_menu = {
 };
 
 static struct menu_scroll_control fileselector_scroll_control = {
-  fileselector_menu_refill, 2
+  fileselector_menu_refill, 3
 };
 
 static struct menu_page fileselector_menu = {
@@ -567,7 +567,7 @@ static void menu_redraw(void)
 
 static void fileselector_menu_refill(void)
 {
-  unsigned entry = 2, pos = fileselector_scroll_control.top_entry;
+  unsigned entry = 3, pos = fileselector_scroll_control.top_entry;
   while (entry < MAX_FILESELECTOR_ENTRIES-1 && pos < fileselector_cnt)
     fileselector_menu_entries[entry++] = fileselector_menu_names[pos++];
   fileselector_menu_entries[entry] = NULL;
@@ -603,7 +603,14 @@ static int fileselector_menu_fill(bool root)
       break;
   }
   fileselector_scroll_control.top_entry = 0;
-  fileselector_scroll_control.total_entries = fileselector_cnt + 2;
+  fileselector_scroll_control.total_entries = fileselector_cnt + 3;
+  fileselector_status_line[0] = FILETYPE_LABEL;
+  unsigned i = 0;
+  while (i<MAX_FILESELECTOR_NAMELEN && fileselector_dir.path[i]) {
+    fileselector_status_line[i+1] = fileselector_dir.path[i];
+    i++;
+  }
+  fileselector_status_line[i+1] = 0;
   fileselector_menu_refill();
   return r;
 }
@@ -611,8 +618,8 @@ static int fileselector_menu_fill(bool root)
 static void fileselector_menu_select(unsigned entry)
 {
   char typ = 0;
-  if (entry >= 3) {
-    entry -= 3;
+  if (entry >= 4) {
+    entry -= 4;
     entry += fileselector_scroll_control.top_entry;
     if (entry < fileselector_cnt)
       typ = fileselector_menu_names[entry][0];
@@ -647,7 +654,10 @@ static void menu_open_fileselector(const char *title,
 {
   fileselector_open_func = open_func;
   fileselector_menu_entries[0] = title;
-  fileselector_menu_entries[1] = "-";
+  fileselector_menu_entries[1] = fileselector_status_line;
+  fileselector_menu_entries[2] = "-";
+  fileselector_status_line[0] = '&';
+  fileselector_status_line[1] = 0;
 
   int r = -ECARDCHANGED;
   if (saved_dir != NULL) {
