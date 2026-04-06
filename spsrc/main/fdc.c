@@ -50,7 +50,8 @@ void fdc_mount(unsigned drive, const fatfs_filehandle_t *fh)
 	  sectors = 9;
 	  break;
 	case 9*40*2*256:
-	  sectors = 18;
+	  sectors = 9;
+	  tracks = 80;
 	  break;
 	case 9*40*4*256:
 	  sectors = 18;
