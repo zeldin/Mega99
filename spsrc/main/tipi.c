@@ -2,6 +2,7 @@
 #include "regs.h"
 #include "fatfs.h"
 #include "tipi.h"
+#include "dirpath.h"
 
 #if TIPI_DEBUG_ENABLED
 #define TIPI_DEBUG(...) printf(__VA_ARGS__)
@@ -94,7 +95,7 @@ static struct {
   uint8_t name_len;
 } pab;
 
-static fatfs_filehandle_t dsk_dirmap[9];
+static dirpath_t dsk_dirmap[9];
 
 static char dsk_config[9][81] = {
   "DSK1_DIR=",
@@ -203,14 +204,14 @@ static uint8_t tipi_update_tifile_header(struct tifiles_handle *h)
     return TIPI_EFILERR;
 }
 
-static int tipi_open_mapdir(const char *fname, fatfs_filehandle_t *h)
+static int tipi_open_mapdir(const char *fname, dirpath_t *dirpath)
 {
   if (!strncmp(fname, "DSK", 3) &&
       fname[3] >= '1' && fname[3] <= '9' && fname[4] == '.' &&
-      dsk_config[fname[3]-'1'][9]) {
-    *h = dsk_dirmap[fname[3]-'1'];
-  } else
-    return fatfs_open_rootdir(h);
+      dsk_config[fname[3]-'1'][9])
+    return dirpath_restore(dirpath, &dsk_dirmap[fname[3]-'1']);
+  else
+    return dirpath_open_rootdir(dirpath);
 }
 
 static uint8_t tipi_open_or_create_tifile(struct tifiles_handle *h,
@@ -218,9 +219,11 @@ static uint8_t tipi_open_or_create_tifile(struct tifiles_handle *h,
 					  struct tifiles_header *header)
 {
   int r;
+  static dirpath_t mapdir;
   const char *dot = strchr(fname, '.');
-  if ((r = tipi_open_mapdir(fname, &h->direntry)) < 0)
-    return r;
+  if ((r = tipi_open_mapdir(fname, &mapdir)) < 0)
+    return tipi_errno_to_status(r);
+  h->direntry = mapdir.fh;
   if (dot)
     fname = dot+1;
   else
@@ -288,18 +291,14 @@ static void tipi_reply_byte(uint8_t b)
   tipi_reply_len = 0;
 }
 
-static void tipi_config_drive_path(char *name, fatfs_filehandle_t *dirmap)
+static void tipi_config_drive_path(char *name, dirpath_t *dirmap)
 {
   fatfs_filehandle_t fh;
   int r;
-  if ((r = fatfs_open_dir(tipi_packet+9, &fh)) < 0) {
-    TIPI_DEBUG("Failed to open \"%s\" error %d\n", tipi_packet+9, r);
-  } else {
-    *dirmap = fh;
-    strcpy(name, tipi_packet+9);
-  }
+  strcpy(name, tipi_packet+9);
+  strcpy(dirmap->path, tipi_packet+9);
 }
- 
+
 static uint8_t tipi_config_write(void)
 {
   TIPI_DEBUG("Config write: %s\n", tipi_packet);
