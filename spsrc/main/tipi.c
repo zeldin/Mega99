@@ -229,7 +229,7 @@ static uint8_t tipi_open_or_create_tifile(struct tifiles_handle *h,
   else
     fname = "";
   if (header != NULL) {
-    if ((r = fatfs_open_or_createat(fname, &h->handle, &h->direntry)) >= 0)
+    if ((r = dirpath_open_or_createat(&mapdir, fname, &h->handle, &h->direntry)) >= 0)
       if (!h->handle.size) {
 	/* New file */
 	if ((r = fatfs_setsize(&h->handle, &h->direntry, 0x80u)) >= 0) {
@@ -248,7 +248,7 @@ static uint8_t tipi_open_or_create_tifile(struct tifiles_handle *h,
 	return tipi_errno_to_status(r);
       }
   } else
-    r = fatfs_openat(fname, &h->handle, &h->direntry);
+    r = dirpath_openat(&mapdir, fname, &h->handle, &h->direntry);
   if (r < 0)
       return tipi_errno_to_status(r);
   /* Existing file */

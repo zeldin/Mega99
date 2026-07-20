@@ -133,3 +133,63 @@ int dirpath_open_rootdir(dirpath_t *dp)
   dp->path[0] = 0;
   return dirpath_chdir(dp, "/");
 }
+
+static int dirpath_prepare_openat(const dirpath_t *dp, const char **filenamep,
+				  fatfs_filehandle_t *dirfh)
+{
+  const char *path = *filenamep;
+  char *slash = strrchr(path, '/');
+  int cardnum = dirpath_parse_cardnum(path);
+  if (cardnum >= 0 || slash || !dp) {
+    static dirpath_t tmppath;
+    char oc;
+    int r;
+    if (dp)
+      tmppath = *dp;
+    else if ((r = dirpath_open_rootdir(&tmppath)) < 0)
+      return r;
+    if (slash) {
+      oc = *slash;
+      *slash = 0;
+    }
+    r = dirpath_chdir(&tmppath, path);
+    if (slash) {
+      *slash++ = oc;
+      path = slash;
+    } else if(cardnum >= 0)
+      path += 4;
+    if (r < 0)
+      return r;
+    dp = &tmppath;
+  }
+  *dirfh = dp->fh;
+  *filenamep = path;
+  return 0;
+}
+
+int dirpath_openat(const dirpath_t *dp, const char *filename,
+		   fatfs_filehandle_t *fh, fatfs_filehandle_t *dirfh)
+{
+  int r;
+  if (!dirfh) {
+    fatfs_filehandle_t dirfh_dp;
+    dirfh = &dirfh_dp;
+  }
+  if ((r = dirpath_prepare_openat(dp, &filename, dirfh)) < 0)
+    return r;
+  return fatfs_openat(filename, fh, dirfh);
+}
+
+int dirpath_open_or_createat(const dirpath_t *dp, const char *filename,
+			     fatfs_filehandle_t *fh,
+			     fatfs_filehandle_t *dirent_fh)
+{
+  int r;
+  if (!dirent_fh) {
+    fatfs_filehandle_t dirfh_dp;
+    dirent_fh = &dirfh_dp;
+  }
+  if ((r = dirpath_prepare_openat(dp, &filename, dirent_fh)) < 0)
+    return r;
+  return fatfs_open_or_createat(filename, fh, dirent_fh);
+}
