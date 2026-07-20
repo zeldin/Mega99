@@ -95,8 +95,6 @@ static struct {
   uint8_t name_len;
 } pab;
 
-static dirpath_t dsk_dirmap[9];
-
 static char dsk_config[9][81] = {
   "DSK1_DIR=",
   "DSK2_DIR=",
@@ -208,9 +206,11 @@ static int tipi_open_mapdir(const char *fname, dirpath_t *dirpath)
 {
   if (!strncmp(fname, "DSK", 3) &&
       fname[3] >= '1' && fname[3] <= '9' && fname[4] == '.' &&
-      dsk_config[fname[3]-'1'][9])
-    return dirpath_restore(dirpath, &dsk_dirmap[fname[3]-'1']);
-  else
+      dsk_config[fname[3]-'1'][9]) {
+    static dirpath_t mapdir;
+    strcpy(mapdir.path, &dsk_config[tipi_packet[3]-'1'][9]);
+    return dirpath_restore(dirpath, &mapdir);
+  } else
     return dirpath_open_rootdir(dirpath);
 }
 
@@ -291,22 +291,13 @@ static void tipi_reply_byte(uint8_t b)
   tipi_reply_len = 0;
 }
 
-static void tipi_config_drive_path(char *name, dirpath_t *dirmap)
-{
-  fatfs_filehandle_t fh;
-  int r;
-  strcpy(name, tipi_packet+9);
-  strcpy(dirmap->path, tipi_packet+9);
-}
-
 static uint8_t tipi_config_write(void)
 {
   TIPI_DEBUG("Config write: %s\n", tipi_packet);
   if (!strncmp(tipi_packet, "DSK", 3) &&
       tipi_packet[3] >= '1' && tipi_packet[3] <= '9' &&
       !strncmp(tipi_packet+4, "_DIR=", 5))
-    tipi_config_drive_path(&dsk_config[tipi_packet[3]-'1'][9],
-			   &dsk_dirmap[tipi_packet[3]-'1']);
+    strcpy(&dsk_config[tipi_packet[3]-'1'][9], tipi_packet+9);
   tipi_reply_byte(TIPI_SUCCESS);
 }
 
