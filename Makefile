@@ -141,7 +141,7 @@ VIVADO ?= ./vivado_wrapper
 
 CORETOOL ?= coretool
 
-CORE_VERSION = 1.7
+CORE_VERSION = 1.8
 
 EMBEDDED_FILES = mega99sp.bin
 
