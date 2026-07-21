@@ -3,6 +3,7 @@
 #include "fatfs.h"
 #include "tipi.h"
 #include "dirpath.h"
+#include "configfile.h"
 
 #if TIPI_DEBUG_ENABLED
 #define TIPI_DEBUG(...) printf(__VA_ARGS__)
@@ -138,6 +139,33 @@ static struct tipi_special_handler {
   { "STATUS",
     status_records, sizeof(status_records)/sizeof(status_records[0]) },
 };
+
+static void tipi_configfile_parse(const char *prefix, const char *value);
+static void tipi_configfile_format(const char *prefix, char *value);
+
+const config_entry_t tipi_config_entries[] = {
+  { dsk_config[0], tipi_configfile_parse, tipi_configfile_format },
+  { dsk_config[1], tipi_configfile_parse, tipi_configfile_format },
+  { dsk_config[2], tipi_configfile_parse, tipi_configfile_format },
+  { dsk_config[3], tipi_configfile_parse, tipi_configfile_format },
+  { dsk_config[4], tipi_configfile_parse, tipi_configfile_format },
+  { dsk_config[5], tipi_configfile_parse, tipi_configfile_format },
+  { dsk_config[6], tipi_configfile_parse, tipi_configfile_format },
+  { dsk_config[7], tipi_configfile_parse, tipi_configfile_format },
+  { dsk_config[8], tipi_configfile_parse, tipi_configfile_format },
+  { NULL }
+};
+
+static void tipi_configfile_parse(const char *prefix, const char *value)
+{
+  char *p = strchr(prefix, '=')+1;
+  strlcpy(p, value, 81-(p-prefix));
+}
+
+static void tipi_configfile_format(const char *prefix, char *value)
+{
+  strcpy(value, strchr(prefix, '=')+1);
+}
 
 static uint8_t tipi_errno_to_status(int r)
 {

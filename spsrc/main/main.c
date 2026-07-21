@@ -17,6 +17,7 @@
 #include "reset.h"
 #include "embedfile.h"
 #include "groms.h"
+#include "configfile.h"
 
 static int open_auxfile(const char *filename, fatfs_filehandle_t *fh)
 {
@@ -140,6 +141,14 @@ void main()
     for(unsigned j=0; j<32; j++)
       REGS_IOMMU_DESCRIPTOR(i, j<<11) = 0;
 
+  // enable 32K RAM, FDC, speech, and TIPI at >1200
+  REGS_MISC.enable =
+    REGS_MISC_ENABLE_RAM32K | REGS_MISC_ENABLE_FDC | REGS_MISC_ENABLE_VSP |
+    REGS_MISC_ENABLE_TIPI | (2u << REGS_MISC_ENABLE_TIPI_CRUADDR_SHIFT) |
+    REGS_MISC_ENABLE_TIPI_INTERNAL;
+
+  configfile_init();
+
   groms_init();
   groms_free_grom_range(0xffffu, 0x0000, 0x10000u);
   if (load_rom("994a_rom_hb.u610", "ti99_4a.zip", CPUROMH, 4096) < 0 ||
@@ -193,15 +202,15 @@ void main()
   REGS_MISC.led4_rgb = 0x00ff00u;
   REGS_MISC.leds |= 0x00770000u;
 
-  // enable 32K RAM, FDC, and speech
-  REGS_MISC.enable =
-    REGS_MISC_ENABLE_RAM32K | REGS_MISC_ENABLE_FDC | REGS_MISC_ENABLE_VSP;
+  // disable TIPI if we don't have the DSR
+  if (!TIPIROM[0])
+    REGS_MISC.enable &=
+      ~(REGS_MISC_ENABLE_TIPI | REGS_MISC_ENABLE_TIPI_INTERNAL |
+	REGS_MISC_ENABLE_TIPI_CRUADDR_MASK);
 
-  // enable TIPI at >1200, but only if we have the DSR
-  if (TIPIROM[0])
-    REGS_MISC.enable |=
-      REGS_MISC_ENABLE_TIPI | (2u << REGS_MISC_ENABLE_TIPI_CRUADDR_SHIFT) |
-      REGS_MISC_ENABLE_TIPI_INTERNAL;
+  // disable PCODE card if we don't have the ROMs
+  if (!PCODEROM1[0])
+    REGS_MISC.enable &= ~REGS_MISC_ENABLE_PCODE;
 
   printf("Starting TMS9900\n");
   keyboard_unblock();

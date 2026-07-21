@@ -6,6 +6,8 @@
 #define __INT32_TYPE__ int
 #undef __UINT32_TYPE__
 #define __UINT32_TYPE__ unsigned int
+#else
+#define _DEFAULT_SOURCE 1
 #endif
 #include <stdint.h>
 #include <stdbool.h>

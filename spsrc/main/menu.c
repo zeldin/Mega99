@@ -12,6 +12,7 @@
 #include "strerr.h"
 #include "regs.h"
 #include "mem.h"
+#include "configfile.h"
 
 #define MAX_FILESELECTOR_FILES 1000
 #define MAX_FILESELECTOR_NAMELEN 40
@@ -99,6 +100,8 @@ static const char * const settings_menu_entries[] = {
   settings_menu_entry_tipi,
   settings_menu_entry_tipi2,
   "-",
+  "Load settings",
+  "Save settings",
   "Back to main menu",
   NULL
 };
@@ -158,6 +161,24 @@ static void (*textinput_func)(const char *data, unsigned len) = NULL;
 static bool (*textinput_filter)(char key) = NULL;
 static unsigned textinput_cnt, textinput_offs;
 
+static void parse_enable(const char *prefix, const char *value);
+static void parse_dir(const char *prefix, const char *value);
+static void format_enable(const char *prefix, char *value);
+static void format_dir(const char *prefix, char *value);
+
+const config_entry_t settings_config_entries[] = {
+  { "Enable", parse_enable, format_enable },
+  { NULL }
+};
+
+const config_entry_t paths_config_entries[] = {
+  { "RPKDir", parse_dir, format_dir },
+  { "DSKDir", parse_dir, format_dir },
+  { "TAPDir", parse_dir, format_dir },
+  { "MMDir", parse_dir, format_dir },
+  { NULL }
+};
+
 static bool filename_filter(char key)
 {
   switch (key) {
@@ -174,6 +195,45 @@ static bool filename_filter(char key)
     return false;
   }
   return true;
+}
+
+static dirpath_t *saved_dir_lookup(const char *prefix)
+{
+  switch (*prefix) {
+  case 'R': return &saved_rpk_dir;
+  case 'D': return &saved_dsk_dir;
+  case 'T': return &saved_tap_dir;
+  case 'M': return &saved_mm_dir;
+  }
+  return NULL;
+}
+
+static void parse_enable(const char *prefix, const char *value)
+{
+  unsigned long v;
+  if (1 == sscanf(value, "%li", &v))
+    REGS_MISC.enable = v;
+}
+
+static void parse_dir(const char *prefix, const char *value)
+{
+  dirpath_t *dp = saved_dir_lookup(prefix);
+  if (dp && strcmp(value, dp->path)) {
+    strlcpy(dp->path, value, sizeof(dp->path));
+    dp->fh.start_cluster = 0;
+  }
+}
+
+static void format_enable(const char *prefix, char *value)
+{
+  sprintf(value, "0x%lx", (unsigned long)REGS_MISC.enable);
+}
+
+static void format_dir(const char *prefix, char *value)
+{
+  dirpath_t *dp = saved_dir_lookup(prefix);
+  if (dp)
+    strcpy(value, dp->path);
 }
 
 static void menu_open_func_rpk(fatfs_filehandle_t *fh, const char *filename)
@@ -303,6 +363,19 @@ static void settings_menu_select(unsigned entry)
     settings_menu_update();
     break;
   case 19:
+    configfile_load();
+    if (!PCODEROM1[0])
+      REGS_MISC.enable &= ~REGS_MISC_ENABLE_PCODE;
+    if (!TIPIROM[0])
+      REGS_MISC.enable &=
+	~(REGS_MISC_ENABLE_TIPI | REGS_MISC_ENABLE_TIPI_INTERNAL |
+	  REGS_MISC_ENABLE_TIPI_CRUADDR_MASK);
+    settings_menu_update();
+    break;
+  case 20:
+    configfile_save();
+    break;
+  case 21:
     menu_close();
     break;
   }
