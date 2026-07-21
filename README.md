@@ -134,7 +134,7 @@ connectors.
 Cartridges are loaded from RPK files as used by MAME.  To insert a
 cartridge, open the main menu and select "Load RPK", then choose the
 RPK file to load.  Supported cartridge layouts are "standard", "paged",
-"mbx", "minimem", "paged377", "paged378" and "paged379i".
+"mbx", "minimem", "paged377", "paged378", "paged379i", and "gromemu".
 
 
 ### Disk drive
@@ -217,8 +217,10 @@ is provided, TipiPEB hardware can be enabled on CRU address >1200
 is connected either to PMOD connector 2 for connection to a physical
 Raspberry Pi, or it can be connected internally to the service processor
 which supports part of the TIPI service set (default).  Currently
-the internal TIPI services are restricted to loading programs (in
-TIFILES format) from the SD card root directory.
+the internal TIPI services are restricted to loading and saving programs
+(in TIFILES format).  Default directories for disk emulation can be
+set with CALL TIPI, and slashes in filenames can be used to load/save
+to/from subdirectories.
 
 Pin mappings for the Raspberry Pi connection:
 
@@ -234,6 +236,16 @@ Pin mappings for the Raspberry Pi connection:
 | 9     | 8    | 38  | R_DIN    |
 | 10    | 10   | 40  | R_DC     |
 | 11    | 4    | 34  | GND      |
+
+
+## Config file
+
+The current settings and default paths can be saved to a file MEGA99.CFG
+(in the subdirectory MEGA99 if it exists).  This file will be loaded
+automatically when Mega99 starts.  Note that using the "W)rite" function
+in CALL TIPI will not automatically save out the new default paths to
+the config file; this must be done from the settings menu afterwards for
+the new paths to persist across a power cycle.
 
 
 # Running on Nexys A7
