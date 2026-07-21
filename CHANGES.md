@@ -97,3 +97,17 @@ v1.7 (2025-05-31)
   - SAVE implemented
 
   - DSK base directory can be set in CALL TIPI
+
+
+v1.8 (2026-07-21)
+=================
+
+* gromemu RPKs now supported
+
+* File selectors now show directory paths
+
+* Settings can be saved to (and loaded from) sdcard
+
+* Loading RPKs containing filenames longer than 15 characters
+  no longer fails
+
